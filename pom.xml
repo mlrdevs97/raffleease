@@ -11,8 +11,8 @@
 	<groupId>com.raffleease</groupId>
 	<artifactId>raffleease</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Raffleease</name>
-	<description>Raffleease App</description>
+	<name>RaffleEase</name>
+	<description>Raffle Ease App</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -47,10 +47,18 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.thymeleaf.extras</groupId>
 			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
 		</dependency>
-
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
