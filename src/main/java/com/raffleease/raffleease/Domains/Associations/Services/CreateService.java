@@ -28,7 +28,7 @@ public class CreateService {
         try {
             return repository.save(association);
         } catch (Exception exp) {
-            throw new DataBaseHandlingException("Error accessing database when saving association: " + exp.getMessage());
+            throw new DatabaseException("Error accessing database while saving association: " + exp.getMessage());
         }
     }
 }

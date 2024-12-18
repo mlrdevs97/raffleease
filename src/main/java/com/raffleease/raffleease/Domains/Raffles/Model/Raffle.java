@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Raffles.Model;
 
+import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,7 +37,7 @@ public class Raffle {
     private LocalDateTime endDate;
 
     @OneToMany(mappedBy = "raffle", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Raffle> images;
+    private List<RaffleImage> images;
 
     @Column(nullable = false)
     private BigDecimal ticketPrice;
@@ -54,7 +55,7 @@ public class Raffle {
     @OneToMany(mappedBy = "raffle", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Ticket> tickets;
 
-    @Column(nullable = false)
-    private Long associationId;
+    @OneToOne()
+    private Association association;
 
 }

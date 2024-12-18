@@ -2,12 +2,12 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesOrchestrator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.query.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Set;
 
 @RequiredArgsConstructor
 @RestController
@@ -17,63 +17,50 @@ public class RafflesController {
 
     @PostMapping("/")
     public ResponseEntity<RaffleDTO> create(
-            @Valid @RequestBody RaffleCreate request,
-            @RequestHeader("Authorization") String authHeader
+            @Valid @RequestBody RaffleCreate request
     ) {
-        return ResponseEntity.ok(orchestrator.createRaffle(request, authHeader));
+        return ResponseEntity.ok(orchestrator.createRaffle(request));
     }
 
-    // TODO
-    @PutMapping("/publish/{id}")
+    @PatchMapping("/{id}/publish")
     public ResponseEntity<RaffleDTO> publish(
             @PathVariable Long id
     ) {
         return ResponseEntity.ok(orchestrator.publish(id));
     }
 
-    // TODO
-    @PutMapping("/pause/{id}")
+    @PatchMapping("/{id}/pause")
     public ResponseEntity<RaffleDTO> pause(
             @PathVariable Long id
     ) {
         return ResponseEntity.ok(orchestrator.pause(id));
     }
 
-    // TODO
-    @PutMapping("/restart/{id}")
+    @PatchMapping("/{id}/restart")
     public ResponseEntity<RaffleDTO> restart(
             @PathVariable Long id
     ) {
         return ResponseEntity.ok(orchestrator.restart(id));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<RaffleDTO> edit(
-            @PathVariable Long id,
-            @Valid @RequestBody RaffleEdit editRaffle
-    ) {
-        return ResponseEntity.ok(orchestrator.edit(id, editRaffle));
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<RaffleDTO> get(
-            @PathVariable Long id
+            @PathVariable long id
     ) {
         return ResponseEntity.ok(orchestrator.get(id));
     }
 
-    @GetMapping("/")
-    public ResponseEntity<Set<RaffleDTO>> getAll(
-            @RequestHeader("Authorization") String authHeader
-    ) {
-        return ResponseEntity.ok(orchestrator.getAll(authHeader));
+    @GetMapping
+    public ResponseEntity<Page> getAll() {
+        Page raffles = orchestrator.getAll();
+        return ResponseEntity.ok(raffles);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
-            @PathVariable Long id
+            @PathVariable long id
     ) {
-        deleteService.delete(id);
+        orchestrator.delete(id);
         return ResponseEntity.ok().build();
     }
 }

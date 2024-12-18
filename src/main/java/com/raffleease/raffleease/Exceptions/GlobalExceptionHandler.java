@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Exceptions;
 
+import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.ConflictException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import com.raffleease.raffleease.Responses.ApiResponse;
@@ -44,6 +45,18 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse> handleBusinessException(BusinessException exp) {
+        ApiResponse response = ResponseFactory.error(
+                exp.getMessage(),
+                NOT_FOUND.value(),
+                NOT_FOUND.getReasonPhrase()
+        );
+
+        return ResponseEntity
+                .status(NOT_FOUND)
+                .body(response);
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException exp) {

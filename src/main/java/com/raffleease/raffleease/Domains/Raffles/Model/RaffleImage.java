@@ -13,7 +13,7 @@ import lombok.*;
 public class RaffleImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private long id;
 
     @ManyToOne
     @JoinColumn(name = "raffle_id", nullable = false)
