@@ -2,7 +2,7 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesOrchestrator;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
 import jakarta.validation.Valid;
@@ -29,6 +29,14 @@ public class RafflesController {
                         "New raffle successfully created"
                 )
         );
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<RaffleDTO> edit(
+            @PathVariable Long id,
+            @Valid @RequestBody RaffleEdit editRaffle
+    ) {
+        return ResponseEntity.ok(orchestrator.edit(id, editRaffle));
     }
 
     @PatchMapping("/{id}/publish")

@@ -5,6 +5,7 @@ import com.raffleease.raffleease.Domains.Raffles.Model.RaffleImage;
 import com.raffleease.raffleease.Domains.Raffles.Repository.IRafflesRepository;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleDeleteService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
+import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsDeleteService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 public class RaffleDeleteServiceImpl implements IRaffleDeleteService {
     private final ITicketsDeleteService ticketsDeleteService;
     private final IRafflesQueryService queryService;
-    private final S3Service s3Service;
+    // private final S3Service s3Service;
     private final IRafflesRepository repository;
     private final RafflesStatusServiceImpl rafflesStatusServiceImpl;
 
@@ -29,7 +30,8 @@ public class RaffleDeleteServiceImpl implements IRaffleDeleteService {
         rafflesStatusServiceImpl.delete(id);
         List<String> images = raffle.getImages().stream().map(RaffleImage::getKey).toList();
         deleteRegistry(id);
-        ticketsDeleteService.deleteTickets(id);
+        ticketsDeleteService.deleteTickets(raffle.getTickets());
+        // TODO
         // CompletableFuture.runAsync(() -> s3Service.delete(images));
     }
 
@@ -37,7 +39,7 @@ public class RaffleDeleteServiceImpl implements IRaffleDeleteService {
         try {
             repository.deleteById(id);
         } catch (DataAccessException ex) {
-            throw new DatabaseException(" " + ex.getMessage());
+            throw new DatabaseException("Database error occurred while deleting raffle: " + ex.getMessage());
         }
     }
 }

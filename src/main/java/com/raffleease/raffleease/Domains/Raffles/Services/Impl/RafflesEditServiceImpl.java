@@ -9,6 +9,8 @@ import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleCommandService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesEditService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
+import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
+import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsCreateService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +25,10 @@ import java.util.Set;
 public class RafflesEditServiceImpl implements IRafflesEditService {
     private final IRafflesQueryService queryService;
     private final IRaffleCommandService commandService;
-    private final RafflesMapper mapper;
-    // private final S3Service s3Service;
     private final ITicketsCreateService ticketsCreateService;
+    private final RafflesMapper mapper;
+
+    // private final S3Service s3Service;
 
     @Transactional
     public RaffleDTO edit(Long id, RaffleEdit editRaffle) {
@@ -113,7 +116,7 @@ public class RafflesEditServiceImpl implements IRafflesEditService {
                 .lowerLimit(lowerLimit)
                 .build();
 
-        Set<String> newTickets = ticketsCreateService.createTickets(request);
+        Set<Ticket> newTickets = ticketsCreateService.createTickets(request);
         raffle.getTickets().addAll(newTickets);
     }
 }

@@ -9,6 +9,7 @@ import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -31,6 +32,8 @@ public class RafflesQueryServiceImpl implements IRafflesQueryService {
     }
 
     public Set<RaffleDTO> getAll() {
+        // TODO
+        Association association = new Association();
         Set<Raffle> raffles = findByAssociation(association);
         return mapper.fromRaffleSet(raffles);
     }
@@ -38,7 +41,7 @@ public class RafflesQueryServiceImpl implements IRafflesQueryService {
     private Set<Raffle> findByAssociation(Association association) {
         try {
             return new HashSet<>(rafflesRepository.findByAssociation(association));
-        } catch (Exception exp) {
+        } catch (DataAccessException exp) {
             throw new DatabaseException("Database error occurred while retrieving association: " + exp.getMessage());
         }
     }

@@ -9,9 +9,9 @@ import com.raffleease.raffleease.Domains.Raffles.Model.RaffleImage;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleCommandService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleCreateService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleImagesService;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
-import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
+import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsCreateService;
+import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsEditService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,10 +25,10 @@ import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDI
 @RequiredArgsConstructor
 @Service
 public class RaffleCreateServiceImpl implements IRaffleCreateService {
-    private final IRafflesQueryService queryService;
     private final IRaffleCommandService commandService;
     private final IRaffleImagesService imagesService;
     private final ITicketsCreateService ticketsCreateService;
+    private final ITicketsEditService ticketsEditService;
     private final RafflesMapper rafflesMapper;
     private final ImagesMapper imagesMapper;
 
@@ -40,6 +40,7 @@ public class RaffleCreateServiceImpl implements IRaffleCreateService {
 
     @Transactional
     public RaffleDTO createRaffle(RaffleCreate request) {
+        // TODO
         // Long associationId = authClient.getId(authHeader);
         Raffle raffle = rafflesMapper.toRaffle(request);
         // raffle.setAssociation(association);
@@ -50,17 +51,8 @@ public class RaffleCreateServiceImpl implements IRaffleCreateService {
         raffle.setURL(host + path + raffle.getId());
         setRaffleImages(request.imageKeys(), savedRaffle);
         Raffle updatedRaffle = commandService.saveRaffle(savedRaffle);
-        setTicketsRaffle(raffle.getId(), createdTickets);
+        ticketsEditService.setRaffle(raffle, createdTickets);
         return rafflesMapper.fromRaffle(updatedRaffle);
-    }
-
-    private void setTicketsRaffle(Long raffleId, Set<String> tickets) {
-        ticketsRaffleProducer.produceTicketsRaffle(
-                TicketsRaffle.builder()
-                        .raffleId(raffleId)
-                        .tickets(tickets)
-                        .build()
-        );
     }
 
     private void setRaffleImages(List<String> imageKeys, Raffle raffle) {
