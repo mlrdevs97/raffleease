@@ -1,10 +1,12 @@
-package com.raffleease.raffleease.Domains.Raffles.Services;
+package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
-import com.raffleease.raffleease.Domains.Associations.Services.CreateService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesStatusService;
+import com.raffleease.raffleease.Domains.Raffles.Services.Impl.RaffleCommandServiceImpl;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,9 +18,9 @@ import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PAUSE
 
 @RequiredArgsConstructor
 @Service
-public class RafflesStatusService {
-    private final RafflesQueryService rafflesQueryService;
-    private final RaffleCommandService commandService;
+public class RafflesStatusServiceImpl implements IRafflesStatusService {
+    private final IRafflesQueryService rafflesQueryService;
+    private final IRafflesCommandService commandService;
     private final RafflesMapper mapper;
 
     public RaffleDTO publish(Long id) {

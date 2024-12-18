@@ -58,6 +58,18 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse> handleGeneralException(Exception ex) {
+        ApiResponse response = ResponseFactory.error(
+                "An unexpected error occurred: " + ex.getMessage(),
+                INTERNAL_SERVER_ERROR.value(),
+                INTERNAL_SERVER_ERROR.getReasonPhrase()
+
+        );
+
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException exp) {
         Map<String, String> errors = new HashMap<>();

@@ -1,20 +1,22 @@
-package com.raffleease.raffleease.Domains.Raffles.Services;
+package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Repository.IRafflesRepository;
+import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
-public class RaffleCommandService {
+public class RaffleCommandServiceImpl {
     private final IRafflesRepository repository;
 
     public Raffle saveRaffle(Raffle raffle) {
         try {
             return repository.save(raffle);
-        } catch (Exception exp) {
-            throw new DatabaseException("Error accessing database while saving raffle: " + exp.getMessage());
+        } catch (DataAccessException exp) {
+            throw new DatabaseException("Database error occurred while saving raffle: " + exp.getMessage());
         }
     }
 }

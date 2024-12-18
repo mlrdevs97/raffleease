@@ -1,10 +1,11 @@
-package com.raffleease.raffleease.Domains.Raffles.Services;
+package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Repository.IRafflesRepository;
-import com.raffleease.raffleease.Domains.Raffles.Repository.ImagesRepository;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
+import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,9 +15,8 @@ import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
-public class RafflesQueryService {
+public class RafflesQueryServiceImpl implements IRafflesQueryService {
     private final IRafflesRepository rafflesRepository;
-    private final ImagesRepository imagesRepository;
     private final RafflesMapper mapper;
 
     public RaffleDTO get(Long id) {
@@ -38,7 +38,7 @@ public class RafflesQueryService {
         try {
             return new HashSet<>(rafflesRepository.findByAssociation(associationId));
         } catch (Exception exp) {
-            throw new DatabaseException("Failed to access database while retrieving raffles: " + exp.getMessage());
+            throw new DatabaseException("Database error occurred while retrieving association: " + exp.getMessage());
         }
     }
 }

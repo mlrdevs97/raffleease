@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Raffles.Model;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
+import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -1,4 +1,4 @@
-package com.raffleease.raffleease.Domains.Raffles.Services;
+package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
@@ -6,6 +6,11 @@ import com.raffleease.raffleease.Domains.Raffles.Mappers.ImagesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleImage;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleCommandService;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleCreateService;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleImagesService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
+import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,10 +23,10 @@ import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDI
 
 @RequiredArgsConstructor
 @Service
-public class RaffleCreateService {
+public class RaffleCreateServiceImpl implements IRaffleCreateService {
     private final RafflesQueryService queryService;
-    private final RaffleCommandService commandService;
-    private final RaffleImagesService imagesService;
+    private final IRaffleCommandService commandService;
+    private final IRaffleImagesService imagesService;
     private final TicketsCreateService ticketsCreateService;
     private final RafflesMapper rafflesMapper;
     private final ImagesMapper imagesMapper;
@@ -34,9 +39,9 @@ public class RaffleCreateService {
 
     @Transactional
     public RaffleDTO createRaffle(RaffleCreate request) {
-        Long associationId = authClient.getId(authHeader);
+        // Long associationId = authClient.getId(authHeader);
         Raffle raffle = rafflesMapper.toRaffle(request);
-        raffle.setAssociationId(associationId);
+        // raffle.setAssociation(association);
         Set<Ticket> createdTickets = ticketsCreateService.createTickets(request.ticketsInfo());
         raffle.setTickets(createdTickets);
         raffle.setStatus(PENDING);

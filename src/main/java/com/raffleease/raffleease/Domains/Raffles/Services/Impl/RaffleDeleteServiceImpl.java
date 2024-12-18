@@ -1,34 +1,35 @@
-package com.raffleease.raffleease.Domains.Raffles.Services;
+package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleImage;
 import com.raffleease.raffleease.Domains.Raffles.Repository.IRafflesRepository;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleDeleteService;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-public class RaffleDeleteService {
-    private final TicketsDeleteProducer ticketsDeleteProducer;
-    private final RafflesQueryService queryService;
+@RequiredArgsConstructor
+@Service
+public class RaffleDeleteServiceImpl implements IRaffleDeleteService {
+    private final ITicketsDeleteService ticketsDeleteService;
+    private final IRafflesQueryService queryService;
     private final S3Service s3Service;
     private final IRafflesRepository repository;
-    private final RafflesStatusService rafflesStatusService;
+    private final RafflesStatusServiceImpl rafflesStatusServiceImpl;
 
     @Transactional
     public void delete(Long id) {
         Raffle raffle = queryService.findById(id);
-        rafflesStatusService.delete(id);
+        rafflesStatusServiceImpl.delete(id);
         List<String> images = raffle.getImages().stream().map(RaffleImage::getKey).collect(Collectors.toList());
         deleteRegistry(id);
-        ticketsDeleteProducer.deleteTickets(
-                TicketsDelete.builder()
-                        .raffleId(id)
-                        .build()
-        );
-        CompletableFuture.runAsync(() -> s3Service.delete(images));
+        ticketsDeleteService.deleteTickets(id);
+        // CompletableFuture.runAsync(() -> s3Service.delete(images));
     }
 
     public void deleteRegistry(Long id) {
