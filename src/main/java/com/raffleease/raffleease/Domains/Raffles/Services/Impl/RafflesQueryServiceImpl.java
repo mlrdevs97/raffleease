@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
+import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
@@ -34,9 +35,9 @@ public class RafflesQueryServiceImpl implements IRafflesQueryService {
         return mapper.fromRaffleSet(raffles);
     }
 
-    public Set<Raffle> findByAssociation(Long associationId) {
+    private Set<Raffle> findByAssociation(Association association) {
         try {
-            return new HashSet<>(rafflesRepository.findByAssociation(associationId));
+            return new HashSet<>(rafflesRepository.findByAssociation(association));
         } catch (Exception exp) {
             throw new DatabaseException("Database error occurred while retrieving association: " + exp.getMessage());
         }

@@ -9,6 +9,7 @@ import com.raffleease.raffleease.Domains.Raffles.Model.RaffleImage;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleCommandService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleCreateService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleImagesService;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import jakarta.transaction.Transactional;
@@ -24,10 +25,10 @@ import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDI
 @RequiredArgsConstructor
 @Service
 public class RaffleCreateServiceImpl implements IRaffleCreateService {
-    private final RafflesQueryService queryService;
+    private final IRafflesQueryService queryService;
     private final IRaffleCommandService commandService;
     private final IRaffleImagesService imagesService;
-    private final TicketsCreateService ticketsCreateService;
+    private final ITicketsCreateService ticketsCreateService;
     private final RafflesMapper rafflesMapper;
     private final ImagesMapper imagesMapper;
 

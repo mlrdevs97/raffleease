@@ -6,6 +6,7 @@ import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleImage;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleCommandService;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesEditService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
@@ -16,22 +17,21 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
-public class RaffleEditServiceImpl {
+public class RafflesEditServiceImpl implements IRafflesEditService {
     private final IRafflesQueryService queryService;
     private final IRaffleCommandService commandService;
     private final RafflesMapper mapper;
-    private final S3Service s3Service;
+    // private final S3Service s3Service;
     private final ITicketsCreateService ticketsCreateService;
 
     @Transactional
     public RaffleDTO edit(Long id, RaffleEdit editRaffle) {
-        Raffle raffle = rafflesService.findById(id);
+        Raffle raffle = queryService.findById(id);
 
-        if (!Objects.isNull(editRaffle.title())) {
+        if (editRaffle.title() != null) {
             raffle.setTitle(editRaffle.title());
         }
 
@@ -68,12 +68,12 @@ public class RaffleEditServiceImpl {
 
         List<String> deleteKeys = oldKeys.stream()
                 .filter(k -> !newKeys.contains(k))
-                .collect(Collectors.toList());
+                .toList();
 
         if (!deleteKeys.isEmpty()) {
             raffle.getImages().removeIf(image -> deleteKeys.contains(image.getKey()));
 
-            s3Service.delete(deleteKeys);
+            // s3Service.delete(deleteKeys);
         }
 
         List<String> addKeys = new ArrayList<>(newKeys);

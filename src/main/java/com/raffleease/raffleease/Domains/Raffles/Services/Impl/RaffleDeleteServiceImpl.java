@@ -5,6 +5,7 @@ import com.raffleease.raffleease.Domains.Raffles.Model.RaffleImage;
 import com.raffleease.raffleease.Domains.Raffles.Repository.IRafflesRepository;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleDeleteService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
+import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
@@ -26,18 +27,17 @@ public class RaffleDeleteServiceImpl implements IRaffleDeleteService {
     public void delete(Long id) {
         Raffle raffle = queryService.findById(id);
         rafflesStatusServiceImpl.delete(id);
-        List<String> images = raffle.getImages().stream().map(RaffleImage::getKey).collect(Collectors.toList());
+        List<String> images = raffle.getImages().stream().map(RaffleImage::getKey).toList();
         deleteRegistry(id);
         ticketsDeleteService.deleteTickets(id);
         // CompletableFuture.runAsync(() -> s3Service.delete(images));
     }
 
-    public void deleteRegistry(Long id) {
+    private void deleteRegistry(Long id) {
         try {
             repository.deleteById(id);
         } catch (DataAccessException ex) {
             throw new DatabaseException(" " + ex.getMessage());
         }
     }
-
 }
