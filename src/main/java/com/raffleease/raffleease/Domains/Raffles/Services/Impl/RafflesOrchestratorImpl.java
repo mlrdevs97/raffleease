@@ -7,6 +7,7 @@ import com.raffleease.raffleease.Domains.Raffles.Services.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 
 @RequiredArgsConstructor
@@ -42,9 +43,7 @@ public class RafflesOrchestratorImpl implements IRafflesOrchestrator {
     public RaffleDTO get(Long id) { return rafflesQueryService.get(id); }
 
     @Override
-    public Set<RaffleDTO> getAll() {
-        return rafflesQueryService.getAll();
-    }
+    public List<RaffleDTO> getAll() { return rafflesQueryService.getAll(); }
 
     @Override
     public RaffleDTO createRaffle(RaffleCreate request) {

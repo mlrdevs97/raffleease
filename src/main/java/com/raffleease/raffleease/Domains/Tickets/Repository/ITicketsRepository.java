@@ -12,8 +12,8 @@ import java.util.List;
 public interface ITicketsRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findByRaffleIdAndStatus(Long raffleId, TicketStatus status);
 
-    List<Ticket> findByRaffleIdAndStatusAndTicketNumberContaining(
-            Long raffleId,
+    List<Ticket> findByRaffleAndStatusAndTicketNumberContaining(
+            Raffle raffle,
             TicketStatus status,
             String ticketNumber
     );

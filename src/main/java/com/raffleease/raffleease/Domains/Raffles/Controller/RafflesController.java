@@ -3,14 +3,16 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesOrchestrator;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.Set;
+import java.net.URI;
 
 @RequiredArgsConstructor
 @RestController
@@ -23,30 +25,39 @@ public class RafflesController {
             @Valid @RequestBody RaffleCreate request
     ) {
         RaffleDTO createdRaffle = orchestrator.createRaffle(request);
-        return ResponseEntity.ok(
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(createdRaffle.id())
+                .toUri();
+
+        return ResponseEntity.created(location).body(
                 ResponseFactory.success(
                         createdRaffle,
-                        "New raffle successfully created"
+                        "New raffle created successfully"
                 )
         );
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RaffleDTO> edit(
+    public ResponseEntity<ApiResponse> edit(
             @PathVariable Long id,
             @Valid @RequestBody RaffleEdit editRaffle
     ) {
-        return ResponseEntity.ok(orchestrator.edit(id, editRaffle));
+        return ResponseEntity.ok(ResponseFactory.success(
+                orchestrator.edit(id, editRaffle),
+                "Raffle edited successfully"
+        ));
     }
 
     @PatchMapping("/{id}/publish")
     public ResponseEntity<ApiResponse> publish(
             @PathVariable Long id
     ) {
-        RaffleDTO publishedRaffle = orchestrator.publish(id);
         return ResponseEntity.ok(ResponseFactory.success(
-                publishedRaffle,
-                "Raffle successfully published"
+                orchestrator.publish(id),
+                "Raffle published successfully"
         ));
     }
 
@@ -54,10 +65,9 @@ public class RafflesController {
     public ResponseEntity<ApiResponse> pause(
             @PathVariable Long id
     ) {
-        RaffleDTO pausedRaffle = orchestrator.pause(id);
         return ResponseEntity.ok(ResponseFactory.success(
-                pausedRaffle,
-                "Raffle successfully paused"
+                orchestrator.pause(id),
+                "Raffle paused successfully"
         ));
     }
 
@@ -65,10 +75,9 @@ public class RafflesController {
     public ResponseEntity<ApiResponse> restart(
             @PathVariable Long id
     ) {
-        RaffleDTO restartedRaffle = orchestrator.restart(id);
         return ResponseEntity.ok(ResponseFactory.success(
-                restartedRaffle,
-                "Raffle successfully restarted"
+                orchestrator.restart(id),
+                "Raffle restarted successfully"
         ));
     }
 
@@ -76,19 +85,17 @@ public class RafflesController {
     public ResponseEntity<ApiResponse> get(
             @PathVariable Long id
     ) {
-        RaffleDTO retrievedRaffle = orchestrator.get(id);
         return ResponseEntity.ok(ResponseFactory.success(
-                retrievedRaffle,
-                "Raffle successfully retrieved"
+                orchestrator.get(id),
+                "Raffle retrieved successfully"
         ));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse> getAll() {
-        Set<RaffleDTO> retrievedRaffles = orchestrator.getAll();
         return ResponseEntity.ok(ResponseFactory.success(
-                retrievedRaffles,
-                "Raffles successfully published"
+                orchestrator.getAll(),
+                "All raffles retrieved successfully"
         ));
     }
 
@@ -97,9 +104,6 @@ public class RafflesController {
             @PathVariable Long id
     ) {
         orchestrator.delete(id);
-        return ResponseEntity.ok(ResponseFactory.success(
-                null,
-                "Raffle successfully deleted"
-        ));
+        return ResponseEntity.noContent().build();
     }
 }

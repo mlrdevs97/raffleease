@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
-public class AssociationCreateService implements IAssociationCreateService {
+public class AssociationCreateServiceImpl implements IAssociationCreateService {
     private final IAssociationsRepository repository;
     private final AssociationsMapper mapper;
 

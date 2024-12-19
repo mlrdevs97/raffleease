@@ -5,7 +5,7 @@ import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleImage;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleCommandService;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesCommandService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesEditService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
@@ -24,7 +24,7 @@ import java.util.Set;
 @Service
 public class RafflesEditServiceImpl implements IRafflesEditService {
     private final IRafflesQueryService queryService;
-    private final IRaffleCommandService commandService;
+    private final IRafflesCommandService commandService;
     private final ITicketsCreateService ticketsCreateService;
     private final RafflesMapper mapper;
 

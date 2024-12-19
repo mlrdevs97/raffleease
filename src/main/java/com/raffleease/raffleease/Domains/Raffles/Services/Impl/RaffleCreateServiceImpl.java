@@ -6,7 +6,7 @@ import com.raffleease.raffleease.Domains.Raffles.Mappers.ImagesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleImage;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleCommandService;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesCommandService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleCreateService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleImagesService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
@@ -25,7 +25,7 @@ import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDI
 @RequiredArgsConstructor
 @Service
 public class RaffleCreateServiceImpl implements IRaffleCreateService {
-    private final IRaffleCommandService commandService;
+    private final IRafflesCommandService commandService;
     private final IRaffleImagesService imagesService;
     private final ITicketsCreateService ticketsCreateService;
     private final ITicketsEditService ticketsEditService;

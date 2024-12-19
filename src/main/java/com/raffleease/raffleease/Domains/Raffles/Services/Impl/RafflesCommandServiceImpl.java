@@ -2,7 +2,7 @@ package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Repository.IRafflesRepository;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRaffleCommandService;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesCommandService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
-public class RaffleCommandServiceImpl implements IRaffleCommandService {
+public class RafflesCommandServiceImpl implements IRafflesCommandService {
     private final IRafflesRepository repository;
 
     public Raffle saveRaffle(Raffle raffle) {

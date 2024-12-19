@@ -12,8 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -31,16 +30,16 @@ public class RafflesQueryServiceImpl implements IRafflesQueryService {
                 .orElseThrow(() -> new NotFoundException("Raffle with id <" + id + "> not found"));
     }
 
-    public Set<RaffleDTO> getAll() {
+    public List<RaffleDTO> getAll() {
         // TODO
         Association association = new Association();
-        Set<Raffle> raffles = findByAssociation(association);
-        return mapper.fromRaffleSet(raffles);
+        List<Raffle> raffles = findByAssociation(association);
+        return mapper.fromRaffleList(raffles);
     }
 
-    private Set<Raffle> findByAssociation(Association association) {
+    private List<Raffle> findByAssociation(Association association) {
         try {
-            return new HashSet<>(rafflesRepository.findByAssociation(association));
+            return rafflesRepository.findByAssociation(association);
         } catch (DataAccessException exp) {
             throw new DatabaseException("Database error occurred while retrieving association: " + exp.getMessage());
         }

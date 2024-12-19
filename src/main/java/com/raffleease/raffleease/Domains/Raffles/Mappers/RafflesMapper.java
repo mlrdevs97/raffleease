@@ -6,8 +6,7 @@ import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class RafflesMapper {
@@ -46,7 +45,7 @@ public class RafflesMapper {
                 .build();
     }
 
-    public Set<RaffleDTO> fromRaffleSet(Set<Raffle> raffles) {
-        return raffles.stream().map(this::fromRaffle).collect(Collectors.toSet());
+    public List<RaffleDTO> fromRaffleList(List<Raffle> raffles) {
+        return raffles.stream().map(this::fromRaffle).toList();
     }
 }

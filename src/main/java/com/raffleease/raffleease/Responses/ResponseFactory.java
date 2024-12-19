@@ -3,6 +3,10 @@ package com.raffleease.raffleease.Responses;
 import java.util.Map;
 
 public class ResponseFactory {
+    public static <T> ApiResponse success(String message) {
+        return new SuccessResponse<>(null, message);
+    }
+
     public static <T> ApiResponse success(T data, String message) {
         return new SuccessResponse<>(data, message);
     }

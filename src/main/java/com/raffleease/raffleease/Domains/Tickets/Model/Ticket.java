@@ -25,4 +25,5 @@ public class Ticket {
     private TicketStatus status;
     private String reservationFlag;
     private LocalDateTime reservationTime;
+    private String customerId;
 }

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
-public class AssociationsQueryService implements IAssociationQueryService {
+public class AssociationsQueryServiceImpl implements IAssociationQueryService {
     private final IAssociationsRepository repository;
     private final AssociationsMapper mapper;
 
