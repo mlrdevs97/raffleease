@@ -40,8 +40,8 @@ public class TicketsQueryServiceImpl implements ITicketsQueryService {
     }
 
     @Override
-    public List<TicketDTO> findByTicketNumber(SearchRequest request) {
-        Set<Ticket> searchResults = searchTicketsByNumber(request.raffleId(), request.ticketNumber());
+    public List<TicketDTO> findByTicketNumber(Long raffleId, String ticketNumber) {
+        Set<Ticket> searchResults = searchTicketsByNumber(raffleId, ticketNumber);
         List<Ticket> sortedResult = sortTicketsByNumber(searchResults);
         return mapper.fromTicketList(sortedResult);
     }

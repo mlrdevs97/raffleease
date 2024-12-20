@@ -1,8 +1,8 @@
 package com.raffleease.raffleease.Domains.Tickets.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Tickets.DTO.*;
-import com.raffleease.raffleease.Domains.Tickets.Services.IRandomTicketsService;
-import com.raffleease.raffleease.Domains.Tickets.Services.IReservationsService;
+import com.raffleease.raffleease.Domains.Tickets.Services.ITicketRandomService;
+import com.raffleease.raffleease.Domains.Tickets.Services.ITicketReservationsService;
 import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsOrchestrator;
 import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsQueryService;
 import lombok.RequiredArgsConstructor;
@@ -14,13 +14,13 @@ import java.util.List;
 @Service
 public class TicketsOrchestratorImpl implements ITicketsOrchestrator {
     private final ITicketsQueryService ticketsQueryService;
-    private final IReservationsService reservationService;
-    private final IRandomTicketsService randomTickets;
+    private final ITicketReservationsService reservationService;
+    private final ITicketRandomService randomTicketsService;
 
 
     @Override
-    public List<TicketDTO> findByTicketNumber(SearchRequest request) {
-        return ticketsQueryService.findByTicketNumber(request);
+    public List<TicketDTO> findByTicketNumber(Long raffleId, String ticketNumber) {
+        return ticketsQueryService.findByTicketNumber(raffleId, ticketNumber);
     }
 
     @Override
@@ -30,7 +30,7 @@ public class TicketsOrchestratorImpl implements ITicketsOrchestrator {
 
     @Override
     public ReservationResponse generateRandom(GenerateRandom request) {
-        return randomTickets.generateRandom(request);
+        return randomTicketsService.generateRandom(request);
     }
 
     @Override

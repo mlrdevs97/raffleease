@@ -6,7 +6,7 @@ import com.raffleease.raffleease.Domains.Tickets.DTO.ReservationResponse;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import java.util.Set;
 
-public interface IReservationsService {
+public interface ITicketReservationsService {
     void release(ReservationRequest request);
 
     ReservationResponse reserve(ReservationRequest request);

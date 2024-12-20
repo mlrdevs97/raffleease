@@ -4,8 +4,8 @@ import com.raffleease.raffleease.Domains.Tickets.DTO.GenerateRandom;
 import com.raffleease.raffleease.Domains.Tickets.DTO.ReservationResponse;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Repository.ITicketsRepository;
-import com.raffleease.raffleease.Domains.Tickets.Services.IRandomTicketsService;
-import com.raffleease.raffleease.Domains.Tickets.Services.IReservationsService;
+import com.raffleease.raffleease.Domains.Tickets.Services.ITicketRandomService;
+import com.raffleease.raffleease.Domains.Tickets.Services.ITicketReservationsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +18,8 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAIL
 
 @RequiredArgsConstructor
 @Service
-public class RandomTicketsServiceImpl implements IRandomTicketsService {
-    private final IReservationsService reservationService;
+public class TicketTicketRandomServiceImpl implements ITicketRandomService {
+    private final ITicketReservationsService reservationService;
     private final ITicketsRepository repository;
 
     @Override

@@ -22,7 +22,6 @@ public class TicketsCommandServiceImpl implements ITicketsCommandService {
             return new HashSet<>(repository.saveAll(tickets));
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while saving tickets: " + ex.getMessage());
-
         }
     }
 }

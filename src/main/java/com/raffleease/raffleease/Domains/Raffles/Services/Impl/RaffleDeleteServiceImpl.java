@@ -28,9 +28,9 @@ public class RaffleDeleteServiceImpl implements IRaffleDeleteService {
     public void delete(Long id) {
         Raffle raffle = queryService.findById(id);
         rafflesStatusServiceImpl.delete(id);
-        List<String> images = raffle.getImages().stream().map(RaffleImage::getKey).toList();
+        // List<String> images = raffle.getImages().stream().map(RaffleImage::getKey).toList();
         deleteRegistry(id);
-        ticketsDeleteService.deleteTickets(raffle.getTickets());
+        ticketsDeleteService.delete(raffle.getTickets());
         // TODO
         // CompletableFuture.runAsync(() -> s3Service.delete(images));
     }

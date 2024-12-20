@@ -5,10 +5,7 @@ import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsOrchestrator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -18,28 +15,29 @@ import java.util.List;
 public class TicketsController {
     private final ITicketsOrchestrator orchestrator;
 
-    @PostMapping("/find-by-number")
+    @GetMapping("/search")
     public ResponseEntity<List<TicketDTO>> findByTicketNumber(
-            @Valid @RequestBody SearchRequest request
+            @RequestParam("raffleId") Long raffleId,
+            @RequestParam("ticketNumber") String ticketNumber
     ) {
-        return ResponseEntity.ok(orchestrator.findByTicketNumber(request));
+        return ResponseEntity.ok(orchestrator.findByTicketNumber(raffleId, ticketNumber));
     }
 
-    @PostMapping("/generate-random")
+    @PostMapping("/reservations/random")
     public ResponseEntity<ReservationResponse> generateRandom(
             @Valid @RequestBody GenerateRandom request
     ) {
         return ResponseEntity.ok(orchestrator.generateRandom(request));
     }
 
-    @PostMapping("/reserve")
+    @PostMapping("/reservations")
     public ResponseEntity<ReservationResponse> reserve(
             @Valid @RequestBody ReservationRequest request
     ) {
         return ResponseEntity.ok(orchestrator.reserve(request));
     }
 
-    @PostMapping("/release")
+    @DeleteMapping("/reservations")
     public ResponseEntity<Void> release(
             @Valid @RequestBody ReservationRequest request
     ) {

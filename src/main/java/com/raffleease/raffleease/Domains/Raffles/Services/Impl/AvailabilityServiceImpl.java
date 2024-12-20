@@ -15,15 +15,8 @@ public class AvailabilityServiceImpl implements IAvailabilityService {
     private final IRafflesCommandService raffleCommandService;
 
     @Override
-    public void modifyTicketsAvailability(Long raffleId, Long quantity, byte operationType) {
+    public void reduceAvailableTickets(Long raffleId, long reductionQuantity) {
         Raffle raffle = rafflesQueryService.findById(raffleId);
-        switch (operationType) {
-            case 0 -> reduceAvailableTickets(raffle, quantity);
-            case 1 -> increaseAvailableTickets(raffle, quantity);
-        }
-    }
-
-    private void reduceAvailableTickets(Raffle raffle, long reductionQuantity) {
         long availableTickets = raffle.getAvailableTickets() - reductionQuantity;
         if (availableTickets < 0) {
             throw new BusinessException("Insufficient tickets available to complete the operation");
@@ -32,7 +25,9 @@ public class AvailabilityServiceImpl implements IAvailabilityService {
         raffleCommandService.saveRaffle(raffle);
     }
 
-    private void increaseAvailableTickets(Raffle raffle, long increaseQuantity) {
+    @Override
+    public void increaseAvailableTickets(Long raffleId, long increaseQuantity) {
+        Raffle raffle = rafflesQueryService.findById(raffleId);
         Long availableTickets = raffle.getAvailableTickets() + increaseQuantity;
         if (availableTickets > raffle.getTotalTickets()) {
             throw new BusinessException("The operation exceeds the total ticket limit");

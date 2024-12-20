@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Exceptions;
 
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.ConflictException;
+import com.raffleease.raffleease.Exceptions.CustomExceptions.EncryptionException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
@@ -49,12 +50,25 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse> handleBusinessException(BusinessException exp) {
         ApiResponse response = ResponseFactory.error(
                 exp.getMessage(),
-                NOT_FOUND.value(),
-                NOT_FOUND.getReasonPhrase()
+                BAD_REQUEST.value(),
+                BAD_REQUEST.getReasonPhrase()
         );
 
         return ResponseEntity
-                .status(NOT_FOUND)
+                .status(BAD_REQUEST)
+                .body(response);
+    }
+
+    @ExceptionHandler(EncryptionException.class)
+    public ResponseEntity<ApiResponse> handleEncryptionException(EncryptionException exp) {
+        ApiResponse response = ResponseFactory.error(
+                exp.getMessage(),
+                INTERNAL_SERVER_ERROR.value(),
+                INTERNAL_SERVER_ERROR.getReasonPhrase()
+        );
+
+        return ResponseEntity
+                .status(CONFLICT)
                 .body(response);
     }
 

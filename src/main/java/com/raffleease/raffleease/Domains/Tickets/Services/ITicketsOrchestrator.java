@@ -1,17 +1,16 @@
 package com.raffleease.raffleease.Domains.Tickets.Services;
 
 import com.raffleease.raffleease.Domains.Tickets.DTO.*;
-import jakarta.validation.Valid;
 
 import java.util.List;
 
 public interface ITicketsOrchestrator {
 
-    List<TicketDTO> findByTicketNumber(@Valid SearchRequest request);
+    List<TicketDTO> findByTicketNumber(Long raffleId, String ticketNumber);
 
-    void release(@Valid ReservationRequest request);
+    void release(ReservationRequest request);
 
-    ReservationResponse generateRandom(@Valid GenerateRandom request);
+    ReservationResponse generateRandom(GenerateRandom request);
 
-    ReservationResponse reserve(@Valid ReservationRequest request);
+    ReservationResponse reserve(ReservationRequest request);
 }
