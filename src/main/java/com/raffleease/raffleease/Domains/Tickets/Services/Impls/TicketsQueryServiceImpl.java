@@ -1,11 +1,11 @@
 package com.raffleease.raffleease.Domains.Tickets.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
-import com.raffleease.raffleease.Domains.Tickets.DTO.SearchRequest;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketDTO;
-import com.raffleease.raffleease.Domains.Tickets.Mappers.TicketsMapper;
+import com.raffleease.raffleease.Domains.Tickets.Mappers.ITicketsMapper;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
+import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 import com.raffleease.raffleease.Domains.Tickets.Repository.ICustomTicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Repository.ITicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsQueryService;
@@ -15,41 +15,33 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
 
 @RequiredArgsConstructor
 @Service
 public class TicketsQueryServiceImpl implements ITicketsQueryService {
-    private final IRafflesQueryService rafflesQueryService;
+    private final IRafflesPersistenceService rafflePersistence;
     private final ITicketsRepository repository;
-    private final TicketsMapper mapper;
+    private final ICustomTicketsRepository customRepository;
+    private final ITicketsMapper mapper;
 
     @Override
-    public List<Ticket> findAllById(Set<Long> ticketsIds) {
-        try {
-            return repository.findAllById(ticketsIds);
-        } catch (DataAccessException ex) {
-            throw new DatabaseException("Database error occurred while retrieving tickets: " + ex.getMessage());
+    public List<Ticket> findAllById(List<Long> ticketIds) {
+        List<Ticket> tickets = repository.findAllById(ticketIds);
+        if (tickets.isEmpty()) throw new NotFoundException("No tickets were found for provided ids");
+        if (tickets.size() < ticketIds.size()) {
+            throw new NotFoundException("One or more tickets could not be found");
         }
+        return tickets;
     }
 
     @Override
     public List<TicketDTO> findByTicketNumber(Long raffleId, String ticketNumber) {
-        Set<Ticket> searchResults = searchTicketsByNumber(raffleId, ticketNumber);
-        List<Ticket> sortedResult = sortTicketsByNumber(searchResults);
-        return mapper.fromTicketList(sortedResult);
-    }
-
-    private Set<Ticket> searchTicketsByNumber(Long raffleId, String ticketNumber) {
-        Raffle raffle = rafflesQueryService.findById(raffleId);
+        Raffle raffle = rafflePersistence.findById(raffleId);
         try {
-            List<Ticket> searchResults = repository.findByRaffleAndStatusAndTicketNumberContaining(
+            List<Ticket> searchResults = customRepository.findByTicketNumber(
                     raffle,
                     AVAILABLE,
                     ticketNumber
@@ -57,15 +49,18 @@ public class TicketsQueryServiceImpl implements ITicketsQueryService {
             if (searchResults.isEmpty()) {
                 throw new NotFoundException("No ticket for search was found");
             }
-            return new HashSet<>(searchResults);
-        } catch (Exception exp) {
-            throw new DatabaseException("Failed to access database when searching tickets: " + exp.getMessage());
+            return mapper.fromTicketList(searchResults);
+        } catch (DataAccessException exp) {
+            throw new DatabaseException("Database error occurred while retrieving tickets: " + exp.getMessage());
         }
     }
 
-    private List<Ticket> sortTicketsByNumber(Set<Ticket> tickets) {
-        return tickets.stream()
-                .sorted(Comparator.comparing(ticket -> Long.parseLong(ticket.getTicketNumber())))
-                .collect(Collectors.toList());
+    @Override
+    public List<Ticket> findByRaffleAndStatus(Raffle raffle, TicketStatus ticketStatus) {
+        try {
+            return repository.findByRaffleAndStatus(raffle, AVAILABLE);
+        } catch (DataAccessException ex) {
+            throw new DatabaseException("Database error occurred while retrieving tickets: " + ex.getMessage());
+        }
     }
 }

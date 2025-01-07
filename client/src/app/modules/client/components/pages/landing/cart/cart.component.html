@@ -1,0 +1,32 @@
+<div class="fixed bottom-0 left-0 right-0 bg-white p-6 px-8 sm:px-12 shadow-lg rounded-t-lg transform mx-auto max-w-6xl  w-full transition-transform duration-1000 ease-in-out z-50"
+    [ngClass]="{ 'translate-y-0': isCartVisible, 'translate-y-full': !isCartVisible }">
+
+    <div class="flex justify-between items-center border-b pb-2 mb-4">
+        <h2 class="text-lg font-semibold">Números seleccionados:</h2>
+        <button class="text-gray-500 hover:text-gray-700" (click)="toggleCart()">
+            <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                <g id="SVGRepo_iconCarrier">
+                    <g clip-path="url(#clip0_429_11083)">
+                        <path d="M7 7.00006L17 17.0001M7 17.0001L17 7.00006" stroke="#f44336" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round"></path>
+                    </g>
+                    <defs>
+                        <clipPath id="clip0_429_11083">
+                            <rect width="24" height="24" fill="white"></rect>
+                        </clipPath>
+                    </defs>
+                </g>
+            </svg>
+        </button>
+    </div>
+
+    <div class="mb-6">
+        <app-items-list [tickets]="tickets"></app-items-list>
+    </div>
+
+    <app-purchase-btn></app-purchase-btn>
+</div>
+
+<app-overlay [isVisible]="isCartVisible" (click)="toggleCart()"></app-overlay>

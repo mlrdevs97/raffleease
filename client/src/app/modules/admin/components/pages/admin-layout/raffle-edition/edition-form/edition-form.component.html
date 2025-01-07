@@ -1,0 +1,123 @@
+@if (raffle) {
+<div class="flex py-12 justify-center min-h-screen text-gray-900 antialiased">
+    <div class="w-full max-w-4xl lg:px-8">
+        <h1 class="text-2xl font-bold mb-6 text-center">Editar sorteo</h1>
+        <form [formGroup]="raffleForm" (ngSubmit)="onSubmit($event)" class="space-y-6">
+
+            <div class="text-start">
+                <label class="font-medium text-gray-700 text-start">Título del sorteo *</label>
+                <div class="mt-1">
+                    <input type="text" formControlName="title" placeholder="Introducir título del sorteo"
+                        class="w-full p-2 border border-gray-400 rounded focus:outline-none focus:ring focus:ring-blue-300" />
+                </div>
+                @if ((raffleForm.get('title')?.touched || formSubmitted) && raffleForm.get('title')?.invalid) {
+                <small class="text-red-500 text-sm">
+                    {{ getErrorMessage('title') }}
+                </small>
+                }
+            </div>
+
+            <!-- Raffle Description Field -->
+            <div class="text-start">
+                <label class="font-medium text-gray-700">Descripción del sorteo *</label>
+                <div class="mt-1">
+                    <textarea formControlName="description" placeholder="Introducir descripción" rows="4"
+                        class="w-full p-2 border border-gray-400 rounded focus:outline-none focus:ring focus:ring-blue-300 resize-y"></textarea>
+                </div>
+                @if ((raffleForm.get('description')?.touched || formSubmitted) &&
+                raffleForm.get('description')?.invalid) {
+                <small class="text-red-500 text-sm">
+                    {{ getErrorMessage('description') }}
+                </small>
+                }
+            </div>
+
+            <!-- Start and End Dates Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="text-start">
+                    <label class="font-medium text-gray-700">Fecha de finalización *</label>
+                    <div class="mt-1">
+                        <input type="date" formControlName="endDate"
+                            class="w-full p-2 border border-gray-400 rounded focus:outline-none focus:ring focus:ring-blue-300" />
+                    </div>
+                    @if ((raffleForm.get('endDate')?.touched || formSubmitted) && raffleForm.get('endDate')?.invalid) {
+                    <small class="text-red-500 text-sm">
+                        {{ getErrorMessage('endDate') }}
+                    </small>
+                    }
+                </div>
+                <div class="text-start">
+                    <label class="font-medium text-gray-700">Cantidad de tickets *</label>
+                    <div class="mt-1">
+                        <input type="number" formControlName="totalTickets" placeholder="Introducir cantidad de tickets"
+                            class="w-full p-2 border border-gray-400 rounded focus:outline-none focus:ring focus:ring-blue-300" />
+                    </div>
+                    @if ((raffleForm.get('totalTickets')?.touched || formSubmitted) &&
+                    raffleForm.get('totalTickets')?.invalid) {
+                    <small class="text-red-500 text-sm">
+                        {{ getErrorMessage('totalTickets') }}
+                    </small>
+                    }
+                </div>
+            </div>
+
+            <!-- Tickets Info Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="text-start">
+                    <label class="font-medium text-gray-700">Primer número disponible *</label>
+                    <div class="mt-1">
+                        <input type="number" formControlName="lowerLimit"
+                            placeholder="Introducir primer número disponible"
+                            class="w-full p-2 border border-gray-400 rounded bg-gray-200 text-gray-500 cursor-not-allowed focus:outline-none"
+                            readonly />
+                    </div>
+                    @if ((raffleForm.get('lowerLimit')?.touched || formSubmitted) &&
+                    raffleForm.get('lowerLimit')?.invalid)
+                    {
+                    <small class="text-red-500 text-sm">
+                        {{ getErrorMessage('lowerLimit') }}
+                    </small>
+                    }
+                </div>
+
+                <div class="text-start">
+                    <label class="font-medium text-gray-700">Precio del ticket *</label>
+                    <div class="mt-1">
+                        <input type="number" formControlName="ticketPrice" placeholder="Introducir precio del ticket"
+                            class="w-full p-2 border border-gray-400 rounded focus:outline-none focus:ring focus:ring-blue-300" />
+                    </div>
+                    @if ((raffleForm.get('ticketPrice')?.touched || formSubmitted) &&
+                    raffleForm.get('ticketPrice')?.invalid) {
+                    <small class="text-red-500 text-sm">
+                        {{ getErrorMessage('ticketPrice') }}
+                    </small>
+                    }
+                </div>
+            </div>
+
+            <!-- Image Upload Field -->
+            <div>
+                <app-upload-images (filesChange)="setImages($event)" [images]="raffle.images"
+                    class="mt-2"></app-upload-images>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex flex-col items-center gap-4">
+                <div class="w-full">
+                    <button type="submit"
+                        class="w-full bg-blue-500 text-white py-2 p-4 rounded-md text-center font-bold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                        [disabled]="raffleForm.invalid">
+                        Editar sorteo
+                    </button>
+                </div>
+                <div class="w-full">
+                    <button type="button" (click)="onCancel()"
+                        class="w-full border border-blue-500 text-blue-500 py-2 p-4 rounded-md text-center font-bold hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+}

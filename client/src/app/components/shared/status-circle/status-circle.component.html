@@ -1,0 +1,24 @@
+<div class="flex items-center">
+    @if (status === 'ACTIVE') {
+    <span [ngClass]="status" [style.width.px]="iconSize" [style.height.px]="iconSize"
+        class="w-4 h-4 rounded-full mr-4 relative animate-pulse bg-green-500"></span>
+    }
+
+    @if (status === 'PENDING') {
+    <span [ngClass]="status" [style.width.px]="iconSize" [style.height.px]="iconSize"
+        class="w-4 h-4 rounded-full mr-4 relative animate-pulse bg-blue-500"></span>
+    }
+
+    @if (status === 'COMPLETED') {
+    <span [ngClass]="status" [style.width.px]="iconSize" [style.height.px]="iconSize"
+        class="w-4 h-4 rounded-full mr-4 relative animate-pulse bg-yellow-400"></span>
+    }
+
+    @if (status === 'PAUSED') {
+    <span [ngClass]="status" [style.width.px]="iconSize" [style.height.px]="iconSize"
+        class="w-4 h-4 rounded-full mr-4 relative animate-pulse bg-red-600"></span>
+    }
+
+    <span class="text-lg font-bold text-gray-800" [ngClass]="{'outline-black': blackOutline}"
+        [style.fontSize.px]="textSize">{{ translatedStatus }}</span>
+</div>

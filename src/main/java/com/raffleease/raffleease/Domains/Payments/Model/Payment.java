@@ -1,11 +1,10 @@
 package com.raffleease.raffleease.Domains.Payments.Model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.Id;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,10 +15,12 @@ import java.math.BigDecimal;
 @Table(name = "Payments")
 public class Payment {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long orderId;
+    private String paymentIntentId;
     private PaymentStatus status;
     private String paymentMethod;
     private BigDecimal total;
-    private String stripePaymentId;
+    private LocalDateTime createdAt;
+    private LocalDateTime completedAt;
 }

@@ -1,9 +1,8 @@
 package com.raffleease.raffleease.Domains.Payments.Services;
 
-import com.raffleease.raffleease.Domains.Payments.DTOs.SessionCreate;
+import com.raffleease.raffleease.Domains.Orders.Model.Order;
 
 public interface IStripeService {
     String getPublicKey();
-
-    String createSession(SessionCreate request);
+    String createSession(Order order);
 }

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,9 +24,9 @@ public record RaffleCreate(
         @Future(message = "Raffle's end date must be in the future")
         LocalDateTime endDate,
 
-        @NotNull(message = "at least one picture for raffle is required")
-        @Size(max = 10, message = "A maximum of 10 photos for raffle are allowed")
-        List<String> imageKeys,
+        @NotNull(message = "Images for raffle are required")
+        @Size(min = 1 , max = 10, message = "A minimum of 1 and a maximum of 10 pictures for raffle are allowed")
+        List<MultipartFile> images,
 
         @NotNull(message = "Raffle ticket's info is required")
         @Validated

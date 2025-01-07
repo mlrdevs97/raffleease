@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: RaffleEase
+    security:
+      jwt:
+        secret_key: ${security_key}
+        token_expiration: ${token_expiration}
+        refresh_token_expiration: ${refresh_token_expiration}
+    files:
+      storage:
+        path: ${STORAGE_PATH}
+
+  data:
+    redis:
+      host: ${redis_host}
+      port: ${redis_port}
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${db_host}:${db_port}/${db_name}
+    username: ${db_user}
+    password: ${db_password}
+  jpa:
+    hibernate:
+      ddl-auto: update
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+    database: postgresql
+
+  mail:
+    host: ${mail_host}
+    port: ${mail_port}
+    username: ${mail_username}
+    password: ${mail_password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+        connectiontimeout: 5000
+        timeout: 3000
+        writetimeout: 5000

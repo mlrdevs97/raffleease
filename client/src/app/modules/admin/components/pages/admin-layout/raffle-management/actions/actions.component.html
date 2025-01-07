@@ -1,0 +1,93 @@
+<div class="w-full md:px-6 py-2 sm:py-4">
+
+    <div class="w-full mb-4">
+        <div class="w-full mb-4">
+            <button (click)="triggerAction('publish')" [disabled]="raffleStatus !== 'PENDING'"
+                class="w-full bg-white border-[1.5px] border-blue-500 text-blue-500 font-medium p-4 rounded-md transition duration-300 ease-in-out uppercase flex items-center justify-center gap-4 
+                    hover:shadow-lg hover:scale-105 hover:text-blue-500 
+                    disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none disabled:hover:scale-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-upload" width="24px"
+                    height="24px" viewBox="0 0 24 24" stroke-width="1.5" stroke="#3B82F6" fill="none"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                    <polyline points="7 9 12 4 17 9" />
+                    <line x1="12" y1="4" x2="12" y2="16" />
+                </svg>
+                <span class="hidden sm:inline-block">Publicar</span>
+            </button>
+        </div>
+
+    </div>
+
+    <div class="flex flex-wrap justify-between gap-4 mb-4">
+        <button (click)="edit()" [disabled]="raffleStatus === 'COMPLETED'" class="flex-1 bg-blue-500 text-white p-4 rounded-md transition duration-300 ease-in-out uppercase tracking-[0.08em] flex items-center justify-center gap-4 hover:shadow-lg hover:scale-105 
+        disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:scale-100">
+            <svg viewBox="0 0 24 24" width="24px" height="24px" fill="none" xmlns="http://www.w3.org/2000/svg"
+                stroke="#ffffff">
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                <g id="SVGRepo_iconCarrier">
+                    <path d="M4 5L15 5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round"></path>
+                    <path d="M4 8H15" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    </path>
+                    <path d="M4 11H11" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    </path>
+                    <path
+                        d="M18.4563 13.5423L13.9268 18.0719C13.6476 18.3511 13.292 18.5414 12.9048 18.6188L10.8153 19.0367L11.2332 16.9472C11.3106 16.5601 11.5009 16.2045 11.7801 15.9253L16.3096 11.3957M18.4563 13.5423L19.585 12.4135C19.9755 12.023 19.9755 11.3898 19.585 10.9993L18.8526 10.2669C18.4621 9.8764 17.8289 9.8764 17.4384 10.2669L16.3096 11.3957M18.4563 13.5423L16.3096 11.3957"
+                        stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </g>
+            </svg>
+            <span class="hidden sm:block">Editar</span>
+        </button>
+
+
+
+        @if (raffleStatus === 'PENDING') {
+        <button (click)="triggerAction('delete')"
+            class="flex-1 bg-red-600 text-white p-4 rounded-md transition duration-300 ease-in-out uppercase tracking-[0.08em] flex items-center justify-center gap-4 hover:shadow-lg hover:scale-105">
+            <svg height="24px" width="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                <g id="SVGRepo_iconCarrier">
+                    <path
+                        d="M18 6L17.1991 18.0129C17.129 19.065 17.0939 19.5911 16.8667 19.99C16.6666 20.3412 16.3648 20.6235 16.0011 20.7998C15.588 21 15.0607 21 14.0062 21H9.99377C8.93927 21 8.41202 21 7.99889 20.7998C7.63517 20.6235 7.33339 20.3412 7.13332 19.99C6.90607 19.5911 6.871 19.065 6.80086 18.0129L6 6M4 6H20M16 6L15.7294 5.18807C15.4671 4.40125 15.3359 4.00784 15.0927 3.71698C14.8779 3.46013 14.6021 3.26132 14.2905 3.13878C13.9376 3 13.523 3 12.6936 3H11.3064C10.477 3 10.0624 3 9.70951 3.13878C9.39792 3.26132 9.12208 3.46013 8.90729 3.71698C8.66405 4.00784 8.53292 4.40125 8.27064 5.18807L8 6M14 10V17M10 10V17"
+                        stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </g>
+            </svg>
+            <span class="hidden sm:block">Eliminar</span>
+        </button>
+        } @else if (raffleStatus === 'ACTIVE') {
+        <button (click)="triggerAction('pause')"
+            class="flex-1 bg-red-600 text-white p-4 rounded-md transition duration-300 ease-in-out uppercase tracking-[0.08em] flex items-center justify-center gap-4 hover:shadow-lg hover:scale-105">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-player-pause" width="24px"
+                height="24px" viewBox="0 0 24 24" stroke-width="1.5" stroke="#ffffff" fill="none" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <rect x="6" y="5" width="4" height="14" rx="1" />
+                <rect x="14" y="5" width="4" height="14" rx="1" />
+            </svg>
+            <span class="hidden sm:block">Pausar</span>
+        </button>
+        } @else if (raffleStatus === 'PAUSED') {
+        <button (click)="triggerAction('restart')"
+            class="flex-1 bg-white border-[1.5px] border-red-500 text-red-500 p-4 rounded-md transition duration-300 ease-in-out uppercase tracking-[0.08em] flex items-center justify-center gap-4 hover:shadow-lg hover:scale-105 ">
+            <svg fill="#DC2626" height="24px" width="24px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 52 52" xml:space="preserve" stroke="#DC2626">
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                <g id="SVGRepo_iconCarrier">
+                    <g>
+                        <path
+                            d="M26,0C11.663,0,0,11.663,0,26s11.663,26,26,26s26-11.663,26-26S40.337,0,26,0z M26,50C12.767,50,2,39.233,2,26 S12.767,2,26,2s24,10.767,24,24S39.233,50,26,50z">
+                        </path>
+                        <polygon points="32,36.783 32,15.438 14.043,25.806 "></polygon>
+                    </g>
+                </g>
+            </svg>
+            <span class="hidden sm:block">Reanudar</span>
+        </button>
+        }
+    </div>
+</div>

@@ -1,0 +1,41 @@
+@if (raffleId) {
+<div class="relative sm:px-8">
+    <div class="flex flex-wrap justify-between items-center p-4">
+        <h2 class="text-3xl font-bold text-gray-800 tracking-tight mb-2 md:px-8 xl:px-20">Gestionar sorteo</h2>
+
+        <div class="mx-auto py-4 flex flex-col md:flex-row gap-8 md:gap-4 lg:gap-0">
+            <div class="w-full md:w-1/2">
+                <app-raffle-images [images]="raffle.images"></app-raffle-images>
+            </div>
+
+            <div class="md:w-1/2">
+
+                <div class="mb-5 w-full">
+                    <app-raffle-details [raffleId]="raffleId" [(raffle)]="raffle"></app-raffle-details>
+                </div>
+
+                <div class="border-t border-gray-200 sm:mx-8 mb-4"></div>
+
+                <div class="mb-5 w-full">
+                    @if (raffle) {
+                    <app-actions [raffleStatus]="raffle.status" [raffleId]="raffleId"
+                        (actionTriggered)="handleAction($event)"></app-actions>
+                    }
+                </div>
+
+                <div class="border-t border-gray-200 sm:mx-8 mb-4"></div>
+
+                
+                <div class="mb-5 w-full">
+                    <app-statistics [raffle]="raffle"></app-statistics>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <app-modals [raffleId]="raffleId" [display]="displayModal" [action]="selectedAction"
+        (confirmed)="onActionConfirmed()" (closed)="hiddeModal()">
+    </app-modals>
+</div>
+}

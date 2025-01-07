@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Raffles.Model;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
+import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,7 +9,6 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -38,7 +38,7 @@ public class Raffle {
     private LocalDateTime endDate;
 
     @OneToMany(mappedBy = "raffle", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<RaffleImage> images;
+    private List<Image> images;
 
     @Column(nullable = false)
     private BigDecimal ticketPrice;
@@ -54,9 +54,9 @@ public class Raffle {
     private Long soldTickets;
 
     @OneToMany(mappedBy = "raffle", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Ticket> tickets;
+    private List<Ticket> tickets;
 
-    @OneToOne()
+    @ManyToOne
+    @JoinColumn(name = "association_id", nullable = false)
     private Association association;
-
 }

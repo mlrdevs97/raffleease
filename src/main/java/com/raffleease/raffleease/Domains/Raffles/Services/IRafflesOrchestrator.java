@@ -1,7 +1,7 @@
 package com.raffleease.raffleease.Domains.Raffles.Services;
 
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
-import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 
 import java.util.List;
@@ -9,17 +9,17 @@ import java.util.List;
 public interface IRafflesOrchestrator {
     void delete(Long id);
 
-    RaffleDTO publish(Long id);
+    PublicRaffleDTO publish(Long id);
 
-    RaffleDTO pause(Long id);
+    PublicRaffleDTO pause(Long id);
 
-    RaffleDTO restart(Long id);
+    PublicRaffleDTO restart(Long id);
 
-    RaffleDTO get(Long id);
+    PublicRaffleDTO get(Long id);
 
-    List<RaffleDTO> getAll();
+    List<PublicRaffleDTO> getAll(String token);
 
-    RaffleDTO createRaffle(RaffleCreate request);
+    PublicRaffleDTO createRaffle(String token, RaffleCreate request);
 
-    RaffleDTO edit(Long id, RaffleEdit editRaffle);
+    PublicRaffleDTO edit(Long id, RaffleEdit raffleEdit);
 }

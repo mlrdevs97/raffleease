@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Domains.Payments.Controller;
 
-import com.raffleease.raffleease.Domains.Payments.DTOs.SessionCreate;
 import com.raffleease.raffleease.Domains.Payments.Services.IStripeService;
 import com.raffleease.raffleease.Domains.Payments.Services.IWebhookService;
 import lombok.RequiredArgsConstructor;
@@ -17,13 +16,6 @@ public class StripeController {
     @GetMapping("/keys/public")
     public ResponseEntity<String> getPublicKey() {
         return ResponseEntity.ok(stripeService.getPublicKey());
-    }
-
-    @PostMapping("/sessions")
-    public ResponseEntity<String> createSession(
-            @RequestBody SessionCreate request
-    ) {
-        return ResponseEntity.ok(stripeService.createSession(request));
     }
 
     @PostMapping("/webhooks")

@@ -1,11 +1,10 @@
 package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
-import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
-import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
+import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesCommandService;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesStatusService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +18,11 @@ import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PAUSE
 @RequiredArgsConstructor
 @Service
 public class RafflesStatusServiceImpl implements IRafflesStatusService {
-    private final IRafflesQueryService rafflesQueryService;
-    private final IRafflesCommandService commandService;
-    private final RafflesMapper mapper;
+    private final IRafflesPersistenceService rafflesPersistence;
+    private final IRafflesMapper mapper;
 
-    public RaffleDTO publish(Long id) {
-        Raffle raffle = rafflesQueryService.findById(id);
+    public PublicRaffleDTO publish(Long id) {
+        Raffle raffle = rafflesPersistence.findById(id);
         if (!raffle.getStatus().equals(RaffleStatus.PENDING)) {
             throw new BusinessException("Only raffles in 'PENDING' state can be published.");
         }
@@ -33,8 +31,8 @@ public class RafflesStatusServiceImpl implements IRafflesStatusService {
         return saveAndMap(raffle);
     }
 
-    public RaffleDTO pause(Long id) {
-        Raffle raffle = rafflesQueryService.findById(id);
+    public PublicRaffleDTO pause(Long id) {
+        Raffle raffle = rafflesPersistence.findById(id);
         if (!raffle.getStatus().equals(ACTIVE)) {
             throw new BusinessException("Only raffles in 'ACTIVE' state can be paused.");
         }
@@ -42,8 +40,8 @@ public class RafflesStatusServiceImpl implements IRafflesStatusService {
         return saveAndMap(raffle);
     }
 
-    public RaffleDTO restart(Long id) {
-        Raffle raffle = rafflesQueryService.findById(id);
+    public PublicRaffleDTO restart(Long id) {
+        Raffle raffle = rafflesPersistence.findById(id);
         if (!raffle.getStatus().equals(PAUSED)) {
             throw new BusinessException("Only raffles in 'PAUSED' state can be restarted.");
         }
@@ -52,14 +50,13 @@ public class RafflesStatusServiceImpl implements IRafflesStatusService {
     }
 
     public void delete(Long id) {
-        Raffle raffle = rafflesQueryService.findById(id);
+        Raffle raffle = rafflesPersistence.findById(id);
         if (!raffle.getStatus().equals(RaffleStatus.PENDING)) {
             throw new BusinessException("Only raffles in 'PENDING' state can be deleted.");
         }
     }
 
-    private RaffleDTO saveAndMap(Raffle raffle) {
-        Raffle savedRaffle = commandService.saveRaffle(raffle);
-        return mapper.fromRaffle(savedRaffle);
+    private PublicRaffleDTO saveAndMap(Raffle raffle) {
+        return mapper.fromRaffle(rafflesPersistence.save(raffle));
     }
 }

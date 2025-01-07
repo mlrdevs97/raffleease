@@ -1,56 +1,57 @@
 package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
-import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.Services.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
 public class RafflesOrchestratorImpl implements IRafflesOrchestrator {
+    private final IRafflesQueryService queryService;
     private final IRaffleCreateService createService;
-    private final IRafflesQueryService rafflesQueryService;
     private final IRafflesStatusService rafflesStatusService;
-    private final IRaffleDeleteService raffleDeleteService;
+    private final IRafflesPersistenceService rafflesPersistence;
     private final IRafflesEditService rafflesEditService;
 
     @Override
-    public void delete(Long id) {
-        raffleDeleteService.delete(id);
-    }
+    public void delete(Long id) { rafflesPersistence.deleteById(id); }
 
     @Override
-    public RaffleDTO publish(Long id) {
+    public PublicRaffleDTO publish(Long id) {
         return rafflesStatusService.publish(id);
     }
 
     @Override
-    public RaffleDTO pause(Long id) {
+    public PublicRaffleDTO pause(Long id) {
         return rafflesStatusService.pause(id);
     }
 
     @Override
-    public RaffleDTO restart(Long id) {
+    public PublicRaffleDTO restart(Long id) {
         return rafflesStatusService.restart(id);
     }
 
     @Override
-    public RaffleDTO get(Long id) { return rafflesQueryService.get(id); }
-
-    @Override
-    public List<RaffleDTO> getAll() { return rafflesQueryService.getAll(); }
-
-    @Override
-    public RaffleDTO createRaffle(RaffleCreate request) {
-        return createService.createRaffle(request);
+    public PublicRaffleDTO get(Long id) {
+        return queryService.get(id);
     }
 
-    public RaffleDTO edit(Long id, RaffleEdit editRaffle) {
-        return rafflesEditService.edit(id, editRaffle);
+    @Override
+    public List<PublicRaffleDTO> getAll(String token) {
+        return queryService.getAll(token);
+    }
+
+    @Override
+    public PublicRaffleDTO createRaffle(String token, RaffleCreate request) {
+        return createService.createRaffle(token, request);
+    }
+
+    public PublicRaffleDTO edit(Long id, RaffleEdit raffleEdit) {
+        return rafflesEditService.edit(id, raffleEdit);
     }
 }

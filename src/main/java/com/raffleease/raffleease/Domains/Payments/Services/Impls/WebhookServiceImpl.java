@@ -1,9 +1,22 @@
 package com.raffleease.raffleease.Domains.Payments.Services.Impls;
 
-import com.raffleease.raffleease.Domains.Customers.DTO.CustomerDTO;
-import com.raffleease.raffleease.Domains.Payments.DTOs.PaymentDTO;
+import com.raffleease.raffleease.Domains.Cart.Model.Cart;
+import com.raffleease.raffleease.Domains.Cart.Services.ICartsService;
+import com.raffleease.raffleease.Domains.Customers.Model.Customer;
+import com.raffleease.raffleease.Domains.Customers.Services.ICustomersService;
+import com.raffleease.raffleease.Domains.Notifications.Services.INotificationsService;
+import com.raffleease.raffleease.Domains.Orders.DTOs.OrderEdit;
+import com.raffleease.raffleease.Domains.Orders.Model.Order;
+import com.raffleease.raffleease.Domains.Orders.Services.IOrdersService;
+import com.raffleease.raffleease.Domains.Payments.DTOs.PaymentEdit;
+import com.raffleease.raffleease.Domains.Payments.Model.Payment;
+import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
 import com.raffleease.raffleease.Domains.Payments.Services.IPaymentsService;
 import com.raffleease.raffleease.Domains.Payments.Services.IWebhookService;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesEditService;
+import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsReleaseService;
+import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
+import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.CustomStripeException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DeserializationException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.InvalidSignatureException;
@@ -13,20 +26,35 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.*;
 import com.stripe.net.Webhook;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static com.raffleease.raffleease.Domains.Cart.Model.CartStatus.CLOSED;
+import static com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus.*;
+import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 
 @RequiredArgsConstructor
 @Service
-public class WebHookServiceImpl implements IWebhookService {
-    private final IPaymentsService paymentsService;
+public class WebhookServiceImpl implements IWebhookService {
+    private final IPaymentsService paymentsEditService;
+    private final ICustomersService customersService;
+    private final ITicketsService ticketsService;
+    private final IOrdersService ordersService;
+    private final IRafflesEditService rafflesEditService;
+    private final ICartsService cartsService;
+    private final IReservationsReleaseService reservationsReleaseService;
+    private final INotificationsService notificationsCreateService;
 
     @Value("${STRIPE_WEBHOOK_KEY}")
     private String webhookKey;
 
+    @Override
     public void handleWebHook(String payload, String sigHeader) {
         Event event = constructEvent(payload, sigHeader, webhookKey);
         StripeObject stripeObject = deserializeStripeObject(event);
@@ -50,110 +78,109 @@ public class WebHookServiceImpl implements IWebhookService {
 
     private void processPayment(Event event, StripeObject stripeObject) {
         if (stripeObject instanceof PaymentIntent paymentIntent) {
-            PaymentDTO payment = createPayment(paymentIntent);
-            Long orderId = payment.orderId();
-            Long raffleId = Long.parseLong(paymentIntent.getMetadata().get("raffleId"));
+            Order order = getOrder(paymentIntent);
+            Payment payment = updatePayment(order.getPayment(), paymentIntent);
+            Cart cart = cartsService.edit(order.getCart(), CLOSED);
+            Customer customer = createCustomer(paymentIntent);
 
             switch (event.getType()) {
                 case "payment_intent.succeeded":
-                    handlePaymentSuccess((PaymentIntent) stripeObject, orderId);
+                    handlePaymentSuccess(order);
                     break;
                 case "payment_intent.payment_failed":
-                    handlePaymentFailure(orderId, raffleId);
+                    handlePaymentFailure(order);
                     break;
                 case "payment_intent.canceled":
-                    handlePaymentCanceled(orderId, raffleId);
+                    handlePaymentCanceled(order);
                     break;
             }
+            updateOrder(order, payment, customer, cart);
         }
     }
 
-    private PaymentDTO createPayment(PaymentIntent paymentIntent) {
-        return paymentsService.createPayment(
-                Long.parseLong(paymentIntent.getMetadata().get("orderId")),
-                paymentIntent.getId(),
-                BigDecimal.valueOf(paymentIntent.getAmount()),
-                paymentIntent.getPaymentMethod()
+    private void handlePaymentSuccess(Order order) {
+        paymentsEditService.edit(order.getPayment(), PaymentEdit.builder()
+                .paymentStatus(SUCCEEDED)
+                .completedAt(LocalDateTime.now())
+                .build()
         );
+        List<Ticket> purchasedTickets = ticketsService.edit(order.getCart().getTickets(), SOLD);
+        rafflesEditService.edit(
+                order.getCart().getRaffle(),
+                Optional.ofNullable(order.getPayment().getTotal()).orElse(BigDecimal.ZERO),
+                (long) purchasedTickets.size()
+        );
+        notificationsCreateService.create(order);
     }
 
-    private void handlePaymentSuccess(PaymentIntent paymentIntent, Long orderId) {
-        PaymentDTO payment = getPaymentData(paymentIntent, orderId);
-        CustomerDTO customer = getCustomerData(paymentIntent);
-        PaymentSuccess request = buildSuccessRequest(orderId, payment, customer);
-        successProducer.notifySuccess(request);
+    private void handlePaymentFailure(Order order) {
+        handlePaymentUnsuccessful(order, FAILED);
     }
 
-    private void handlePaymentFailure(Long orderId, Long raffleId) {
-        handlePaymentUnsuccessful(orderId, OrderStatus.FAILED, raffleId);
+    private void handlePaymentCanceled(Order order) {
+        handlePaymentUnsuccessful(order, CANCELLED);
     }
 
-    private void handlePaymentCanceled(Long orderId, Long raffleId) {
-        handlePaymentUnsuccessful(orderId, OrderStatus.CANCELED, raffleId);
+    private void handlePaymentUnsuccessful(Order order, PaymentStatus paymentStatus) {
+        paymentsEditService.edit(order.getPayment(), PaymentEdit.builder()
+                .paymentStatus(paymentStatus)
+                .completedAt(LocalDateTime.now())
+                .build()
+        );
+        reservationsReleaseService.release(order.getCart());
     }
 
-    private void handlePaymentUnsuccessful(Long orderId, OrderStatus status, Long raffleId) {
-
-        failureProducer.notifyFailure(
-                PaymentFailure.builder()
-                        .orderId(orderId)
-                        .status(status)
-                        .raffleId(raffleId)
+    private Payment updatePayment(Payment payment, PaymentIntent paymentIntent) {
+        String paymentMethod = retrieveStripePaymentMethod(paymentIntent.getPaymentMethod()).getType();
+        return paymentsEditService.edit(
+                payment,
+                PaymentEdit.builder()
+                        .completedAt(LocalDateTime.now())
+                        .total(BigDecimal.valueOf(paymentIntent.getAmount()))
+                        .paymentMethod(paymentMethod)
+                        .paymentIntentId(paymentIntent.getId())
                         .build()
         );
     }
 
-    private PaymentDTO getPaymentData(PaymentIntent paymentIntent, Long orderId) {
-        PaymentMethod paymentMethod = retrieveStripePaymentMethod(paymentIntent);
-        return buildPaymentDTO(
-                orderId,
-                paymentMethod,
-                paymentIntent.getAmount(),
-                paymentIntent.getId()
+    private Customer createCustomer(PaymentIntent paymentIntent) {
+        com.stripe.model.Customer customerData = retrieveStripeCustomerData(paymentIntent);
+        return customersService.createCustomer(
+                customerData.getId(),
+                customerData.getName(),
+                customerData.getEmail(),
+                customerData.getPhone()
         );
     }
 
-    private CustomerDTO getCustomerData(PaymentIntent paymentIntent) {
-        Customer customer = retrieveStripeCustomerData(paymentIntent);
-        return buildCustomerData(customer);
-    }
-
-    private PaymentMethod retrieveStripePaymentMethod(PaymentIntent paymentIntent) {
+    private PaymentMethod retrieveStripePaymentMethod(String paymentMethodId) {
         try {
-            return PaymentMethod.retrieve(paymentIntent.getPaymentMethod());
+            return PaymentMethod.retrieve(paymentMethodId);
         } catch (StripeException exp) {
             throw new CustomStripeException("Error retrieving payment data from stripe: " + exp.getMessage());
         }
     }
 
-    private Customer retrieveStripeCustomerData(PaymentIntent paymentIntent) {
+    private com.stripe.model.Customer retrieveStripeCustomerData(PaymentIntent paymentIntent) {
         try {
-            return Customer.retrieve(paymentIntent.getCustomer());
+            return com.stripe.model.Customer.retrieve(paymentIntent.getCustomer());
         } catch (StripeException exp) {
             throw new CustomStripeException("Error retrieving customer data from stripe: " + exp.getMessage());
         }
     }
 
-    private PaymentDTO buildPaymentDTO(
-            Long orderId,
-            PaymentMethod paymentMethod,
-            Long amount,
-            String paymentIntentId
-    ) {
-        return PaymentDTO.builder()
-                .orderId(orderId)
-                .paymentMethod(paymentMethod.getType())
-                .total(BigDecimal.valueOf(amount).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP))
-                .paymentIntentId(paymentIntentId)
-                .build();
+    private Order getOrder(PaymentIntent paymentIntent) {
+        Long orderId = Long.parseLong(paymentIntent.getMetadata().get("orderId"));
+        return ordersService.findById(orderId);
     }
 
-    private CustomerDTO buildCustomerData(Customer customer) {
-        return CustomerDTO.builder()
-                .stripeId(customer.getId())
-                .name(customer.getName())
-                .email(customer.getEmail())
-                .phoneNumber(customer.getPhone())
-                .build();
+    private void updateOrder(Order order, Payment payment, Customer customer, Cart cart) {
+        ordersService.edit(order, OrderEdit.builder()
+                .customer(customer)
+                .payment(payment)
+                .cart(cart)
+                .orderDate(LocalDateTime.now())
+                .build()
+        );
     }
 }

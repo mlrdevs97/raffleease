@@ -1,7 +1,7 @@
 package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
-import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesOrchestrator;
 import com.raffleease.raffleease.Responses.ApiResponse;
@@ -22,9 +22,10 @@ public class RafflesController {
 
     @PostMapping
     public ResponseEntity<ApiResponse> create(
+            @RequestHeader(value = "Authorization") String authHeader,
             @Valid @RequestBody RaffleCreate request
     ) {
-        RaffleDTO createdRaffle = orchestrator.createRaffle(request);
+        PublicRaffleDTO createdRaffle = orchestrator.createRaffle(authHeader.substring(7), request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -43,10 +44,10 @@ public class RafflesController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> edit(
             @PathVariable Long id,
-            @Valid @RequestBody RaffleEdit editRaffle
+            @Valid @RequestBody RaffleEdit raffleEdit
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                orchestrator.edit(id, editRaffle),
+                orchestrator.edit(id, raffleEdit),
                 "Raffle edited successfully"
         ));
     }
@@ -92,15 +93,17 @@ public class RafflesController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getAll() {
+    public ResponseEntity<ApiResponse> getAll(
+            @RequestHeader("Authorization") String authHeader
+    ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                orchestrator.getAll(),
+                orchestrator.getAll(authHeader.substring(7)),
                 "All raffles retrieved successfully"
         ));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse> delete(
+    public ResponseEntity<Void> delete(
             @PathVariable Long id
     ) {
         orchestrator.delete(id);

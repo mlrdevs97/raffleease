@@ -1,8 +1,7 @@
 package com.raffleease.raffleease.Domains.Payments.Services.Impls;
 
-import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
-import com.raffleease.raffleease.Domains.Payments.DTOs.SessionCreate;
+import com.raffleease.raffleease.Domains.Orders.Model.Order;
+import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Payments.Services.IStripeService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.CustomStripeException;
 import com.stripe.Stripe;
@@ -18,8 +17,6 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 @Service
 public class StripeServiceImpl implements IStripeService {
-    private final IRafflesQueryService rafflesQueryService;
-
     @Value("${STRIPE_PUBLIC_KEY}")
     private String stripePublicKey;
 
@@ -38,15 +35,16 @@ public class StripeServiceImpl implements IStripeService {
     }
 
     @Override
-    public String createSession(SessionCreate request) {
+    public String createSession(Order order) {
         Stripe.apiKey = stripeSecretKey;
-        RaffleDTO raffle = getRaffleInfo(request.raffleId());
-        SessionCreateParams params = buildSessionParams(request, raffle);
+        SessionCreateParams params = buildSessionParams(order);
         Session session = buildSession(params);
         return session.getClientSecret();
     }
 
-    private SessionCreateParams buildSessionParams(SessionCreate request, RaffleDTO raffle) {
+    private SessionCreateParams buildSessionParams(Order order) {
+        Raffle raffle = order.getCart().getRaffle();
+
         return SessionCreateParams.builder()
                 .setUiMode(SessionCreateParams.UiMode.EMBEDDED)
                 .setMode(SessionCreateParams.Mode.PAYMENT)
@@ -58,8 +56,7 @@ public class StripeServiceImpl implements IStripeService {
                 )
                 .setPaymentIntentData(
                         SessionCreateParams.PaymentIntentData.builder()
-                                .putMetadata("orderId", request.orderId().toString())
-                                .putMetadata("raffleId", request.raffleId().toString())
+                                .putMetadata("orderId", order.getId().toString())
                                 .build()
                 )
                 .addLineItem(
@@ -69,16 +66,16 @@ public class StripeServiceImpl implements IStripeService {
                                                 .setCurrency("eur")
                                                 .setProductData(
                                                         SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                                                .setName("Ticket for raffle " + raffle.title())
+                                                                .setName("Ticket for raffle " + raffle.getTitle())
                                                                 .build()
                                                 )
-                                                .setUnitAmount(raffle.ticketPrice().multiply(BigDecimal.valueOf(100)).longValue())
+                                                .setUnitAmount(raffle.getTicketPrice().multiply(BigDecimal.valueOf(100)).longValue())
                                                 .build()
                                 )
-                                .setQuantity(request.quantity())
+                                .setQuantity((long) order.getCart().getTickets().size())
                                 .build()
                 )
-                .setReturnUrl(clientHost + clientPath + raffle.id())
+                .setReturnUrl(clientHost + clientPath + raffle.getId())
                 .build();
     }
 
@@ -88,9 +85,5 @@ public class StripeServiceImpl implements IStripeService {
         } catch (StripeException ex) {
             throw new CustomStripeException("Error creating checkout session: " + ex.getMessage());
         }
-    }
-
-    private RaffleDTO getRaffleInfo(Long raffleId) {
-        return rafflesQueryService.get(raffleId);
     }
 }

@@ -1,94 +1,100 @@
 package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
-import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
+import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Images.Services.IImagesService;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
-import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
+import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Model.RaffleImage;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesCommandService;
 import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesEditService;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesQueryService;
+import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
-import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
-import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsCreateService;
+import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
 public class RafflesEditServiceImpl implements IRafflesEditService {
-    private final IRafflesQueryService queryService;
-    private final IRafflesCommandService commandService;
-    private final ITicketsCreateService ticketsCreateService;
-    private final RafflesMapper mapper;
-
-    // private final S3Service s3Service;
+    private final IRafflesPersistenceService rafflesPersistence;
+    private final ITicketsService ticketsCreateService;
+    private final IImagesService imagesService;
+    private final IRafflesMapper mapper;
 
     @Transactional
-    public RaffleDTO edit(Long id, RaffleEdit editRaffle) {
-        Raffle raffle = queryService.findById(id);
+    public PublicRaffleDTO edit(Long id, RaffleEdit raffleEdit) {
+        Raffle raffle = rafflesPersistence.findById(id);
 
-        if (editRaffle.title() != null) {
-            raffle.setTitle(editRaffle.title());
+        if (raffleEdit.title() != null) {
+            raffle.setTitle(raffleEdit.title());
         }
 
-        if (editRaffle.description() != null) {
-            raffle.setDescription(editRaffle.description());
+        if (raffleEdit.description() != null) {
+            raffle.setDescription(raffleEdit.description());
         }
 
-        if (editRaffle.endDate() != null) {
-            raffle.setEndDate(editRaffle.endDate());
+        if (raffleEdit.endDate() != null) {
+            raffle.setEndDate(raffleEdit.endDate());
         }
 
-        if (editRaffle.imageKeys() != null) {
-            editImages(raffle, editRaffle.imageKeys());
+        if (raffleEdit.deleteImageIds() != null && !raffleEdit.deleteImageIds().isEmpty()) {
+            deleteImages(raffle, raffleEdit.deleteImageIds());
         }
 
-        if (editRaffle.ticketPrice() != null) {
-            raffle.setTicketPrice(editRaffle.ticketPrice());
+        if (raffleEdit.newIMages() != null && !raffleEdit.newIMages().isEmpty()) {
+            addNewImages(raffle, raffleEdit.newIMages());
         }
 
-        if (editRaffle.totalTickets() != null) {
-            editTotalTickets(raffle, editRaffle.totalTickets());
+        if (raffleEdit.ticketPrice() != null) {
+            raffle.setTicketPrice(raffleEdit.ticketPrice());
         }
 
-        Raffle savedRaffle = commandService.saveRaffle(raffle);
+        if (raffleEdit.totalTickets() != null) {
+            editTotalTickets(raffle, raffleEdit.totalTickets());
+        }
+
+        Raffle savedRaffle = rafflesPersistence.save(raffle);
         return mapper.fromRaffle(savedRaffle);
     }
 
-    private void editImages(Raffle raffle, List<String> newKeys) {
-        List<RaffleImage> oldImages = raffle.getImages();
+    @Override
+    public void edit(Raffle raffle, BigDecimal revenue, Long soldTickets) {
+        raffle.setSoldTickets(raffle.getSoldTickets() + soldTickets);
+        raffle.setRevenue(raffle.getRevenue().add(revenue));
+        rafflesPersistence.save(raffle);
+    }
 
-        List<String> oldKeys = oldImages.stream()
-                .map(RaffleImage::getKey)
+    private void deleteImages(Raffle raffle, List<Long> deleteIds) {
+        List<Image> currentImages = raffle.getImages();
+
+        List<Image> imagesToDelete = currentImages.stream()
+                .filter(image -> deleteIds.contains(image.getId()))
                 .toList();
 
-        List<String> deleteKeys = oldKeys.stream()
-                .filter(k -> !newKeys.contains(k))
-                .toList();
-
-        if (!deleteKeys.isEmpty()) {
-            raffle.getImages().removeIf(image -> deleteKeys.contains(image.getKey()));
-
-            // s3Service.delete(deleteKeys);
+        if (currentImages.size() - imagesToDelete.size() < 1) {
+            throw new BusinessException("At least one picture for raffle is required");
         }
 
-        List<String> addKeys = new ArrayList<>(newKeys);
-        addKeys.removeAll(oldKeys);
+        imagesService.deleteAll(imagesToDelete);
+        raffle.getImages().removeAll(imagesToDelete);
+    }
 
-        for (String newKey : addKeys) {
-            RaffleImage newImage = RaffleImage.builder()
-                    .key(newKey)
-                    .raffle(raffle)
-                    .build();
-            raffle.getImages().add(newImage);
+    private void addNewImages(Raffle raffle, List<MultipartFile> newImages) {
+        List<Image> currentImages = raffle.getImages();
+
+        if (currentImages.size() + newImages.size() >= 10) {
+            throw new BusinessException("A maximum of 10 pictures are allowed");
         }
+
+        List<Image> createdImages = imagesService.create(raffle, newImages);
+        raffle.getImages().addAll(createdImages);
     }
 
     private void editTotalTickets(Raffle raffle, long editTotal) {
@@ -116,7 +122,6 @@ public class RafflesEditServiceImpl implements IRafflesEditService {
                 .lowerLimit(lowerLimit)
                 .build();
 
-        Set<Ticket> newTickets = ticketsCreateService.createTickets(request);
-        raffle.getTickets().addAll(newTickets);
+        raffle.getTickets().addAll(ticketsCreateService.create(raffle, request));
     }
 }

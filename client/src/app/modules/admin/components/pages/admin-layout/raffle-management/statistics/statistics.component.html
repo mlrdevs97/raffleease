@@ -1,0 +1,69 @@
+<div class="w-full md:px-6 py-2 sm:py-4 bg-white rounded-md shadow-md">
+    <div class="max-w-5xl mx-auto text-left mb-4">
+        <h2 class="text-xl sm:text-3xl md:text-2xl lg:text-3xl font-extrabold leading-tight text-gray-800">
+            Estadísticas del sorteo
+        </h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-6 p-4">
+        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-md shadow-sm border border-gray-200">
+            <span class="text-gray-600 font-medium">Total de Tickets</span>
+            <span class="text-gray-900 font-bold text-lg">{{ raffle.totalTickets }}</span>
+        </div>
+
+        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-md shadow-sm border border-gray-200">
+            <span class="text-gray-600 font-medium">Tickets Vendidos</span>
+            <span class="text-gray-900 font-bold text-lg">{{ soldTickets }}</span>
+        </div>
+
+        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-md shadow-sm border border-gray-200">
+            <span class="text-gray-600 font-medium">Tickets reservados</span>
+            <span class="text-gray-900 font-bold text-lg">{{ reserved }}</span>
+        </div>
+
+        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-md shadow-sm border border-gray-200">
+            <span class="text-gray-600 font-medium">Tickets Disponibles</span>
+            <span class="text-gray-900 font-bold text-lg">{{ raffle.availableTickets }}</span>
+        </div>
+
+        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-md shadow-sm border border-gray-200">
+            <span class="text-gray-600 font-medium">Precio del Ticket</span>
+            <span class="text-gray-900 font-bold text-lg">{{ raffle.ticketPrice }}€</span>
+        </div>
+
+        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-md shadow-sm border border-gray-200">
+            <span class="text-gray-600 font-medium">Recaudación Total</span>
+            <span class="text-gray-900 font-bold text-lg">{{ revenue }}€</span>
+        </div>
+
+        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-md shadow-sm border border-gray-200">
+            <span class="text-gray-600 font-medium">Primer Número:</span>
+            <span class="text-gray-900 font-bold text-lg">{{ raffle.firstTicketNumber }}</span>
+        </div>
+
+        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-md shadow-sm border border-gray-200">
+            <span class="text-gray-600 font-medium">Último Número:</span>
+            <span class="text-gray-900 font-bold text-lg">{{ lastTicket }}</span>
+        </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto p-4 mb-4">
+        <h3 class="text-start text-xl font-semibold text-gray-700 mb-4">
+            Buscar ganador
+        </h3>
+        <div class="grid sm:flex gap-4">
+            <input type="text" placeholder="Introducir número ganador"
+                class="w-full sm:flex-1 px-6 py-4 border border-gray-300 rounded-md shadow-sm text-gray-700 focus:ring focus:ring-blue-200 focus:outline-none" />
+            <button
+                class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 bg-blue-500 text-white font-semibold rounded-md shadow hover:bg-blue-700 focus:ring focus:ring-blue-300 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <span class="md:hidden xl:inline-block text text-lg">Buscar</span>
+            </button>
+        </div>
+    </div>
+
+</div>

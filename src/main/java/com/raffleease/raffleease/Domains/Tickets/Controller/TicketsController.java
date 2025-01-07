@@ -1,8 +1,9 @@
 package com.raffleease.raffleease.Domains.Tickets.Controller;
 
 import com.raffleease.raffleease.Domains.Tickets.DTO.*;
-import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsOrchestrator;
-import jakarta.validation.Valid;
+import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsQueryService;
+import com.raffleease.raffleease.Responses.ApiResponse;
+import com.raffleease.raffleease.Responses.ResponseFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,35 +14,19 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/tickets")
 public class TicketsController {
-    private final ITicketsOrchestrator orchestrator;
+    private final ITicketsQueryService queryService;
 
-    @GetMapping("/search")
-    public ResponseEntity<List<TicketDTO>> findByTicketNumber(
+    @GetMapping
+    public ResponseEntity<ApiResponse> findByTicketNumber(
             @RequestParam("raffleId") Long raffleId,
             @RequestParam("ticketNumber") String ticketNumber
     ) {
-        return ResponseEntity.ok(orchestrator.findByTicketNumber(raffleId, ticketNumber));
-    }
-
-    @PostMapping("/reservations/random")
-    public ResponseEntity<ReservationResponse> generateRandom(
-            @Valid @RequestBody GenerateRandom request
-    ) {
-        return ResponseEntity.ok(orchestrator.generateRandom(request));
-    }
-
-    @PostMapping("/reservations")
-    public ResponseEntity<ReservationResponse> reserve(
-            @Valid @RequestBody ReservationRequest request
-    ) {
-        return ResponseEntity.ok(orchestrator.reserve(request));
-    }
-
-    @DeleteMapping("/reservations")
-    public ResponseEntity<Void> release(
-            @Valid @RequestBody ReservationRequest request
-    ) {
-        orchestrator.release(request);
-        return ResponseEntity.noContent().build();
+        List<TicketDTO> tickets = queryService.findByTicketNumber(raffleId, ticketNumber);
+        return ResponseEntity.ok(
+                ResponseFactory.success(
+                        tickets,
+                        "Tickets retrieved successfully"
+                )
+        );
     }
 }
