@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Token.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
+import com.raffleease.raffleease.Domains.Auth.Services.ICookiesService;
 import com.raffleease.raffleease.Domains.Token.Services.*;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Model.UserPrincipal;
@@ -23,15 +24,15 @@ public class TokensManagementServiceImpl implements ITokensManagementService {
     private final ITokensQueryService tokensQueryService;
     private final IUsersService usersService;
     private final IBlackListService blackListService;
+    private final ICookiesService cookiesService;
 
     @Override
     public AuthResponse refresh(
             HttpServletRequest request,
             HttpServletResponse response
     ) {
-        final String refreshToken = extractTokenFromRequest(request);
-        final String subject = tokensQueryService.getSubject(refreshToken);
-
+        String refreshToken = cookiesService.extractCookieValue(request, "refresh_token");
+        String subject = tokensQueryService.getSubject(refreshToken);
         if (Objects.isNull(subject)) throw new AuthorizationException("Subject not found in refresh token");
         User user = usersService.findByIdentifier(subject);
         UserPrincipal principal = new UserPrincipal(user);
@@ -39,22 +40,23 @@ public class TokensManagementServiceImpl implements ITokensManagementService {
         String accessToken = tokensCreateService.generateAccessToken(principal);
         return AuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
                 .build();
     }
 
     @Override
     public void revoke(String token) {
         String tokenId = tokensQueryService.getTokenId(token);
+        if (blackListService.isTokenBlackListed(tokenId)) throw new AuthorizationException("Token already revoked");
         Date expiration = tokensQueryService.getExpiration(token);
         Long expirationTime = expiration.getTime() - System.currentTimeMillis();
         blackListService.addTokenToBlackList(tokenId, expirationTime);
     }
 
 
-    private String extractTokenFromRequest(HttpServletRequest request) {
+    @Override
+    public String extractTokenFromRequest(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (Objects.isNull(authHeader)) throw new AuthorizationException("Missing refresh token");
+        if (Objects.isNull(authHeader)) throw new AuthorizationException("Missing authorization header");
         if (!authHeader.startsWith("Bearer ")) throw new AuthorizationException("Invalid token format");
         return authHeader.substring(7);
     }

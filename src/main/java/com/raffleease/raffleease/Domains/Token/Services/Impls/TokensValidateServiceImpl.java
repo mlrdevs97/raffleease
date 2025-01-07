@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
@@ -18,27 +19,25 @@ public class TokensValidateServiceImpl implements ITokensValidateService {
 
     @Override
     public void validateToken(String token, UserDetails userDetails) {
-        if (!isTokenNonExpired(token)) {
-            throw new AuthorizationException("Token expired");
-        }
+        if (!isTokenNonExpired(token)) throw new AuthorizationException("Token expired");
 
         final String tokenId = tokenQueryService.getTokenId(token);
-        if (blackListService.isTokenBlackListed(tokenId)) {
-            throw new AuthorizationException("Token revoked");
-        }
+        if (Objects.isNull(tokenId)) throw new AuthorizationException("Token id not found");
+        if (blackListService.isTokenBlackListed(tokenId)) throw new AuthorizationException("Token revoked");
 
         final String subject = tokenQueryService.getSubject(token);
-        if (!subject.equals(userDetails.getUsername())) {
-            throw new AuthorizationException("User name does not match token user name");
-        }
+        if (Objects.isNull(subject)) throw new AuthorizationException("Subject not found in token");
+        if (!subject.equals(userDetails.getUsername())) throw new AuthorizationException("User name does not match token user name");
     }
 
     @Override
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String subject = tokenQueryService.getSubject(token);
         final String tokenId = tokenQueryService.getTokenId(token);
-        return (subject.equals(userDetails.getUsername()) &&
+        return (Objects.nonNull(subject) &&
+                subject.equals(userDetails.getUsername()) &&
                 isTokenNonExpired(token) &&
+                Objects.nonNull(tokenId) &&
                 !blackListService.isTokenBlackListed(tokenId)
         );
     }

@@ -6,5 +6,9 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public interface ITokensManagementService {
     void revoke(String token);
+
     AuthResponse refresh(HttpServletRequest request, HttpServletResponse response);
+
+    String extractTokenFromRequest(HttpServletRequest request);
+
 }

@@ -4,9 +4,12 @@ server:
 spring:
   application:
     name: RaffleEase
+    config:
+      cors:
+        allowed_origin: ${allowed_origin}
     security:
       jwt:
-        secret_key: ${security_key}
+        secret_key: ${secret_key}
         token_expiration: ${token_expiration}
         refresh_token_expiration: ${refresh_token_expiration}
     files:

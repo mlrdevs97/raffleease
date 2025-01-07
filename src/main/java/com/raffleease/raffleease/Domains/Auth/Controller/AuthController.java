@@ -28,22 +28,26 @@ public class AuthController {
     private final LogoutHandler logoutHandler;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse> register(@Valid @RequestBody AssociationRegister request) {
-        AuthResponse response = registerService.register(request);
+    public ResponseEntity<ApiResponse> register(
+            @Valid @RequestBody AssociationRegister request,
+            HttpServletResponse response
+    ) {
         return ResponseEntity.ok().body(
                 ResponseFactory.success(
-                        response,
+                        registerService.register(request, response),
                         "New user registered successfully"
                 )
         );
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse> login(@Valid @RequestBody AuthRequest request) {
-        AuthResponse response = loginService.authenticate(request);
+    public ResponseEntity<ApiResponse> login(
+            @Valid @RequestBody AuthRequest request,
+            HttpServletResponse response
+    ) {
         return ResponseEntity.ok().body(
                 ResponseFactory.success(
-                        response,
+                        loginService.authenticate(request, response),
                         "User authenticated successfully"
                 )
         );

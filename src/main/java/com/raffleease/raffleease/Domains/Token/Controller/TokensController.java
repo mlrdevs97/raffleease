@@ -25,10 +25,4 @@ public class TokensController {
                 "Token refreshed successfully"
         ));
     }
-
-    @DeleteMapping("/revoke")
-    public ResponseEntity<Void> revoke(@RequestParam String token) {
-        service.revokeAllUserTokens(token);
-        return ResponseEntity.noContent().build();
-    }
 }
