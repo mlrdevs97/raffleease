@@ -17,18 +17,18 @@ public class TokensCreateServiceImpl implements ITokensCreateService {
     private final ITokensQueryService tokenQueryService;
 
     @Override
-    public String generateAccessToken(User user) {
+    public String generateAccessToken(Long userId) {
         return buildToken(
-                user.getId(),
+                userId,
                 TokenType.ACCESS,
                 tokenQueryService.getAccessTokenExpirationValue()
         );
     }
 
     @Override
-    public String generateRefreshToken(User user) {
+    public String generateRefreshToken(Long userId) {
         return buildToken(
-                user.getId(),
+                userId,
                 TokenType.REFRESH,
                 tokenQueryService.getRefreshTokenExpirationValue()
         );

@@ -4,16 +4,16 @@ import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Auth.Services.ICookiesService;
 import com.raffleease.raffleease.Domains.Token.Services.*;
 import com.raffleease.raffleease.Domains.Users.Model.User;
-import com.raffleease.raffleease.Domains.Users.Model.UserPrincipal;
 import com.raffleease.raffleease.Domains.Users.Services.IUsersService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
+import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
-import java.util.Objects;
+
 
 @RequiredArgsConstructor
 @Service
@@ -31,10 +31,16 @@ public class TokensManagementServiceImpl implements ITokensManagementService {
             HttpServletResponse response
     ) {
         String refreshToken = cookiesService.extractCookieValue(request, "refresh_token");
-        Long userId = getUserIdFromToken(refreshToken);
-        User user = usersService.findById(userId);
-        tokensValidateService.validateToken(refreshToken, new UserPrincipal(user));
-        String accessToken = tokensCreateService.generateAccessToken(user);
+        tokensValidateService.validateToken(refreshToken);
+        String subject = tokensQueryService.getSubject(refreshToken);
+        Long userId = Long.parseLong(subject);
+        User user;
+        try {
+            user = usersService.findById(userId);
+        } catch (NotFoundException ex) {
+            throw new AuthorizationException("User not found for provided subject in token");
+        }
+        String accessToken = tokensCreateService.generateAccessToken(user.getId());
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .build();
@@ -47,15 +53,5 @@ public class TokensManagementServiceImpl implements ITokensManagementService {
         Date expiration = tokensQueryService.getExpiration(token);
         Long expirationTime = expiration.getTime() - System.currentTimeMillis();
         blackListService.addTokenToBlackList(tokenId, expirationTime);
-    }
-
-    private Long getUserIdFromToken(String token) {
-        String subject = tokensQueryService.getSubject(token);
-        if (Objects.isNull(subject)) throw new AuthorizationException("Subject not found in refresh token");
-        try {
-            return Long.parseLong(subject);
-        } catch (NumberFormatException ex) {
-            throw new AuthorizationException("Invalid subject format in token");
-        }
     }
 }

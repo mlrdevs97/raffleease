@@ -14,13 +14,7 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "Associations")
 public class Association extends User {
     @Column(nullable = false, unique = true)
-    private String name;
-
-    @Column(nullable = false, unique = true)
-    private String email;
-
-    @Column(nullable = false, unique = true)
-    private String phoneNumber;
+    private String associationName;
 
     @OneToOne(cascade = CascadeType.ALL)
     private Address address;

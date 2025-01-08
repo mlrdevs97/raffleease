@@ -7,7 +7,6 @@ import com.raffleease.raffleease.Domains.Auth.Services.ICookiesService;
 import com.raffleease.raffleease.Domains.Auth.Services.IRegisterService;
 import com.raffleease.raffleease.Domains.Token.Services.ITokensCreateService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
-import com.raffleease.raffleease.Domains.Users.Model.UserPrincipal;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +25,8 @@ public class RegisterServiceImpl implements IRegisterService {
     @Override
     public AuthResponse register(AssociationRegister request, HttpServletResponse response) {
         User user = associationsService.create(request, passwordEncoder.encode(request.password()));
-        String refreshToken = tokensCreateService.generateRefreshToken(user);
-        String accessToken = tokensCreateService.generateAccessToken(user);
+        String refreshToken = tokensCreateService.generateRefreshToken(user.getId());
+        String accessToken = tokensCreateService.generateAccessToken(user.getId());
         cookiesService.addCookie(response, "refresh_token", refreshToken, 6048000);
         return AuthResponse.builder()
                 .accessToken(accessToken)

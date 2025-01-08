@@ -2,7 +2,10 @@ package com.raffleease.raffleease.Domains.Token.Filters;
 
 import com.raffleease.raffleease.Domains.Token.Services.ITokensQueryService;
 import com.raffleease.raffleease.Domains.Token.Services.ITokensValidateService;
-import com.raffleease.raffleease.Domains.Users.Services.Impls.UserDetailsServiceImpl;
+import com.raffleease.raffleease.Domains.Users.Model.CostumUserDetails;
+import com.raffleease.raffleease.Domains.Users.Model.User;
+import com.raffleease.raffleease.Domains.Users.Services.IUsersService;
+import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,7 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -24,7 +27,8 @@ import java.util.Objects;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final ITokensQueryService tokenQueryService;
     private final ITokensValidateService tokenValidationService;
-    private final UserDetailsServiceImpl userDetailsService;
+
+    private final IUsersService usersService;
 
     @Override
     protected void doFilterInternal(
@@ -44,28 +48,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String jwt = authHeader.substring(7);
-        final String identifier = tokenQueryService.getSubject(jwt);
-
-        if (Objects.isNull(identifier)) {
+        if (!tokenValidationService.isTokenValid(jwt)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        if (Objects.isNull(SecurityContextHolder.getContext().getAuthentication())) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(identifier);
-
-            if (tokenValidationService.isTokenValid(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
+        if (Objects.nonNull(SecurityContextHolder.getContext().getAuthentication())) {
+            filterChain.doFilter(request, response);
+            return;
         }
+
+        String subject = tokenQueryService.getSubject(jwt);
+        Long userId = Long.parseLong(subject);
+        User user;
+        try {
+            user = usersService.findById(userId);
+        } catch (NotFoundException ex) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        UserDetails userDetails = new CostumUserDetails(user);
+
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities()
+        );
+        authToken.setDetails(
+                new WebAuthenticationDetailsSource().buildDetails(request)
+        );
+        SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
     }

@@ -4,14 +4,12 @@ import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.security.auth.Subject;
-import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
 
 @Getter
 @Builder
-public record UserPrincipal(User user) implements UserDetails, Principal {
+public record CostumUserDetails(User user) implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();
@@ -47,13 +45,4 @@ public record UserPrincipal(User user) implements UserDetails, Principal {
         return true;
     }
 
-    @Override
-    public String getName() {
-        return user.getIdentifier();
-    }
-
-    @Override
-    public boolean implies(Subject subject) {
-        return Principal.super.implies(subject);
-    }
 }

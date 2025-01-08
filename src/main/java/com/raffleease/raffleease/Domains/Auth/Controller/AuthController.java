@@ -25,18 +25,6 @@ public class AuthController {
     private final LogoutHandler logoutHandler;
     private final IAuthValidationService authValidationService;
 
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse> register(
-            @Valid @RequestBody AssociationRegister request,
-            HttpServletResponse response
-    ) {
-        return ResponseEntity.ok().body(
-                ResponseFactory.success(
-                        registerService.register(request, response),
-                        "New user registered successfully"
-                )
-        );
-    }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> login(

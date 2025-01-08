@@ -8,7 +8,6 @@ import com.raffleease.raffleease.Domains.Token.Services.ITokensCreateService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.IUsersService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthenticationException;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,27 +23,19 @@ public class LoginServiceImpl implements ILoginService {
     private final IUsersService usersService;
 
     public AuthResponse authenticate(AuthRequest request, HttpServletResponse response) {
-        authenticateCredentials(request.email(), request.password());
-        User user = findUser(request.email());
-        String accessToken = tokensCreateService.generateAccessToken(user);
-        String refreshToken = tokensCreateService.generateRefreshToken(user);
+        authenticateCredentials(request.identifier(), request.password());
+        User user = usersService.findByIdentifier(request.identifier());
+        String accessToken = tokensCreateService.generateAccessToken(user.getId());
+        String refreshToken = tokensCreateService.generateRefreshToken(user.getId());
         cookiesService.addCookie(response, "refresh_token", refreshToken, 6048000);
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .build();
     }
 
-    private User findUser(String identifier) {
+    private void authenticateCredentials(String identifier, String password) {
         try {
-            return usersService.findByIdentifier(identifier);
-        } catch (NotFoundException ex) {
-            throw new AuthenticationException("Authentication failed for provided credentials");
-        }
-    }
-
-    private void authenticateCredentials(String email, String password) {
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(identifier, password));
         } catch (org.springframework.security.core.AuthenticationException exp) {
             throw new AuthenticationException("Authentication failed for provided credentials");
         }

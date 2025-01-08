@@ -15,11 +15,11 @@ public class AssociationsMapper implements IAssociationsMapper {
 
     public Association toAssociation(AssociationRegister request, String encodedPassword) {
         return Association.builder()
-                .name(request.name())
+                .associationName(request.name())
+                .userName(request.email())
                 .email(request.email())
                 .phoneNumber(request.phoneNumber())
                 .address(addressMapper.toAddress(request))
-                .identifier(request.email())
                 .password(encodedPassword)
                 .build();
     }
@@ -27,7 +27,7 @@ public class AssociationsMapper implements IAssociationsMapper {
     public AssociationDTO fromAssociation(Association association) {
         return AssociationDTO.builder()
                 .id(association.getId())
-                .name(association.getName())
+                .name(association.getAssociationName())
                 .email(association.getEmail())
                 .phoneNumber(association.getPhoneNumber())
                 .address(addressMapper.fromAddress(association.getAddress()))

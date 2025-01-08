@@ -5,7 +5,6 @@ import com.raffleease.raffleease.Domains.Token.Services.ITokensQueryService;
 import com.raffleease.raffleease.Domains.Token.Services.ITokensValidateService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -18,7 +17,7 @@ public class TokensValidateServiceImpl implements ITokensValidateService {
     private final IBlackListService blackListService;
 
     @Override
-    public void validateToken(String token, UserDetails userDetails) {
+    public void validateToken(String token) {
         if (!isTokenNonExpired(token)) throw new AuthorizationException("Token expired");
 
         String tokenId = tokenQueryService.getTokenId(token);
@@ -27,15 +26,15 @@ public class TokensValidateServiceImpl implements ITokensValidateService {
 
         String subject = tokenQueryService.getSubject(token);
         if (Objects.isNull(subject)) throw new AuthorizationException("Subject not found in token");
-        if (!subject.equals(userDetails.getUsername())) throw new AuthorizationException("User id does not match token user id");
+        if (!isNumeric(subject)) throw new AuthorizationException("Invalid subject format in token");
     }
 
     @Override
-    public boolean isTokenValid(String token, UserDetails userDetails) {
+    public boolean isTokenValid(String token) {
         String subject = tokenQueryService.getSubject(token);
         String tokenId = tokenQueryService.getTokenId(token);
         return (Objects.nonNull(subject) &&
-                subject.equals(userDetails.getUsername()) &&
+                isNumeric(subject) &&
                 isTokenNonExpired(token) &&
                 Objects.nonNull(tokenId) &&
                 !blackListService.isTokenBlackListed(tokenId)
@@ -44,5 +43,14 @@ public class TokensValidateServiceImpl implements ITokensValidateService {
 
     private boolean isTokenNonExpired(String token) {
         return !tokenQueryService.getExpiration(token).before(new Date());
+    }
+
+    private boolean isNumeric(String str) {
+        try {
+            Long.parseLong(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 }
