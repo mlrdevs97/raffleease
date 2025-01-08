@@ -5,9 +5,7 @@ import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Auth.Services.ICookiesService;
 import com.raffleease.raffleease.Domains.Auth.Services.ILoginService;
 import com.raffleease.raffleease.Domains.Token.Services.ITokensCreateService;
-import com.raffleease.raffleease.Domains.Token.Services.ITokensManagementService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
-import com.raffleease.raffleease.Domains.Users.Model.UserPrincipal;
 import com.raffleease.raffleease.Domains.Users.Services.IUsersService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthenticationException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
@@ -28,9 +26,8 @@ public class LoginServiceImpl implements ILoginService {
     public AuthResponse authenticate(AuthRequest request, HttpServletResponse response) {
         authenticateCredentials(request.email(), request.password());
         User user = findUser(request.email());
-        UserPrincipal principal = UserPrincipal.builder().user(user).build();
-        String accessToken = tokensCreateService.generateAccessToken(principal);
-        String refreshToken = tokensCreateService.generateRefreshToken(principal);
+        String accessToken = tokensCreateService.generateAccessToken(user);
+        String refreshToken = tokensCreateService.generateRefreshToken(user);
         cookiesService.addCookie(response, "refresh_token", refreshToken, 6048000);
         return AuthResponse.builder()
                 .accessToken(accessToken)

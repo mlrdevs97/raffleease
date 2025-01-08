@@ -4,12 +4,12 @@ import lombok.Getter;
 
 @Getter
 public class ErrorResponse extends ApiResponse {
-    private final int errorCode;
-    private final String reason;
+    private final int status;
+    private final String statusText;
 
-    public ErrorResponse(String message, int errorCode, String reason) {
+    public ErrorResponse(String message, int status, String statusText) {
         super(false, message);
-        this.errorCode = errorCode;
-        this.reason = reason;
+        this.status = status;
+        this.statusText = statusText;
     }
 }

@@ -1,9 +1,9 @@
 package com.raffleease.raffleease.Domains.Token.Services;
 
-import com.raffleease.raffleease.Domains.Users.Model.UserPrincipal;
+import com.raffleease.raffleease.Domains.Users.Model.User;
 
 
 public interface ITokensCreateService {
-    String generateAccessToken(UserPrincipal principal);
-    String generateRefreshToken(UserPrincipal principal);
+    String generateAccessToken(User user);
+    String generateRefreshToken(User user);
 }

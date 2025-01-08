@@ -16,10 +16,10 @@ spring:
       storage:
         path: ${STORAGE_PATH}
 
-  data:
-    redis:
-      host: ${redis_host}
-      port: ${redis_port}
+  cache:
+    type: redis
+    host: ${redis_host}
+    port: ${redis_port}
 
   datasource:
     driver-class-name: org.postgresql.Driver

@@ -2,7 +2,7 @@ package com.raffleease.raffleease.Domains.Auth.Controller;
 
 import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthRequest;
-import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
+import com.raffleease.raffleease.Domains.Auth.Services.IAuthValidationService;
 import com.raffleease.raffleease.Domains.Auth.Services.ILoginService;
 import com.raffleease.raffleease.Domains.Auth.Services.IRegisterService;
 import com.raffleease.raffleease.Responses.ApiResponse;
@@ -14,10 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
@@ -26,6 +23,7 @@ public class AuthController {
     private final IRegisterService registerService;
     private final ILoginService loginService;
     private final LogoutHandler logoutHandler;
+    private final IAuthValidationService authValidationService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(
@@ -61,5 +59,13 @@ public class AuthController {
     ) {
         logoutHandler.logout(request, response, authentication);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/validate")
+    public ResponseEntity<ApiResponse> validate() {
+        this.authValidationService.isUserAuthenticated();
+        return ResponseEntity.ok().body(
+                ResponseFactory.success("User authentication validated successfully")
+        );
     }
 }

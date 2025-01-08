@@ -20,6 +20,7 @@
     "@angular/router": "^18.2.0",
     "@stripe/stripe-js": "^5.2.0",
     "@types/stripe-v3": "^3.1.33",
+    "jwt-decode": "^4.0.0",
     "rxjs": "~7.8.0",
     "stripe-angular": "^1.9.3",
     "tslib": "^2.3.0",

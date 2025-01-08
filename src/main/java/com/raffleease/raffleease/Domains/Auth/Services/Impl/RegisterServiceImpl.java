@@ -26,9 +26,8 @@ public class RegisterServiceImpl implements IRegisterService {
     @Override
     public AuthResponse register(AssociationRegister request, HttpServletResponse response) {
         User user = associationsService.create(request, passwordEncoder.encode(request.password()));
-        UserPrincipal principal = new UserPrincipal(user);
-        String refreshToken = tokensCreateService.generateRefreshToken(principal);
-        String accessToken = tokensCreateService.generateAccessToken(principal);
+        String refreshToken = tokensCreateService.generateRefreshToken(user);
+        String accessToken = tokensCreateService.generateAccessToken(user);
         cookiesService.addCookie(response, "refresh_token", refreshToken, 6048000);
         return AuthResponse.builder()
                 .accessToken(accessToken)

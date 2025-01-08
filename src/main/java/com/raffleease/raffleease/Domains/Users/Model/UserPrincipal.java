@@ -9,6 +9,7 @@ import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
 
+@Getter
 @Builder
 public record UserPrincipal(User user) implements UserDetails, Principal {
     @Override
@@ -23,7 +24,7 @@ public record UserPrincipal(User user) implements UserDetails, Principal {
 
     @Override
     public String getUsername() {
-        return user.getIdentifier();
+        return user.getId().toString();
     }
 
     @Override

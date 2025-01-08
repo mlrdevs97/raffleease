@@ -5,8 +5,10 @@ import { AuthService } from '../../../../../../core/services/auth/auth.service';
 import { RegisterRequest } from '../../../../../../core/models/auth/register-request';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Constants } from '../../../../../../core/utils/constants/constants/constants.component';
-import { AuthTokenService } from '../../../../../../core/services/token/auth-token.service';
+import { AccessTokenService, AuthTokenService } from '../../../../../../core/services/token/access-token.service';
 import { SuccessResponse } from '../../../../../../core/models/responses/success-response';
+import { AuthResponse } from '../../../../../../core/models/auth/auth-response';
+import { TokenRefreshScheduler } from '../../../../../../core/services/token/token-refresh-scheduler.service';
 
 @Component({
   selector: 'app-register',
@@ -21,15 +23,15 @@ export class RegisterComponent {
 
   constructor(
     private authService: AuthService,
-    private tokenService: AuthTokenService,
+    private tokenService: AccessTokenService,
+    private refreshScheduler: TokenRefreshScheduler,
     private router: Router
   ) { }
 
   register(registerRequest: RegisterRequest) {
     this.authService.register(registerRequest).subscribe({
-      next: (response: SuccessResponse<string>) => {
-        const token: string = response.data!;
-        this.tokenService.setToken(token);
+      next: (response: SuccessResponse<AuthResponse>) => {
+        this.tokenService.setToken(response.data!.accessToken);
         this.router.navigate(['/admin']);
       },
       error: (error: any) => {

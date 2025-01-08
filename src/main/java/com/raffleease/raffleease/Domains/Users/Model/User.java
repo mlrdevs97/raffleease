@@ -1,11 +1,8 @@
 package com.raffleease.raffleease.Domains.Users.Model;
 
-import com.raffleease.raffleease.Domains.Token.Model.Token;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,7 +22,4 @@ public class User {
 
     @Column(unique = true)
     private String password;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Token> tokens;
 }

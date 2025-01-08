@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, ResolveFn, Router, RouterStateSnapshot } from "
 import { inject } from "@angular/core";
 import { Raffle } from "../models/raffles/raffle";
 import { RafflesService } from '../services/raffles/raffles.service';
-import { AuthTokenService } from "../services/token/auth-token.service";
+import { AuthTokenService } from "../services/token/access-token.service";
 import { SuccessResponse } from '../models/responses/success-response';
 
 export const AdminRafflesResolver: ResolveFn<SuccessResponse<Raffle[]> | undefined> = (

@@ -10,7 +10,6 @@ import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationExcept
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -32,12 +31,10 @@ public class TokensManagementServiceImpl implements ITokensManagementService {
             HttpServletResponse response
     ) {
         String refreshToken = cookiesService.extractCookieValue(request, "refresh_token");
-        String subject = tokensQueryService.getSubject(refreshToken);
-        if (Objects.isNull(subject)) throw new AuthorizationException("Subject not found in refresh token");
-        User user = usersService.findByIdentifier(subject);
-        UserPrincipal principal = new UserPrincipal(user);
-        tokensValidateService.validateToken(refreshToken, principal);
-        String accessToken = tokensCreateService.generateAccessToken(principal);
+        Long userId = getUserIdFromToken(refreshToken);
+        User user = usersService.findById(userId);
+        tokensValidateService.validateToken(refreshToken, new UserPrincipal(user));
+        String accessToken = tokensCreateService.generateAccessToken(user);
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .build();
@@ -52,12 +49,13 @@ public class TokensManagementServiceImpl implements ITokensManagementService {
         blackListService.addTokenToBlackList(tokenId, expirationTime);
     }
 
-
-    @Override
-    public String extractTokenFromRequest(HttpServletRequest request) {
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (Objects.isNull(authHeader)) throw new AuthorizationException("Missing authorization header");
-        if (!authHeader.startsWith("Bearer ")) throw new AuthorizationException("Invalid token format");
-        return authHeader.substring(7);
+    private Long getUserIdFromToken(String token) {
+        String subject = tokensQueryService.getSubject(token);
+        if (Objects.isNull(subject)) throw new AuthorizationException("Subject not found in refresh token");
+        try {
+            return Long.parseLong(subject);
+        } catch (NumberFormatException ex) {
+            throw new AuthorizationException("Invalid subject format in token");
+        }
     }
 }

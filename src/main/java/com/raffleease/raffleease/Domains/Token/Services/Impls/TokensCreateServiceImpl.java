@@ -3,7 +3,7 @@ package com.raffleease.raffleease.Domains.Token.Services.Impls;
 import com.raffleease.raffleease.Domains.Token.Model.TokenType;
 import com.raffleease.raffleease.Domains.Token.Services.ITokensCreateService;
 import com.raffleease.raffleease.Domains.Token.Services.ITokensQueryService;
-import com.raffleease.raffleease.Domains.Users.Model.UserPrincipal;
+import com.raffleease.raffleease.Domains.Users.Model.User;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,25 +17,25 @@ public class TokensCreateServiceImpl implements ITokensCreateService {
     private final ITokensQueryService tokenQueryService;
 
     @Override
-    public String generateAccessToken(UserPrincipal principal) {
+    public String generateAccessToken(User user) {
         return buildToken(
-                principal.getUsername(),
+                user.getId(),
                 TokenType.ACCESS,
                 tokenQueryService.getAccessTokenExpirationValue()
         );
     }
 
     @Override
-    public String generateRefreshToken(UserPrincipal principal) {
+    public String generateRefreshToken(User user) {
         return buildToken(
-                principal.getUsername(),
+                user.getId(),
                 TokenType.REFRESH,
                 tokenQueryService.getRefreshTokenExpirationValue()
         );
     }
 
     private String buildToken(
-            String subject,
+            Long subject,
             TokenType tokenType,
             Long jwtExpiration
     ) {
@@ -43,7 +43,7 @@ public class TokensCreateServiceImpl implements ITokensCreateService {
                 .builder()
                 .claim("type", tokenType.toString())
                 .setId(UUID.randomUUID().toString())
-                .setSubject(subject)
+                .setSubject(subject.toString())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(tokenQueryService.getSignInKey())

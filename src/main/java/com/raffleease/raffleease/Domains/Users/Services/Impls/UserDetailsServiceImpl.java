@@ -17,15 +17,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
-        User user;
         try {
-            user = userService.findByIdentifier(identifier);
+            User user = userService.findByIdentifier(identifier);
+            return new UserPrincipal(user);
         } catch (NotFoundException ex) {
             throw new UsernameNotFoundException(ex.getMessage());
         }
-
-        return UserPrincipal.builder()
-                .user(user)
-                .build();
     }
 }

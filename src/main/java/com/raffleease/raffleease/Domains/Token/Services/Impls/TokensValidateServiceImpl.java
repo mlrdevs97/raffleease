@@ -21,19 +21,19 @@ public class TokensValidateServiceImpl implements ITokensValidateService {
     public void validateToken(String token, UserDetails userDetails) {
         if (!isTokenNonExpired(token)) throw new AuthorizationException("Token expired");
 
-        final String tokenId = tokenQueryService.getTokenId(token);
+        String tokenId = tokenQueryService.getTokenId(token);
         if (Objects.isNull(tokenId)) throw new AuthorizationException("Token id not found");
-        if (blackListService.isTokenBlackListed(tokenId)) throw new AuthorizationException("Token revoked");
+        if (blackListService.isTokenBlackListed(tokenId)) throw new AuthorizationException("Token already revoked");
 
-        final String subject = tokenQueryService.getSubject(token);
+        String subject = tokenQueryService.getSubject(token);
         if (Objects.isNull(subject)) throw new AuthorizationException("Subject not found in token");
-        if (!subject.equals(userDetails.getUsername())) throw new AuthorizationException("User name does not match token user name");
+        if (!subject.equals(userDetails.getUsername())) throw new AuthorizationException("User id does not match token user id");
     }
 
     @Override
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String subject = tokenQueryService.getSubject(token);
-        final String tokenId = tokenQueryService.getTokenId(token);
+        String subject = tokenQueryService.getSubject(token);
+        String tokenId = tokenQueryService.getTokenId(token);
         return (Objects.nonNull(subject) &&
                 subject.equals(userDetails.getUsername()) &&
                 isTokenNonExpired(token) &&

@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { AuthTokenService } from '../../../../../core/services/token/auth-token.service';
+import { AccessTokenService } from '../../../../../core/services/token/access-token.service';
+import { AuthService } from '../../../../../core/services/auth/auth.service';
+import { TokenRefreshScheduler } from '../../../../../core/services/token/token-refresh-scheduler.service';
 
 @Component({
   selector: 'app-header',
@@ -12,13 +14,19 @@ import { AuthTokenService } from '../../../../../core/services/token/auth-token.
 export class HeaderComponent {
 
   constructor(
-    private tokenService: AuthTokenService,
+    private tokenService: AccessTokenService,
+    private authService: AuthService,
+    private refreshScheduler: TokenRefreshScheduler,
     private router: Router
   ) {}
 
   logout() {
-    this.tokenService.logout();
-    this.router.navigate(['/admin/auth'])
+    this.authService.logout().subscribe({
+      next: () => {
+        this.tokenService.clearToken();
+        this.refreshScheduler.stopTokenRefreshSchedule();
+        this.router.navigate(['/admin/auth']);
+      }
+    })
   }
-
 }

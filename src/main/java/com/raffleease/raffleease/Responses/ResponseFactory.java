@@ -11,8 +11,8 @@ public class ResponseFactory {
         return new SuccessResponse<>(data, message);
     }
 
-    public static ApiResponse error(String message, int errorCode, String reason) {
-        return new ErrorResponse(message, errorCode, reason);
+    public static ApiResponse error(String message, int status, String statusText) {
+        return new ErrorResponse(message, status, statusText);
     }
 
     public static ApiResponse validationError(String message, int errorCode, String reason, Map<String, String> errors) {

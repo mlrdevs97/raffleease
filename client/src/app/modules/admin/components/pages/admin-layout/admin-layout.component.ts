@@ -1,9 +1,11 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute, Data, Router, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Data, Route, Router, RouterOutlet } from '@angular/router';
 import { HeaderComponent } from '../../shared/header/header.component';
 import { FooterComponent } from '../../shared/footer/footer.component';
 import { ShareRafflesService } from '../../../../../core/services/raffles/share-raffles.service';
 import { Raffle } from '../../../../../core/models/raffles/raffle';
+import { TokenRefreshScheduler } from '../../../../../core/services/token/token-refresh-scheduler.service';
+import { AccessTokenService } from '../../../../../core/services/token/access-token.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -13,10 +15,12 @@ import { Raffle } from '../../../../../core/models/raffles/raffle';
   styleUrl: './admin-layout.component.css'
 })
 export class AdminLayoutComponent {
-
   constructor(
     private route: ActivatedRoute,
-    private shareRaffles: ShareRafflesService
+    private refreshScheduler: TokenRefreshScheduler,
+    private tokenService: AccessTokenService,
+    private shareRaffles: ShareRafflesService,
+    private router: Router
   ) { }
 
   setRaffles() {
@@ -30,6 +34,7 @@ export class AdminLayoutComponent {
   }
 
   ngOnInit() {
+    this.refreshScheduler.startTokenRefreshSchedule();
     this.setRaffles();
   }
 }

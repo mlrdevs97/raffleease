@@ -9,6 +9,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.springframework.http.HttpHeaders.*;
 
@@ -23,7 +24,7 @@ public class CorsConfig {
         final CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.setAllowedOrigins(
-                Arrays.asList(allowedOrigin)
+                Collections.singletonList(allowedOrigin)
         );
         config.setAllowedHeaders(
                 Arrays.asList(

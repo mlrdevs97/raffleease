@@ -18,4 +18,11 @@ public class UsersServiceImpl implements IUsersService {
                 () -> new NotFoundException("User not found with identifier: " + identifier)
         );
     }
+
+    @Override
+    public User findById(Long id) {
+        return repository.findById(id).orElseThrow(
+                () -> new NotFoundException("User not found with id: " + id)
+        );
+    }
 }

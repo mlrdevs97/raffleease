@@ -9,6 +9,4 @@ public interface ITokensManagementService {
 
     AuthResponse refresh(HttpServletRequest request, HttpServletResponse response);
 
-    String extractTokenFromRequest(HttpServletRequest request);
-
 }
