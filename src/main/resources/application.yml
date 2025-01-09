@@ -5,13 +5,14 @@ spring:
   application:
     name: RaffleEase
     config:
+      is_test: ${IS_TEST}
       cors:
         allowed_origin: ${allowed_origin}
     security:
       jwt:
         secret_key: ${secret_key}
         token_expiration: ${token_expiration}
-        refresh_token_expiration: ${refresh_token_expiration}
+        refresh_token_expiration: ${token_refresh_expiration}
     files:
       storage:
         path: ${STORAGE_PATH}

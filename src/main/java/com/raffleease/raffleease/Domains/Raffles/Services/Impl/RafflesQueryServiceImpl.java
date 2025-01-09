@@ -30,8 +30,9 @@ public class RafflesQueryServiceImpl implements IRafflesQueryService {
     }
 
     public List<PublicRaffleDTO> getAll(String token) {
-        String identifier = tokensQueryService.getSubject(token);
-        Association association = associationsService.findByIdentifier(identifier);
+        String subject = tokensQueryService.getSubject(token);
+        Long id = Long.parseLong(subject);
+        Association association = associationsService.findById(id);
         return mapper.fromRaffleList(findByAssociation(association));
     }
 

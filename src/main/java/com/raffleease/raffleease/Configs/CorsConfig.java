@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Configs;
 
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,10 +13,10 @@ import java.util.Collections;
 import static org.springframework.http.HttpHeaders.*;
 
 @Configuration
-@AllArgsConstructor
 public class CorsConfig {
-    @Value("${allowed_origin}")
+    @Value("${spring.application.config.cors.allowed_origin}")
     private String allowedOrigin;
+
     @Bean
     public CorsFilter corsFilter() {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

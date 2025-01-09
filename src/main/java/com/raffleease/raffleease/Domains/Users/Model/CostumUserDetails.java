@@ -7,7 +7,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 
-@Getter
 @Builder
 public record CostumUserDetails(User user) implements UserDetails {
     @Override
@@ -45,4 +44,5 @@ public record CostumUserDetails(User user) implements UserDetails {
         return true;
     }
 
+    public User getUser() { return user; }
 }

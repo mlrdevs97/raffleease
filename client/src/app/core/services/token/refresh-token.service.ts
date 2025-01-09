@@ -14,7 +14,7 @@ import { ErrorResponse } from '../../models/responses/error-response';
 export class RefreshTokenService {
   private refreshing = false;
   private refreshTokenSubject = new BehaviorSubject<SuccessResponse<AuthResponse> | null>(null);
-  private refreshURL = `${environment.serverPath}/api/v1/token`;
+  private refreshURL = `${environment.serverPath}/api/v1/tokens`;
 
   constructor(
     private httpClient: HttpClient,

@@ -4,7 +4,6 @@ import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authTokenInterceptor } from './core/interceptors/auth-token.interceptor';
-import { cartTokenInterceptor } from './core/interceptors/cart-token.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [

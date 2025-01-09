@@ -5,5 +5,5 @@ import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
 
 public interface IAssociationsService {
     Association create(AssociationRegister request, String encodedPassword);
-    Association findByIdentifier(String identifier);
+    Association findById(Long id);
 }

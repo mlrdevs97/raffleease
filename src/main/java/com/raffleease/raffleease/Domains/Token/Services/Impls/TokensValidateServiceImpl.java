@@ -18,11 +18,10 @@ public class TokensValidateServiceImpl implements ITokensValidateService {
 
     @Override
     public void validateToken(String token) {
-        if (!isTokenNonExpired(token)) throw new AuthorizationException("Token expired");
+        if (!isTokenNonExpired(token)) throw new AuthorizationException("Token is expired");
 
         String tokenId = tokenQueryService.getTokenId(token);
         if (Objects.isNull(tokenId)) throw new AuthorizationException("Token id not found");
-        if (blackListService.isTokenBlackListed(tokenId)) throw new AuthorizationException("Token already revoked");
 
         String subject = tokenQueryService.getSubject(token);
         if (Objects.isNull(subject)) throw new AuthorizationException("Subject not found in token");

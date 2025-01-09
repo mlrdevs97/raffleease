@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Domains.Auth.Controller;
 
-import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthRequest;
 import com.raffleease.raffleease.Domains.Auth.Services.IAuthValidationService;
 import com.raffleease.raffleease.Domains.Auth.Services.ILoginService;

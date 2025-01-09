@@ -8,5 +8,5 @@ public interface ICookiesService {
 
     void deleteCookie(HttpServletResponse response, String name);
 
-    String extractCookieValue(HttpServletRequest request, String cookieName);
+    String getCookieValue(HttpServletRequest request, String cookieName);
 }

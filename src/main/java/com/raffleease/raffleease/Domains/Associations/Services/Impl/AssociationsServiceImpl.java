@@ -38,8 +38,8 @@ public class AssociationsServiceImpl implements IAssociationsService {
     }
 
     @Override
-    public Association findByIdentifier(String identifier) {
-        return repository.findByIdentifier(identifier)
-                .orElseThrow(() -> new NotFoundException("Association with identifier <" + identifier + "> not found"));
+    public Association findById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Association with id <" + id + "> not found"));
     }
 }

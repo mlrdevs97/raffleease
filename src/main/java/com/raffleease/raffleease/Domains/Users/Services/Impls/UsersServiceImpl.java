@@ -27,4 +27,14 @@ public class UsersServiceImpl implements IUsersService {
                 () -> new NotFoundException("User not found with id: " + id)
         );
     }
+
+    @Override
+    public boolean existsById(Long id) {
+        try {
+            findById(id);
+            return true;
+        } catch (NotFoundException ex) {
+            return false;
+        }
+    }
 }

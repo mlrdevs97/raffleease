@@ -3,20 +3,20 @@ import { ActivatedRouteSnapshot, ResolveFn, Router, RouterStateSnapshot } from "
 import { inject } from "@angular/core";
 import { Raffle } from "../models/raffles/raffle";
 import { RafflesService } from '../services/raffles/raffles.service';
-import { AuthTokenService } from "../services/token/access-token.service";
+import { AccessTokenService } from "../services/token/access-token.service";
 import { SuccessResponse } from '../models/responses/success-response';
 
-export const AdminRafflesResolver: ResolveFn<SuccessResponse<Raffle[]> | undefined> = (
+export const AdminRafflesResolver: ResolveFn<SuccessResponse<Raffle[]> | null> = (
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
-): Observable<SuccessResponse<Raffle[]> | undefined> => {
-    const tokenService = inject(AuthTokenService);
+): Observable<SuccessResponse<Raffle[]> | null> => {
+    const tokenService = inject(AccessTokenService);
     const rafflesService: RafflesService = inject(RafflesService);
     const router: Router = inject(Router);
     const token = tokenService.getToken();
-    if (!token) return of(undefined);
+    if (!token) return of(null);
     return rafflesService.getAll().pipe(
-        catchError((error: any) => {
+        catchError(() => {
             router.navigate(['/error']);
             return EMPTY;
         })

@@ -35,8 +35,9 @@ public class RaffleCreateServiceImpl implements IRaffleCreateService {
 
     @Transactional
     public PublicRaffleDTO createRaffle(String token, RaffleCreate request) {
-        String identifier = tokensQueryService.getSubject(token);
-        Association association = associationsService.findByIdentifier(identifier);
+        String subject = tokensQueryService.getSubject(token);
+        Long id = Long.parseLong(subject);
+        Association association = associationsService.findById(id);
         Raffle raffle = rafflesMapper.toRaffle(request, association);
         Raffle savedRaffle = rafflesPersistence.save(raffle);
         raffle.setURL(host + path + raffle.getId());

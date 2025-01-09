@@ -3,9 +3,7 @@ import { RegisterFormComponent } from './register-form/register-form.component';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../../../core/services/auth/auth.service';
 import { RegisterRequest } from '../../../../../../core/models/auth/register-request';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Constants } from '../../../../../../core/utils/constants/constants/constants.component';
-import { AccessTokenService, AuthTokenService } from '../../../../../../core/services/token/access-token.service';
+import { AccessTokenService } from '../../../../../../core/services/token/access-token.service';
 import { SuccessResponse } from '../../../../../../core/models/responses/success-response';
 import { AuthResponse } from '../../../../../../core/models/auth/auth-response';
 import { TokenRefreshScheduler } from '../../../../../../core/services/token/token-refresh-scheduler.service';
@@ -24,7 +22,6 @@ export class RegisterComponent {
   constructor(
     private authService: AuthService,
     private tokenService: AccessTokenService,
-    private refreshScheduler: TokenRefreshScheduler,
     private router: Router
   ) { }
 

@@ -3,16 +3,16 @@ package com.raffleease.raffleease.Domains.Token.Services.Impls;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Auth.Services.ICookiesService;
 import com.raffleease.raffleease.Domains.Token.Services.*;
-import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.IUsersService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.Objects;
 
 
 @RequiredArgsConstructor
@@ -30,26 +30,33 @@ public class TokensManagementServiceImpl implements ITokensManagementService {
             HttpServletRequest request,
             HttpServletResponse response
     ) {
-        String refreshToken = cookiesService.extractCookieValue(request, "refresh_token");
-        tokensValidateService.validateToken(refreshToken);
+        String accessToken = extractTokenFromRequest(request);
+        String refreshToken = cookiesService.getCookieValue(request, "refresh_token");
+        revoke(refreshToken);
+        revoke(accessToken);
         String subject = tokensQueryService.getSubject(refreshToken);
         Long userId = Long.parseLong(subject);
-        User user;
-        try {
-            user = usersService.findById(userId);
-        } catch (NotFoundException ex) {
-            throw new AuthorizationException("User not found for provided subject in token");
-        }
-        String accessToken = tokensCreateService.generateAccessToken(user.getId());
+        if (!usersService.existsById(userId)) throw new AuthorizationException("User not found for provided subject in token");
+        String newAccessToken = tokensCreateService.generateAccessToken(userId);
+        String newRefreshToken = tokensCreateService.generateRefreshToken(userId);
+        cookiesService.addCookie(response, "refresh_token", newRefreshToken, 6048000);
         return AuthResponse.builder()
-                .accessToken(accessToken)
+                .accessToken(newAccessToken)
                 .build();
     }
 
     @Override
+    public String extractTokenFromRequest(HttpServletRequest request) {
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (Objects.isNull(authHeader)) throw new AuthorizationException("Missing authorization header");
+        if (!authHeader.startsWith("Bearer ")) throw new AuthorizationException("Invalid token format");
+        return authHeader.substring(7);
+    }
+
+    @Override
     public void revoke(String token) {
+        tokensValidateService.validateToken(token);
         String tokenId = tokensQueryService.getTokenId(token);
-        if (blackListService.isTokenBlackListed(tokenId)) throw new AuthorizationException("Token already revoked");
         Date expiration = tokensQueryService.getExpiration(token);
         Long expirationTime = expiration.getTime() - System.currentTimeMillis();
         blackListService.addTokenToBlackList(tokenId, expirationTime);
