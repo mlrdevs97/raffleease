@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 @Builder
-public record CostumUserDetails(User user) implements UserDetails {
+public record CostumUserDetails(User user, String identifier) implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();
@@ -21,7 +21,7 @@ public record CostumUserDetails(User user) implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getId().toString();
+        return identifier;
     }
 
     @Override

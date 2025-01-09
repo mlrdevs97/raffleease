@@ -6,7 +6,7 @@
     </div>
     }
 
-    <!-- Email Field -->
+    <!-- Identifier Field -->
     <div>
         <label class="block text-sm font-medium text-gray-700">Correo electrónico *</label>
         <div class="relative">
@@ -18,13 +18,13 @@
                         stroke-linecap="round" />
                 </svg>
             </div>
-            <input type="email" formControlName="email" required
+            <input type="text" formControlName="identifier" required
                 class="mt-1 block w-full px-10 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black">
         </div>
-        @if ((authForm.get('email')?.touched || formSubmitted) && authForm.get('email')?.invalid ||
+        @if ((authForm.get('identifier')?.touched || formSubmitted) && authForm.get('identifier')?.invalid ||
         validationErrors['name']) {
         <small class="text-sm text-red-500 mt-1">
-            {{ getErrorMessage('email') }}
+            {{ getErrorMessage('identifier') }}
         </small>
         }
     </div>

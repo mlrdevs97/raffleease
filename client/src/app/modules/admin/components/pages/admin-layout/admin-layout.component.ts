@@ -18,15 +18,14 @@ export class AdminLayoutComponent {
   constructor(
     private route: ActivatedRoute,
     private refreshScheduler: TokenRefreshScheduler,
-    private tokenService: AccessTokenService,
     private shareRaffles: ShareRafflesService,
-    private router: Router
   ) { }
 
   setRaffles() {
     this.route.data.subscribe({
       next: (data: Data) => {
         const raffles: Raffle[] = data['raffles'] ?? [];
+        console.log(raffles);
         const rafflesMap: Map<number, Raffle> = new Map(raffles.map((raffle: Raffle) => [raffle.id, raffle]));
         this.shareRaffles.updateRaffles(rafflesMap);
       }

@@ -20,8 +20,8 @@ public class TokensQueryServiceImpl implements ITokensQueryService {
     @Value("${spring.application.security.jwt.secret_key}")
     private String secretKey;
 
-    @Value("${spring.application.security.jwt.token_expiration}")
-    private Long tokenExpiration;
+    @Value("${spring.application.security.jwt.access_token_expiration}")
+    private Long accessTokenExpiration;
 
     @Value("${spring.application.security.jwt.refresh_token_expiration}")
     private Long refreshTokenExpiration;
@@ -57,7 +57,7 @@ public class TokensQueryServiceImpl implements ITokensQueryService {
 
     @Override
     public Long getAccessTokenExpirationValue() {
-        return tokenExpiration;
+        return accessTokenExpiration;
     }
 
     @Override

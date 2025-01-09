@@ -24,9 +24,8 @@ export class LoginFormComponent {
 
   initializeForm() {
     this.authForm = this.fb.group({
-      email: ['', [
-        Validators.required,
-        Validators.email
+      identifier: ['', [
+        Validators.required
       ]],
       password: ['', [
         Validators.required,
@@ -46,7 +45,7 @@ export class LoginFormComponent {
     const control = this.authForm.get(field);
 
     if (control?.hasError('required')) return 'Campo obligatorio';
-    if (control?.hasError('email')) return 'Introduzca una dirección de correo válida';
+    if (control?.hasError('identifier')) return 'Introduzca una dirección de correo válida';
     return '';
   }
 
@@ -59,10 +58,10 @@ export class LoginFormComponent {
       return;
     }
 
-    const { email, password } = this.authForm.value;
+    const { identifier, password } = this.authForm.value;
 
     this.authRequest.emit({
-      email: email || '',
+      identifier: identifier || '',
       password: password || ''
     });
   }

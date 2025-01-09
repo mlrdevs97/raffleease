@@ -28,7 +28,7 @@ public class SecurityConfig {
     private final AuthenticationProvider authProvider;
     private final LogoutHandler logoutHandler;
 
-    @Value("${logout_url}")
+    @Value("${logout_path}")
     private String logoutUrl;
 
     @Bean

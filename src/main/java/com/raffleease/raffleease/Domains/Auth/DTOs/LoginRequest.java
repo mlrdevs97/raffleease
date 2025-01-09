@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 
 @Builder
-public record AuthRequest(
+public record LoginRequest(
         @NotBlank(message = "Identifier is required")
         String identifier,
 

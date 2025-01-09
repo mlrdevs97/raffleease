@@ -11,16 +11,16 @@ spring:
     security:
       jwt:
         secret_key: ${secret_key}
-        token_expiration: ${token_expiration}
+        access_token_expiration: ${token_access_expiration}
         refresh_token_expiration: ${token_refresh_expiration}
     files:
       storage:
         path: ${STORAGE_PATH}
 
-  cache:
-    type: redis
-    host: ${redis_host}
-    port: ${redis_port}
+  data:
+    redis:
+      host: ${redis_host}
+      port: ${redis_port}
 
   datasource:
     driver-class-name: org.postgresql.Driver

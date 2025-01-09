@@ -14,7 +14,7 @@ import { ErrorResponse } from '../../models/responses/error-response';
 export class RefreshTokenService {
   private refreshing = false;
   private refreshTokenSubject = new BehaviorSubject<SuccessResponse<AuthResponse> | null>(null);
-  private refreshURL = `${environment.serverPath}/api/v1/tokens`;
+  private baseURL = `${environment.serverPath}/api/v1/tokens`;
 
   constructor(
     private httpClient: HttpClient,
@@ -31,7 +31,7 @@ export class RefreshTokenService {
     
     this.refreshing = true;
     
-    return this.httpClient.post<SuccessResponse<AuthResponse>>(this.refreshURL, {}).pipe(
+    return this.httpClient.post<SuccessResponse<AuthResponse>>(this.baseURL, {}, {withCredentials: true}).pipe(
       tap((response: SuccessResponse<AuthResponse>) => {
         const newAccessToken: string = response.data!.accessToken;
         this.accessTokenService.setToken(newAccessToken);

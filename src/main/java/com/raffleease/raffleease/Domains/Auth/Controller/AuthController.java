@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Auth.Controller;
 
-import com.raffleease.raffleease.Domains.Auth.DTOs.AuthRequest;
+import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
+import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Auth.Services.IAuthValidationService;
 import com.raffleease.raffleease.Domains.Auth.Services.ILoginService;
 import com.raffleease.raffleease.Domains.Auth.Services.IRegisterService;
@@ -25,14 +26,27 @@ public class AuthController {
     private final IAuthValidationService authValidationService;
 
 
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse> login(
-            @Valid @RequestBody AuthRequest request,
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse> register(
+            @Valid @RequestBody AssociationRegister request,
             HttpServletResponse response
     ) {
         return ResponseEntity.ok().body(
                 ResponseFactory.success(
-                        loginService.authenticate(request, response),
+                        registerService.register(request, response),
+                        "Association registered successfully"
+                )
+        );
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletResponse response
+    ) {
+        return ResponseEntity.ok().body(
+                ResponseFactory.success(
+                        loginService.login(request, response),
                         "User authenticated successfully"
                 )
         );

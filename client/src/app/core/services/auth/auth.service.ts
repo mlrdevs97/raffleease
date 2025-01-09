@@ -22,11 +22,13 @@ export class AuthService {
     }
 
     authenticate(authRequest: AuthRequest): Observable<SuccessResponse<AuthResponse>> {
-        return this.httpClient.post<SuccessResponse<AuthResponse>>(`${this.baseURL}/authenticate`, authRequest);
+        return this.httpClient.post<SuccessResponse<AuthResponse>>(`${this.baseURL}/login`, authRequest);
     }
 
     logout(): Observable<void> {
-        return this.httpClient.post<void>(`${this.baseURL}/logout`, {});
+        return this.httpClient.post<void>(`${this.baseURL}/logout`, {}, {
+            withCredentials: true
+        });
     }
 
     validate(): Observable<void> {

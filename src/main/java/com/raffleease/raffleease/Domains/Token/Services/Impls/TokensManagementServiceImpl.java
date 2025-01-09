@@ -8,12 +8,12 @@ import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationExcept
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.Objects;
-
 
 @RequiredArgsConstructor
 @Service
@@ -24,6 +24,9 @@ public class TokensManagementServiceImpl implements ITokensManagementService {
     private final IUsersService usersService;
     private final IBlackListService blackListService;
     private final ICookiesService cookiesService;
+
+    @Value("${spring.application.security.jwt.refresh_token_expiration}")
+    private Long refreshTokenExpiration;
 
     @Override
     public AuthResponse refresh(
@@ -39,7 +42,7 @@ public class TokensManagementServiceImpl implements ITokensManagementService {
         if (!usersService.existsById(userId)) throw new AuthorizationException("User not found for provided subject in token");
         String newAccessToken = tokensCreateService.generateAccessToken(userId);
         String newRefreshToken = tokensCreateService.generateRefreshToken(userId);
-        cookiesService.addCookie(response, "refresh_token", newRefreshToken, 6048000);
+        cookiesService.addCookie(response, "refresh_token", newRefreshToken, refreshTokenExpiration);
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
                 .build();

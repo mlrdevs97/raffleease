@@ -3,7 +3,6 @@ package com.raffleease.raffleease.Domains.Token.Services.Impls;
 import com.raffleease.raffleease.Domains.Token.Model.TokenType;
 import com.raffleease.raffleease.Domains.Token.Services.ITokensCreateService;
 import com.raffleease.raffleease.Domains.Token.Services.ITokensQueryService;
-import com.raffleease.raffleease.Domains.Users.Model.User;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,7 @@ public class TokensCreateServiceImpl implements ITokensCreateService {
     @Override
     public String generateAccessToken(Long userId) {
         return buildToken(
-                userId,
+                String.valueOf(userId),
                 TokenType.ACCESS,
                 tokenQueryService.getAccessTokenExpirationValue()
         );
@@ -28,14 +27,14 @@ public class TokensCreateServiceImpl implements ITokensCreateService {
     @Override
     public String generateRefreshToken(Long userId) {
         return buildToken(
-                userId,
+                String.valueOf(userId),
                 TokenType.REFRESH,
                 tokenQueryService.getRefreshTokenExpirationValue()
         );
     }
 
     private String buildToken(
-            Long subject,
+            String subject,
             TokenType tokenType,
             Long jwtExpiration
     ) {
@@ -43,7 +42,7 @@ public class TokensCreateServiceImpl implements ITokensCreateService {
                 .builder()
                 .claim("type", tokenType.toString())
                 .setId(UUID.randomUUID().toString())
-                .setSubject(subject.toString())
+                .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(tokenQueryService.getSignInKey())
