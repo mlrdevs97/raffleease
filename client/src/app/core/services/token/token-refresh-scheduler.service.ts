@@ -2,6 +2,7 @@ import { Injectable } from "@angular/core";
 import { AccessTokenService } from "./access-token.service";
 import { RefreshTokenService } from "./refresh-token.service";
 import { jwtDecode } from 'jwt-decode';
+import { Router } from "@angular/router";
 
 @Injectable({
   providedIn: 'root',
@@ -11,10 +12,12 @@ export class TokenRefreshScheduler {
 
   constructor(
     private refreshTokenService: RefreshTokenService,
-    private accessTokenService: AccessTokenService
+    private accessTokenService: AccessTokenService,
+    private router: Router
   ) {}
 
   startTokenRefreshSchedule() {
+    console.log("REFRESH SCHEDULE STARTED")
     const token: string | null = this.accessTokenService.getToken();
     if (!token) return;
 

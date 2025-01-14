@@ -41,13 +41,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        final String authHeader = request.getHeader("Authorization");
+        String authHeader = request.getHeader("Authorization");
         if (Objects.isNull(authHeader) || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        final String jwt = authHeader.substring(7);
+        String jwt = authHeader.substring(7);
         if (!tokenValidationService.isTokenValid(jwt)) {
             filterChain.doFilter(request, response);
             return;

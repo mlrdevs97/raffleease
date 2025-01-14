@@ -30,6 +30,8 @@ export const authTokenInterceptor: HttpInterceptorFn = (
             Authorization: `Bearer ${token}`
         },
     });
+
+    console.log(cloned);
     
     return next(cloned);
 };

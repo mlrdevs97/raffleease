@@ -43,6 +43,4 @@ public record CostumUserDetails(User user, String identifier) implements UserDet
     public boolean isEnabled() {
         return true;
     }
-
-    public User getUser() { return user; }
 }

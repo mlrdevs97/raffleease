@@ -30,7 +30,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-      dialect: org.hibernate.dialect.PostgreSQLDialect
     database: postgresql
 
   mail:

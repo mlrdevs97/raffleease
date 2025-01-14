@@ -51,10 +51,11 @@ export class CreationFormComponent {
     return this.raffleForm.get('images') as FormArray;
   }
 
-  setImages(files: { id: number | null; file: File, url: string }[], markAsDirty = true) {
+  setImages(images: { id: number | null; file: File, url: string }[], markAsDirty = true) {
     this.images.clear();
-    files.forEach(file => {
-      this.images.push(this.fb.control(file));
+    images.forEach(image => {
+      console.log(image);
+      this.images.push(this.fb.control(image.file));
       if (markAsDirty) this.images.markAsDirty();
     });
   }
@@ -77,7 +78,7 @@ export class CreationFormComponent {
 
     if (this.raffleForm.invalid) return;
 
-    const { title, description, endDate, imageKeys, amount, price, lowerLimit } = this.raffleForm.value;
+    const { title, description, endDate, images, amount, price, lowerLimit } = this.raffleForm.value;
 
     const ticketsInfo: RaffleTicketsCreationRequest = {
       amount,
@@ -87,15 +88,17 @@ export class CreationFormComponent {
 
     const endDateTime: Date = new Date(`${endDate}T00:00:00`);
 
-    const raffleCreationRequest: RaffleCreationRequest = {
+    const request: RaffleCreationRequest = {
       title,
       description,
       endDate: endDateTime,
-      imageKeys,
+      images,
       ticketsInfo
     };
 
-    this.createRaffle.emit(raffleCreationRequest);
+    console.log(request);
+
+    this.createRaffle.emit(request);
   }
 
   onCancel() {
