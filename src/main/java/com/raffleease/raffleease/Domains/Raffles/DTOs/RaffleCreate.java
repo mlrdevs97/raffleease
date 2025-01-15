@@ -24,10 +24,6 @@ public record RaffleCreate(
         @Future(message = "Raffle's end date must be in the future")
         LocalDateTime endDate,
 
-        @NotNull(message = "Images for raffle are required")
-        @Size(min = 1 , max = 10, message = "A minimum of 1 and a maximum of 10 pictures for raffle are allowed")
-        List<MultipartFile> images,
-
         @NotNull(message = "Raffle ticket's info is required")
         @Validated
         TicketsCreate ticketsInfo

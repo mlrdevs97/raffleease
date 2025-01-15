@@ -25,7 +25,7 @@ export class RaffleCreationComponent {
     private router: Router
   ) { }
 
-  createRaffle(request: RaffleCreationRequest) {
+  createRaffle(request: FormData) {
     this.rafflesService.create(request).subscribe({
       next: (response: SuccessResponse<Raffle>) => {
         const raffle: Raffle = response.data!;

@@ -10,9 +10,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @RestController
@@ -23,9 +26,14 @@ public class RafflesController {
     @PostMapping
     public ResponseEntity<ApiResponse> create(
             @RequestHeader(value = "Authorization") String authHeader,
-            @Valid @RequestBody RaffleCreate request
+            @RequestPart("request") @Valid RaffleCreate request,
+            @RequestPart("images") List<MultipartFile> images
     ) {
-        PublicRaffleDTO createdRaffle = orchestrator.createRaffle(authHeader.substring(7), request);
+        if (Objects.isNull(images) || images.isEmpty() || images.size() >= 10) {
+            throw new RuntimeException("Must provide minimum of 1 and a maximum of 10 pictures for raffle");
+        }
+
+        PublicRaffleDTO createdRaffle = orchestrator.createRaffle(authHeader.substring(7), request, images);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()

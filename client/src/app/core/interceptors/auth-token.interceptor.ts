@@ -11,12 +11,10 @@ export const authTokenInterceptor: HttpInterceptorFn = (
     req: HttpRequest<any>,
     next: HttpHandlerFn
 ): Observable<HttpEvent<any>> => {
-    const accessTokenService = inject(AccessTokenService);
-    const refreshTokenService = inject(RefreshTokenService);
+    const accessTokenService: AccessTokenService = inject(AccessTokenService);
+    const token: string | null = accessTokenService.getToken();
 
-    const token = accessTokenService.getToken();
-
-    const excludedUrls = [
+    const excludedUrls: string[] = [
         '/api/v1/auth/authenticate',
         '/api/v1/auth/register'
     ];
@@ -30,8 +28,6 @@ export const authTokenInterceptor: HttpInterceptorFn = (
             Authorization: `Bearer ${token}`
         },
     });
-
-    console.log(cloned);
     
     return next(cloned);
 };

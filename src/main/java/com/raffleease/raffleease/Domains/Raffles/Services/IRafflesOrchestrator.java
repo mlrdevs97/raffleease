@@ -3,6 +3,7 @@ package com.raffleease.raffleease.Domains.Raffles.Services;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public interface IRafflesOrchestrator {
 
     List<PublicRaffleDTO> getAll(String token);
 
-    PublicRaffleDTO createRaffle(String token, RaffleCreate request);
+    PublicRaffleDTO createRaffle(String token, RaffleCreate request, List<MultipartFile> images);
 
     PublicRaffleDTO edit(Long id, RaffleEdit raffleEdit);
 }

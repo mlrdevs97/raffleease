@@ -22,7 +22,6 @@ export class RefreshTokenService {
   ) {}
 
   refreshAccessToken(): Observable<SuccessResponse<AuthResponse>> {
-    console.log("TRYING TO REFRESH TOKEN");
     if (this.refreshing) {
       return this.refreshTokenSubject.asObservable().pipe(
         filter((response): response is SuccessResponse<AuthResponse> => response !== null),
@@ -35,14 +34,12 @@ export class RefreshTokenService {
         withCredentials: true
       }).pipe(
         tap((response: SuccessResponse<AuthResponse>) => {
-          console.log("AAAA")
           const newAccessToken: string = response.data!.accessToken;
           this.accessTokenService.setToken(newAccessToken);
           this.refreshing = false;
           this.refreshTokenSubject.next(response);
         }),
         catchError((error: ErrorResponse) => {
-          console.log("REFRESH TOKEN FAILED")
           this.refreshing = false;
           this.refreshTokenSubject.next(null); 
           return throwError(() => error); 

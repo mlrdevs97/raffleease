@@ -6,6 +6,7 @@ import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.Services.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -47,8 +48,8 @@ public class RafflesOrchestratorImpl implements IRafflesOrchestrator {
     }
 
     @Override
-    public PublicRaffleDTO createRaffle(String token, RaffleCreate request) {
-        return createService.createRaffle(token, request);
+    public PublicRaffleDTO createRaffle(String token, RaffleCreate request, List<MultipartFile> images) {
+        return createService.createRaffle(token, request, images);
     }
 
     public PublicRaffleDTO edit(Long id, RaffleEdit raffleEdit) {

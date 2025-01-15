@@ -16,7 +16,7 @@ import { Router } from '@angular/router';
 export class CreationFormComponent {
   @Input() validationErrors: Record<string, string> = {};
   @Input() serverError: string | null = null;
-  @Output() createRaffle: EventEmitter<RaffleCreationRequest> = new EventEmitter<RaffleCreationRequest>();
+  @Output() createRaffle: EventEmitter<FormData> = new EventEmitter<FormData>();
   raffleForm!: FormGroup;
   formSubmitted = false;
 
@@ -80,25 +80,20 @@ export class CreationFormComponent {
 
     const { title, description, endDate, images, amount, price, lowerLimit } = this.raffleForm.value;
 
-    const ticketsInfo: RaffleTicketsCreationRequest = {
-      amount,
-      price,
-      lowerLimit
-    };
+    const formData = new FormData();
 
-    const endDateTime: Date = new Date(`${endDate}T00:00:00`);
+    formData.append('request', new Blob([JSON.stringify({
+        title,
+        description,
+        endDate: new Date(`${endDate}T00:00:00`),
+        ticketsInfo: { amount, price, lowerLimit }
+    })], { type: 'application/json' }));
 
-    const request: RaffleCreationRequest = {
-      title,
-      description,
-      endDate: endDateTime,
-      images,
-      ticketsInfo
-    };
+    images.forEach((file: File) => formData.append('images', file));
 
-    console.log(request);
+    console.log(formData);
 
-    this.createRaffle.emit(request);
+    this.createRaffle.emit(formData);
   }
 
   onCancel() {

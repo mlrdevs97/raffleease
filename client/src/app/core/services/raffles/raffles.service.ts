@@ -18,7 +18,7 @@ export class RafflesService {
 
   private baseURL: string = `${environment.serverPath}/api/v1/raffles`;
 
-  create(request: RaffleCreationRequest): Observable<SuccessResponse<Raffle>> {
+  create(request: FormData): Observable<SuccessResponse<Raffle>> {
     return this.httpClient.post(`${this.baseURL}`, request) as Observable<SuccessResponse<Raffle>>;
   }
 

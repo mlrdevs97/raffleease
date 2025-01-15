@@ -17,12 +17,14 @@ export class TokenRefreshScheduler {
   ) {}
 
   startTokenRefreshSchedule() {
-    console.log("REFRESH SCHEDULE STARTED")
     const token: string | null = this.accessTokenService.getToken();
     if (!token) return;
-
-    const expirationTime: number = this.getTokenExpirationTime(token);
-    const refreshTime: number = expirationTime - Date.now() - 2 * 60 * 1000;
+    
+    const expirationTime: number = this.getTokenExpirationTime(token) * 1000;
+    const timeBeforeRefresh: number = 10000;
+    const refreshDiff: number = expirationTime - timeBeforeRefresh;
+    const now: number = Date.now();
+    const refreshTime: number = refreshDiff > now ? refreshDiff - now : 3000;
 
     this.refreshTimeout = setTimeout(() => {
       this.refreshTokenService.refreshAccessToken().subscribe({
