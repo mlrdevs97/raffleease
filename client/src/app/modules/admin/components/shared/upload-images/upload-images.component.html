@@ -4,7 +4,7 @@
         <span class="text-gray-800">Drag and drop or browse files</span>
         <input id="fileInput"  type="file" (change)="onFilesSelected($event)" multiple hidden>
     </label>
-    <app-images-preview [files]="files" (delete)="onDelete($event)" (moveUp)="onMoveUp($event)"
+    <app-images-preview [images]="images" (delete)="onDelete($event)" (moveUp)="onMoveUp($event)"
         (moveDown)="onMoveDown($event)">
     </app-images-preview>
 </div>

@@ -1,8 +1,8 @@
 package com.raffleease.raffleease.Domains.Reservations.Services.Impls;
 
-import com.raffleease.raffleease.Domains.Cart.DTO.CartDTO;
+import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesPersistenceService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsRandomService;
 import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsCreateService;
 import com.raffleease.raffleease.Domains.Reservations.DTOs.GenerateRandom;
@@ -22,7 +22,7 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAIL
 public class ReservationsRandomService implements IReservationsRandomService {
     private final IReservationsCreateService reservationService;
     private final ITicketsQueryService ticketsQueryService;
-    private final IRafflesPersistenceService rafflePersistence;
+    private final RafflesPersistenceService rafflePersistence;
 
     @Override
     public CartDTO generateRandom(GenerateRandom request, String cartId) {

@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
 import { ImagesPreviewComponent } from "./images-preview/images-preview.component";
-import { Image } from '../../../../../core/models/raffles/images/image';
+import { Image } from '../../../../../core/models/images/image';
+import { ImagesService } from '../../../../../core/services/images/images-service.service';
+import { SuccessResponse } from '../../../../../core/models/responses/success-response';
 
 @Component({
   selector: 'app-upload-images',
@@ -10,64 +12,69 @@ import { Image } from '../../../../../core/models/raffles/images/image';
   styleUrl: './upload-images.component.css'
 })
 export class UploadImagesComponent {
-  @Input() images!: Image[];
-  @Output() filesChange = new EventEmitter<{id: number | null; file: File, url: string}[]>();
-  files: { id: number | null; file: File, url: string }[] = [];
+  @Input() images: Image[] = [];
+  @Output() imagesChange = new EventEmitter<Image[]>();
+
+  constructor(
+    private imagesService: ImagesService
+  ) { }
 
   onFilesSelected(event: any) {
-    const selectedFiles: File[] = Array.from(event.target.files);
-
-    selectedFiles.forEach((file: File) => {
-      this.files.push({
-        id: null,
-        file,
-        url: URL.createObjectURL(file)
-      })
+    const files: File[] = Array.from(event.target.files);
+    const formData: FormData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file, file.name);
     });
-
-    this.filesChange.emit(this.files);
+    console.log(files);
+    console.log(formData);
+    this.imagesService.create(formData).subscribe({
+      next: (response: SuccessResponse<Image[]>) => {
+        const images: Image[] = response.data!;
+        this.images.push(...images);
+        console.log(this.images);
+        this.setImagesOrder();
+        this.imagesChange.emit(this.images);
+      },
+      error: (error: any) => {
+        console.log(error);
+      }
+    });
   }
 
   onDelete(index: number) {
-    this.files.splice(index, 1);
-    this.filesChange.emit(this.files);
+    const id: number = this.images[index].id;
+    this.imagesService.delete(id).subscribe({
+      next: () => {
+        this.images.splice(index, 1);
+        this.setImagesOrder();
+        this.imagesChange.emit(this.images);    
+      }
+    })
   }
 
   swapItems(index: number, direction: number) {
     const newIndex = index + direction;
-    if (newIndex >= 0 && newIndex < this.files.length) {
-      [this.files[index], this.files[newIndex]] = [this.files[newIndex], this.files[index]];
+    if (newIndex >= 0 && newIndex < this.images.length) {
+      [this.images[index], this.images[newIndex]] = [this.images[newIndex], this.images[index]];
     }
   }
 
   onMoveUp(index: number) {
     this.swapItems(index, -1);
-    this.filesChange.emit(this.files);
+    this.setImagesOrder();
+    this.imagesChange.emit(this.images);
   }
 
   onMoveDown(index: number) {
     this.swapItems(index, 1);
-    this.filesChange.emit(this.files);
+    this.setImagesOrder();
+    this.imagesChange.emit(this.images);
   }
 
-  convertImagesToFiles(images: Image[]): void {
-    this.files = images.map(image => {
-      const { data, contentType } = image.imageFile;
-      const { originalName } = image;
-      const blob: Blob = new Blob([data], { type: contentType });
-      const file: File = new File([blob], originalName, { type: contentType })
-      return {
-        id: image.id,
-        file,
-        url: URL.createObjectURL(file)
-      };
-    });
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['images']) {
-      const images: Image[] = changes['images'].currentValue;
-      this.convertImagesToFiles(images);
-    }
-  }
+  setImagesOrder() {
+    this.images = this.images.map((image, index) => ({
+      ...image,
+      imageOrder: index + 1,
+    }));
+  }  
 }

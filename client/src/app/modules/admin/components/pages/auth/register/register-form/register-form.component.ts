@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RegisterRequest } from '../../../../../../../core/models/auth/register-request';
-import { passwordMatchValidator } from '../../../../../../../core/validators/passwordMatch.validator';
+import { passwordMatchValidator } from '../../../../../../../core/validators/password-match.validator';
 
 @Component({
   selector: 'app-register-form',

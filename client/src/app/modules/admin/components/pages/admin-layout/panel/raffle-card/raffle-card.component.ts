@@ -17,7 +17,6 @@ export class RaffleCardComponent {
   ) { }
 
   @Input() raffle!: Raffle;
-  @Input() images!: string[];
   startDate!: string;
   endDate!: string;
 

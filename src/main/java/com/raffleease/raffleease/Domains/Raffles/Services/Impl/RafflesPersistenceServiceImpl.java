@@ -1,20 +1,22 @@
 package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Repository.IRafflesRepository;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesPersistenceService;
+import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.ConflictException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
-public class RafflesPersistenceServiceImpl implements IRafflesPersistenceService {
-    private final IRafflesRepository repository;
+public class RafflesPersistenceServiceImpl implements RafflesPersistenceService {
+    private final RafflesRepository repository;
 
     @Override
     public Raffle findById(Long id) {
@@ -33,6 +35,10 @@ public class RafflesPersistenceServiceImpl implements IRafflesPersistenceService
             throw new ConflictException("Failed to save raffle due to unique constraint violation: " + ex.getMessage());
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while saving raffle: " + ex.getMessage());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            log.info("ERROR: " + ex.getMessage());
+            throw ex;
         }
     }
 

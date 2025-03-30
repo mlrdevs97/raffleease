@@ -1,7 +1,7 @@
 package com.raffleease.raffleease.Domains.Auth.Services.Impl;
 
-import com.raffleease.raffleease.Domains.Auth.Services.ICookiesService;
-import com.raffleease.raffleease.Domains.Token.Services.ITokensManagementService;
+import com.raffleease.raffleease.Domains.Auth.Services.CookiesService;
+import com.raffleease.raffleease.Domains.Tokens.Services.TokensManagementService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 public class CustomLogoutHandler implements LogoutHandler {
-    private final ITokensManagementService tokensManagementService;
-    private final ICookiesService cookiesService;
+    private final TokensManagementService tokensManagementService;
+    private final CookiesService cookiesService;
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {

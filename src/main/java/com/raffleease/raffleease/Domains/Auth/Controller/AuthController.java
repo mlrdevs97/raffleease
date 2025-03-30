@@ -2,9 +2,9 @@ package com.raffleease.raffleease.Domains.Auth.Controller;
 
 import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
-import com.raffleease.raffleease.Domains.Auth.Services.IAuthValidationService;
-import com.raffleease.raffleease.Domains.Auth.Services.ILoginService;
-import com.raffleease.raffleease.Domains.Auth.Services.IRegisterService;
+import com.raffleease.raffleease.Domains.Auth.Services.AuthValidationService;
+import com.raffleease.raffleease.Domains.Auth.Services.LoginService;
+import com.raffleease.raffleease.Domains.Auth.Services.RegisterService;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,11 +20,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 @RestController
 public class AuthController {
-    private final IRegisterService registerService;
-    private final ILoginService loginService;
+    private final RegisterService registerService;
+    private final LoginService loginService;
     private final LogoutHandler logoutHandler;
-    private final IAuthValidationService authValidationService;
-
+    private final AuthValidationService authValidationService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(
@@ -64,7 +63,7 @@ public class AuthController {
 
     @GetMapping("/validate")
     public ResponseEntity<ApiResponse> validate() {
-        this.authValidationService.isUserAuthenticated();
+        authValidationService.isUserAuthenticated();
         return ResponseEntity.ok().body(
                 ResponseFactory.success("User authentication validated successfully")
         );

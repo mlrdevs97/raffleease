@@ -1,12 +1,12 @@
 package com.raffleease.raffleease.Domains.Raffles.DTOs;
 
+import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,7 +24,11 @@ public record RaffleCreate(
         @Future(message = "Raffle's end date must be in the future")
         LocalDateTime endDate,
 
+        @NotNull(message = "Must provide at least one picture for raffle")
+        @Size(min = 1, max = 10, message = "A minimum of 1 and a maximum of 10 images are allowed")
+        List<ImageDTO> images,
+
         @NotNull(message = "Raffle ticket's info is required")
-        @Validated
+        @Valid
         TicketsCreate ticketsInfo
-) { }
+) {}

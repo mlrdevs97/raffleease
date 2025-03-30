@@ -3,37 +3,31 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesOrchestrator;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.StatusUpdate;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesOrchestrator;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
-import java.util.Objects;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/raffles")
 public class RafflesController {
-    private final IRafflesOrchestrator orchestrator;
+    private final RafflesOrchestrator orchestrator;
 
     @PostMapping
     public ResponseEntity<ApiResponse> create(
-            @RequestHeader(value = "Authorization") String authHeader,
-            @RequestPart("request") @Valid RaffleCreate request,
-            @RequestPart("images") List<MultipartFile> images
+            HttpServletRequest request,
+            @RequestBody @Valid RaffleCreate raffleData
     ) {
-        if (Objects.isNull(images) || images.isEmpty() || images.size() >= 10) {
-            throw new RuntimeException("Must provide minimum of 1 and a maximum of 10 pictures for raffle");
-        }
-
-        PublicRaffleDTO createdRaffle = orchestrator.createRaffle(authHeader.substring(7), request, images);
+        PublicRaffleDTO createdRaffle = orchestrator.create(request, raffleData);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -52,7 +46,7 @@ public class RafflesController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> edit(
             @PathVariable Long id,
-            @Valid @RequestBody RaffleEdit raffleEdit
+            @RequestBody @Valid RaffleEdit raffleEdit
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
                 orchestrator.edit(id, raffleEdit),
@@ -60,33 +54,14 @@ public class RafflesController {
         ));
     }
 
-    @PatchMapping("/{id}/publish")
+    @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse> publish(
-            @PathVariable Long id
-    ) {
+            @PathVariable Long id,
+            @Valid @RequestBody StatusUpdate request
+            ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                orchestrator.publish(id),
-                "Raffle published successfully"
-        ));
-    }
-
-    @PatchMapping("/{id}/pause")
-    public ResponseEntity<ApiResponse> pause(
-            @PathVariable Long id
-    ) {
-        return ResponseEntity.ok(ResponseFactory.success(
-                orchestrator.pause(id),
-                "Raffle paused successfully"
-        ));
-    }
-
-    @PatchMapping("/{id}/restart")
-    public ResponseEntity<ApiResponse> restart(
-            @PathVariable Long id
-    ) {
-        return ResponseEntity.ok(ResponseFactory.success(
-                orchestrator.restart(id),
-                "Raffle restarted successfully"
+                orchestrator.updateStatus(id, request),
+                "Raffle status updated successfully"
         ));
     }
 
@@ -95,17 +70,17 @@ public class RafflesController {
             @PathVariable Long id
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                orchestrator.get(id),
+                orchestrator.getAll(id),
                 "Raffle retrieved successfully"
         ));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse> getAll(
-            @RequestHeader("Authorization") String authHeader
+            HttpServletRequest request
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                orchestrator.getAll(authHeader.substring(7)),
+                orchestrator.getAll(request),
                 "All raffles retrieved successfully"
         ));
     }

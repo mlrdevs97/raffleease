@@ -17,17 +17,17 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 @Service
 public class StripeServiceImpl implements IStripeService {
-    @Value("${STRIPE_PUBLIC_KEY}")
+    @Value("${spring.stripe.keys.public}")
     private String stripePublicKey;
 
-    @Value("${STRIPE_SECRET_KEY}")
+    @Value("${spring.stripe.keys.secret}")
     private String stripeSecretKey;
 
-    @Value("${CLIENT_HOST}")
+    @Value("${spring.application.host.client}")
     private String clientHost;
 
-    @Value("${CLIENT_PATH}")
-    private String clientPath;
+    @Value("${spring.application.paths.client.payment_success}")
+    private String paymentSuccessPath;
 
     @Override
     public String getPublicKey() {
@@ -75,7 +75,7 @@ public class StripeServiceImpl implements IStripeService {
                                 .setQuantity((long) order.getCart().getTickets().size())
                                 .build()
                 )
-                .setReturnUrl(clientHost + clientPath + raffle.getId())
+                .setReturnUrl(clientHost + paymentSuccessPath + raffle.getId())
                 .build();
     }
 

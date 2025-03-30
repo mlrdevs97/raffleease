@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Auth.Services.Impl;
 
-import com.raffleease.raffleease.Domains.Auth.Services.IAuthValidationService;
+import com.raffleease.raffleease.Domains.Auth.Services.AuthValidationService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthenticationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -11,7 +11,7 @@ import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
-public class AuthValidationServiceImpl implements IAuthValidationService {
+public class AuthValidationServiceImpl implements AuthValidationService {
     @Override
     public void isUserAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

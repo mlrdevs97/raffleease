@@ -1,9 +1,13 @@
 package com.raffleease.raffleease.Domains.Images.Model;
 
+import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Images.Services.Impls.ImageEntityListener;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,11 +21,22 @@ public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String originalName;
+    private String fileName;
     private String filePath;
     private String contentType;
 
+    @Column(unique = true)
+    private String url;
+    private Integer imageOrder;
+
     @ManyToOne
-    @JoinColumn(name = "raffle_id", nullable = false)
+    @JoinColumn(name = "raffle_id")
     private Raffle raffle;
+
+    @ManyToOne
+    @JoinColumn(name = "association_id")
+    private Association association;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 }

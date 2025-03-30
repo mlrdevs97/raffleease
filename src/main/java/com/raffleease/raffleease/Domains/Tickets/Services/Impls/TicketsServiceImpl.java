@@ -5,7 +5,7 @@ import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 import com.raffleease.raffleease.Domains.Tickets.Repository.ICustomTicketsRepository;
-import com.raffleease.raffleease.Domains.Tickets.Repository.ITicketsRepository;
+import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAIL
 @RequiredArgsConstructor
 @Service
 public class TicketsServiceImpl implements ITicketsService {
-    private final ITicketsRepository repository;
+    private final TicketsRepository repository;
     private final ICustomTicketsRepository customRepository;
 
     @Override

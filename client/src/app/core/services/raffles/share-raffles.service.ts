@@ -25,10 +25,6 @@ export class ShareRafflesService {
     return this.raffles.get(id);
   }
 
-  getAll() {
-    return this.raffles;
-  }
-
   delete(id: number) {
     this.raffles.delete(id);
   }

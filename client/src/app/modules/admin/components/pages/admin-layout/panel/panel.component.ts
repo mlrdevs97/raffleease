@@ -13,23 +13,18 @@ import { StatusCircleComponent } from '../../../../../../components/shared/statu
   styleUrl: './panel.component.css'
 })
 export class PanelComponent {
+  raffles!: Raffle[];
+
   constructor(
     private shareRaffles: ShareRafflesService
   ) { }
 
-  raffles!: Raffle[];
-  images!: Map<number, string[]>;
-
   getRaffles() {
-    if (this.shareRaffles.isNull()) {
-      this.shareRaffles.rafflesUpdates.subscribe({
-        next: (raffles: Map<number, Raffle>) => {
-          this.raffles = Array.from(raffles.values());
-        }
-      });
-    } else {
-      this.raffles = Array.from(this.shareRaffles.getAll().values());
-    }
+    this.shareRaffles.rafflesUpdates.subscribe({
+      next: (raffles: Map<number, Raffle>) => {
+        this.raffles = Array.from(raffles.values());
+      }
+    });
   }
 
   ngOnInit() {

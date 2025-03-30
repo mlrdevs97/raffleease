@@ -4,7 +4,7 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { RafflesService } from '../../../../../../core/services/raffles/raffles.service';
 import { ShareRafflesService } from '../../../../../../core/services/raffles/share-raffles.service';
 import { Raffle } from '../../../../../../core/models/raffles/raffle';
-import { EditRaffle } from '../../../../../../core/models/raffles/edit-raffle';
+import { RaffleEdit } from '../../../../../../core/models/raffles/raffle-edit';
 import { SuccessResponse } from '../../../../../../core/models/responses/success-response';
 
 @Component({
@@ -27,7 +27,7 @@ export class RaffleEditionComponent {
     private router: Router
   ) { }
 
-  edit(editRaffle: EditRaffle) {
+  edit(editRaffle: Partial<RaffleEdit>) {
     this.rafflesService.edit(this.raffleId, editRaffle).subscribe({
       next: (response: SuccessResponse<Raffle>) => {
         const raffle: Raffle = response.data!;

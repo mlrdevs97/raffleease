@@ -1,10 +1,10 @@
 @if (images) {
 <div class="flex flex-col items-center">
-    <img [src]="mainImage" alt="Imagen principal"
+    <img [src]="mainURL" alt="Imagen principal"
         class="aspect-square object-cover rounded-md shadow-lg mx-auto lg:mx-end w-full max-w-[100%] lg:max-w-[90%]" />
 
     <div class="w-full">
-        <app-thumbnails [urls]="urls" [activeImage]="mainImage"
+        <app-thumbnails [images]="images" [activeImage]="mainURL"
             (imageSelected)="onImageSelected($event)"></app-thumbnails>
     </div>
 </div>

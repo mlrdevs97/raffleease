@@ -1,10 +1,10 @@
 package com.raffleease.raffleease.Domains.Reservations.Services.Impls;
 
-import com.raffleease.raffleease.Domains.Cart.Model.Cart;
-import com.raffleease.raffleease.Domains.Cart.Repository.ICustomCartRepository;
-import com.raffleease.raffleease.Domains.Cart.Services.ICartsService;
+import com.raffleease.raffleease.Domains.Carts.Model.Cart;
+import com.raffleease.raffleease.Domains.Carts.Repository.ICustomCartRepository;
+import com.raffleease.raffleease.Domains.Carts.Services.ICartsService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Services.IAvailabilityService;
+import com.raffleease.raffleease.Domains.Raffles.Services.AvailabilityService;
 import com.raffleease.raffleease.Domains.Reservations.DTOs.ReleaseRequest;
 import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsReleaseService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
@@ -26,7 +26,7 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAIL
 public class ReservationsReleaseServiceImpl implements IReservationsReleaseService {
     private final ITicketsQueryService ticketsQueryService;
     private final ITicketsService ticketsService;
-    private final IAvailabilityService availabilityService;
+    private final AvailabilityService availabilityService;
     private final ICartsService cartsService;
     private final ICustomCartRepository customCartRepository;
 

@@ -1,0 +1,57 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: RaffleEase
+    host:
+      client: ${HOST_CLIENT}
+      server: ${HOST_SERVER}
+    paths:
+      client:
+        payment_success: ${PAYMENT_SUCCESS_PATH}
+    security:
+      jwt:
+        secret_key: ${SECRET_KEY}
+        access_token_expiration: ${TOKEN_ACCESS_EXPIRATION}
+        refresh_token_expiration: ${TOKEN_REFRESH_EXPIRATION}
+
+  storage:
+    images:
+      base_path: ${IMAGES_BASE_PATH}
+      cutoff_seconds: ${IMAGES_CUTOFF_SECONDS}
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME_DEV}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database: postgresql
+
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+        connectiontimeout: 5000
+        timeout: 3000
+        writetimeout: 5000
+
+  stripe:
+    keys:
+      public: ${STRIPE_PUBLIC_KEY}
+      secret: ${STRIPE_SECRET_KEY}

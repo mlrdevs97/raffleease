@@ -1,8 +1,7 @@
 package com.raffleease.raffleease.Domains.Raffles.DTOs;
 
 import com.raffleease.raffleease.Domains.Associations.DTO.AssociationDTO;
-import com.raffleease.raffleease.Domains.Images.DTOs.ImageFile;
-import com.raffleease.raffleease.Domains.Images.DTOs.ImageResponse;
+import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Min;
@@ -38,8 +37,8 @@ public record PublicRaffleDTO(
         @Enumerated
         RaffleStatus status,
 
-        @NotNull(message = "The list of image keys must not be null.")
-        List<ImageResponse> images,
+        @NotNull(message = "The list of image urls must not be null.")
+        List<ImageDTO> images,
 
         @NotNull(message = "The ticket price must not be null.")
         @Min(value = 0, message = "The ticket price must be at least 0.")

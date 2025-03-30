@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
 import { UploadImagesComponent } from '../../../../shared/upload-images/upload-images.component';
-import { EditRaffle } from '../../../../../../../core/models/raffles/edit-raffle';
 import { Raffle } from '../../../../../../../core/models/raffles/raffle';
-import { futureDateValidator } from '../../../../../../../core/validators/futureDateValidator';
-import { totalTicketsValidator } from '../../../../../../../core/validators/totalTicetsValidator';
+import { totalTicketsValidator } from '../../../../../../../core/validators/total-tickets.validator';
 import { Router } from '@angular/router';
-import { ImageFile } from '../../../../../../../core/models/raffles/images/image-file';
+import { Image } from '../../../../../../../core/models/images/image';
+import { correctDateValidator } from '../../../../../../../core/validators/correct-date.validator';
+import { RaffleEdit } from '../../../../../../../core/models/raffles/raffle-edit';
 
 @Component({
   selector: 'app-edition-form',
@@ -19,7 +19,7 @@ export class EditionFormComponent {
   @Input() validationErrors: Record<string, string> = {};
   @Input() serverError: string | null = null;
   @Input() raffle!: Raffle;
-  @Output() editRaffle: EventEmitter<EditRaffle> = new EventEmitter<EditRaffle>();
+  @Output() editRaffle = new EventEmitter<Partial<RaffleEdit>>();
   raffleForm!: FormGroup;
   formSubmitted: boolean = false;
 
@@ -32,9 +32,8 @@ export class EditionFormComponent {
     this.raffleForm = this.fb.group({
       title: ['', Validators.required],
       description: ['', Validators.required],
-      endDate: ['', [Validators.required, futureDateValidator]],
-      newImages: this.fb.array([]),
-      deleteImageIds: this.fb.array([]),
+      endDate: ['', [Validators.required, correctDateValidator]],
+      images: this.fb.array([]),
       totalTickets: ['', [
         Validators.min(this.raffle.totalTickets),
         Validators.required
@@ -62,70 +61,61 @@ export class EditionFormComponent {
     });
   }
 
-  createImageUrl(imageFile: ImageFile): string {
-    const blob = new Blob([imageFile.data], { type: imageFile.contentType });
-    return URL.createObjectURL(blob);
-  }
-
   get lastNumber(): number {
     return this.raffle.firstTicketNumber + this.raffle.totalTickets - 1;
   }
 
-  get deleteImageIds(): FormArray {
-    return this.raffleForm.get('deleteImageIds') as FormArray;
-  }
-  
-  get newImages(): FormArray {
-    return this.raffleForm.get('newImages') as FormArray;
+  get images(): FormArray {
+    return this.raffleForm.get('images') as FormArray;
   }
 
-  setImages(files: { id: number | null; file: File, url: string }[]) {
-    this.deleteImageIds.clear();
-    this.newImages.clear();
-    files.forEach(file => {
-      if (!file.id) this.deleteImageIds.push(this.fb.control(file.id));
-      this.newImages.push(this.fb.control(file));
+  setImages(images: Image[]): void {
+    this.images.clear();
+    images.forEach((image: Image) => {
+      this.images.push(this.fb.control(image));
     });
+    if (!this.images.dirty) this.images.markAsDirty();
   }
-  
+
   onSubmit(event: Event) {
     event.preventDefault();
     this.formSubmitted = true;
 
     if (this.raffleForm.invalid) return;
 
-    const modifiedData: Partial<EditRaffle> = this.getModifiedFields();
-    this.editRaffle.emit(modifiedData);
+    const raffleEdit: Partial<RaffleEdit> = this.getModifiedFields();
+
+    this.editRaffle.emit(raffleEdit);
   }
 
   getErrorMessage(field: string): string {
     if (this.validationErrors[field]) return this.validationErrors[field];
 
-    const control = this.raffleForm.get(field);
+    const control: AbstractControl | null = this.raffleForm.get(field);
+
+    if (!control) throw new Error();
 
     if (control?.hasError('required')) return 'Este campo es obligatorio.';
     if (control?.hasError('min')) return 'El valor ingresado es menor al permitido.';
     if (control?.hasError('max')) return 'El valor ingresado es mayor al permitido.';
     if (control?.hasError('notFutureDate')) return 'La fecha debe ser en el futuro.';
+    if (control?.hasError('exceedsOneYear')) return 'La fecha de finalización no puede ser superior a un año';
     if (control?.hasError('wrongQuantity')) return `La cantidad de tickets no puede ser menor a la cantidad original: ${this.raffle.totalTickets}.`;
-    return '';
+
+    return 'Unexpected error';
   }
 
-  getModifiedFields(): Partial<EditRaffle> {
-    const modifiedData: Partial<EditRaffle> = {};
+  getModifiedFields(): Partial<RaffleEdit> {
+    const modifiedData: Partial<RaffleEdit> = {};
+
     Object.keys(this.raffleForm.controls).forEach((key) => {
       const control = this.raffleForm.get(key);
       if (control?.dirty) {
-        if (key === 'endDate' || key === 'endTime') {
-          const endDate = this.raffleForm.get('endDate')?.value;
-          const endTime = this.raffleForm.get('endTime')?.value;
-          modifiedData.endDate = new Date(`${endDate}T${endTime}:00`);
-        } else if (key === 'newImages') {
-          modifiedData.newImages = this.newImages.value;
-        } else if (key === 'deleteImageIds') {
-          modifiedData.deleteImageIds = this.deleteImageIds.value;
+        if (key === 'endDate') {
+          const endDate: string = this.raffleForm.get('endDate')?.value;
+          modifiedData.endDate = new Date(`${endDate}T00:00:00`);
         } else {
-          modifiedData[key as keyof EditRaffle] = control.value;
+          modifiedData[key as keyof RaffleEdit] = control.value;
         }
       }
     });

@@ -1,5 +1,6 @@
 import { NgClass } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Image } from '../../../../../../../core/models/images/image';
 
 @Component({
   selector: 'app-thumbnails',
@@ -8,8 +9,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
   styleUrl: './thumbnails.component.css'
 })
 export class ThumbnailsComponent {
-  @Input() urls: string[] = [];
-  @Input() activeImage: string = '';
+  @Input() images!: Image[];
+  @Input() activeImage!: string;
   @Output() imageSelected: EventEmitter<string> = new EventEmitter<string>();
 
   selectImage(image: string): void {

@@ -2,10 +2,9 @@ package com.raffleease.raffleease.Domains.Images.DTOs;
 
 import lombok.Builder;
 
+import java.util.List;
+
 @Builder
 public record ImageResponse(
-        Long id,
-        ImageFile imageFile,
-        String originalName,
-        String filePath
+        List<ImageDTO> images
 ) { }

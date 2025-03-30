@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Orders.DTOs;
 
-import com.raffleease.raffleease.Domains.Cart.DTO.CartDTO;
+import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
 import com.raffleease.raffleease.Domains.Customers.DTO.CustomerDTO;
 import com.raffleease.raffleease.Domains.Payments.DTOs.PaymentDTO;
 import jakarta.validation.constraints.NotNull;

@@ -1,11 +1,11 @@
 package com.raffleease.raffleease.Domains.Auth.Services.Impl;
 
-import com.raffleease.raffleease.Domains.Associations.Services.IAssociationsService;
+import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
-import com.raffleease.raffleease.Domains.Auth.Services.ICookiesService;
-import com.raffleease.raffleease.Domains.Auth.Services.IRegisterService;
-import com.raffleease.raffleease.Domains.Token.Services.ITokensCreateService;
+import com.raffleease.raffleease.Domains.Auth.Services.CookiesService;
+import com.raffleease.raffleease.Domains.Auth.Services.RegisterService;
+import com.raffleease.raffleease.Domains.Tokens.Services.TokensCreateService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -16,11 +16,11 @@ import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
-public class RegisterServiceImpl implements IRegisterService {
-    private final IAssociationsService associationsService;
+public class RegisterServiceImpl implements RegisterService {
+    private final AssociationsService associationsService;
     private final PasswordEncoder passwordEncoder;
-    private final ITokensCreateService tokensCreateService;
-    private final ICookiesService cookiesService;
+    private final TokensCreateService tokensCreateService;
+    private final CookiesService cookiesService;
 
     @Value("${spring.application.security.jwt.refresh_token_expiration}")
     private Long refreshTokenExpiration;

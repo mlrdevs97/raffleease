@@ -1,13 +1,19 @@
 package com.raffleease.raffleease.Domains.Tickets.Repository.Impl;
 
+import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 import com.raffleease.raffleease.Domains.Tickets.Repository.ICustomTicketsRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -37,17 +43,36 @@ public class CustomTicketsRepositoryImpl implements ICustomTicketsRepository {
     }
 
     @Override
-    public List<Ticket> findByTicketNumber(Raffle raffle, TicketStatus status, String ticketNumber) {
-        String queryString = "SELECT t FROM Ticket t " +
-                "WHERE t.raffle = :raffle " +
-                "AND t.status = :status " +
-                "AND t.ticketNumber LIKE :ticketNumber " +
-                "ORDER BY CAST(t.ticketNumber AS long)";
+    public List<Ticket> search(Raffle raffle, String ticketNumber, TicketStatus status, Customer customer) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Ticket> query = cb.createQuery(Ticket.class);
+        Root<Ticket> ticket = query.from(Ticket.class);
 
-        return entityManager.createQuery(queryString, Ticket.class)
-                .setParameter("raffle", raffle)
-                .setParameter("status", TicketStatus.AVAILABLE)
-                .setParameter("ticketNumber", "%" + ticketNumber + "%")
-                .getResultList();
+        List<Predicate> predicates = new ArrayList<>();
+        predicates.add(cb.equal(ticket.get("raffle"), raffle));
+
+        if (status != null) {
+            predicates.add(cb.equal(ticket.get("status"), status));
+        }
+        if (ticketNumber != null) {
+            predicates.add(cb.equal(ticket.get("number"), ticketNumber));
+        }
+        if (customer != null) {
+            predicates.add(cb.equal(ticket.get("customer"), customer));
+        }
+
+        query.select(ticket).where(predicates.toArray(new Predicate[0]));
+        return entityManager.createQuery(query).getResultList();
     }
 }
+
+
+
+
+
+
+
+
+
+
+

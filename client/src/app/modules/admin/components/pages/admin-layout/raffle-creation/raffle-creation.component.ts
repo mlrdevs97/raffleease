@@ -3,10 +3,9 @@ import { Router } from '@angular/router';
 import { CreationFormComponent } from './creation-form/creation-form.component';
 import { RafflesService } from '../../../../../../core/services/raffles/raffles.service';
 import { ShareRafflesService } from '../../../../../../core/services/raffles/share-raffles.service';
-import { RaffleCreationRequest } from '../../../../../../core/models/raffles/raffle-creation-request';
 import { Raffle } from '../../../../../../core/models/raffles/raffle';
-import { ShareUrlsService } from '../../../../../../core/services/raffles/share-urls.service';
 import { SuccessResponse } from '../../../../../../core/models/responses/success-response';
+import { RaffleCreate } from '../../../../../../core/models/raffles/raffle-create';
 
 @Component({
   selector: 'app-raffle-creation',
@@ -25,13 +24,13 @@ export class RaffleCreationComponent {
     private router: Router
   ) { }
 
-  createRaffle(request: FormData) {
+  createRaffle(request: RaffleCreate) {
+    console.log(request);
     this.rafflesService.create(request).subscribe({
       next: (response: SuccessResponse<Raffle>) => {
         const raffle: Raffle = response.data!;
         this.shareRaffles.setRaffle(raffle);
         this.router.navigate([`/admin/management/${raffle.id}`]);
-
       },
       error: (err: any) => {
         console.log(err)

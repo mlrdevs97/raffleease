@@ -9,6 +9,7 @@ import java.util.Collections;
 
 @Builder
 public record CostumUserDetails(User user, String identifier) implements UserDetails {
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();

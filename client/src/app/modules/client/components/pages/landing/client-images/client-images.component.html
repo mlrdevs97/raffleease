@@ -3,6 +3,6 @@
     class="aspect-square object-cover rounded-md shadow-lg mx-auto lg:mx-end w-full max-w-[100%] lg:max-w-[90%]" />
 
   <div class="w-full">
-    <app-thumbnails [urls]="urls" [activeImage]="mainImage" (imageSelected)="onImageSelected($event)"></app-thumbnails>
+    <app-thumbnails [images]="images" [activeImage]="mainImage" (imageSelected)="onImageSelected($event)"></app-thumbnails>
   </div>
 </div>

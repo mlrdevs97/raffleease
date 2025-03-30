@@ -1,16 +1,16 @@
 package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Services.IAvailabilityService;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesPersistenceService;
+import com.raffleease.raffleease.Domains.Raffles.Services.AvailabilityService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
-public class AvailabilityServiceImpl implements IAvailabilityService {
-    private final IRafflesPersistenceService rafflesPersistence;
+public class AvailabilityServiceImpl implements AvailabilityService {
+    private final RafflesPersistenceService rafflesPersistence;
 
     @Override
     public void reduceAvailableTickets(Long raffleId, long reductionQuantity) {

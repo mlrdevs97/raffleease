@@ -9,10 +9,15 @@ public class PasswordMatchesValidator implements ConstraintValidator<PasswordMat
     @Override
     public boolean isValid(Object request, ConstraintValidatorContext context) {
         AssociationRegister associationRegister = (AssociationRegister) request;
-        boolean passwordsMatch = associationRegister.password().equals(associationRegister.confirmPassword());
+        String password = associationRegister.password();
+        String confirmPassword = associationRegister.confirmPassword();
+
+        if (password == null || confirmPassword == null) return true;
+
+        boolean passwordsMatch = password.equals(confirmPassword);
         if (!passwordsMatch) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Passwords and confirm password don't match")
+            context.buildConstraintViolationWithTemplate("Password and confirm password don't match")
                     .addPropertyNode("confirmPassword").addConstraintViolation();
         }
         return passwordsMatch;

@@ -6,6 +6,5 @@ import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
 
 public interface IAssociationsMapper {
     Association toAssociation(AssociationRegister request, String encodedPassword);
-
     AssociationDTO fromAssociation(Association association);
 }

@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Reservations.Services;
 
-import com.raffleease.raffleease.Domains.Cart.DTO.CartDTO;
+import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
 import com.raffleease.raffleease.Domains.Reservations.DTOs.ReservationRequest;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 

@@ -1,16 +1,19 @@
 package com.raffleease.raffleease.Domains.Raffles.Mappers.Impls;
 
+import com.raffleease.raffleease.Domains.Associations.DTO.AssociationDTO;
 import com.raffleease.raffleease.Domains.Associations.Mappers.Impl.AssociationsMapper;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
-import com.raffleease.raffleease.Domains.Images.Mappers.IImagesMapper;
+import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
+import com.raffleease.raffleease.Domains.Images.Mappers.ImagesMapper;
+import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDING;
@@ -18,24 +21,31 @@ import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDI
 @RequiredArgsConstructor
 @Service
 public class RafflesMapper implements IRafflesMapper {
-    private final IImagesMapper imagesMapper;
+    private final ImagesMapper imagesMapper;
     private final AssociationsMapper associationsMapper;
 
-    public Raffle toRaffle(RaffleCreate request, Association association) {
+    @Override
+    public Raffle toRaffle(RaffleCreate raffleData, Association association) {
         return Raffle.builder()
-                .title(request.title())
-                .description(request.description())
-                .endDate(request.endDate())
+                .title(raffleData.title())
+                .description(raffleData.description())
+                .endDate(raffleData.endDate())
                 .status(PENDING)
-                .ticketPrice(request.ticketsInfo().price())
-                .availableTickets(request.ticketsInfo().amount())
-                .totalTickets(request.ticketsInfo().amount())
-                .firstTicketNumber(request.ticketsInfo().lowerLimit())
+                .ticketPrice(raffleData.ticketsInfo().price())
+                .availableTickets(raffleData.ticketsInfo().amount())
+                .totalTickets(raffleData.ticketsInfo().amount())
+                .firstTicketNumber(raffleData.ticketsInfo().lowerLimit())
                 .association(association)
                 .build();
     }
 
+    @Override
     public PublicRaffleDTO fromRaffle(Raffle raffle) {
+        AssociationDTO association = associationsMapper.fromAssociation(raffle.getAssociation());
+
+        List<ImageDTO> images = imagesMapper.fromImagesList(raffle.getImages()).stream()
+                .sorted(Comparator.comparing(ImageDTO::imageOrder)).toList();
+
         return PublicRaffleDTO.builder()
                 .id(raffle.getId())
                 .title(raffle.getTitle())
@@ -44,17 +54,18 @@ public class RafflesMapper implements IRafflesMapper {
                 .startDate(raffle.getStartDate())
                 .endDate(raffle.getEndDate())
                 .status(raffle.getStatus())
-                .images(imagesMapper.fromImagesList(raffle.getImages()))
+                .images(images)
                 .ticketPrice(raffle.getTicketPrice())
                 .firstTicketNumber(raffle.getFirstTicketNumber())
                 .soldTickets(raffle.getSoldTickets())
                 .revenue(raffle.getRevenue())
                 .availableTickets(raffle.getAvailableTickets())
                 .totalTickets(raffle.getTotalTickets())
-                .association(associationsMapper.fromAssociation(raffle.getAssociation()))
+                .association(association)
                 .build();
     }
 
+    @Override
     public List<PublicRaffleDTO> fromRaffleList(List<Raffle> raffles) {
         return raffles.stream().map(this::fromRaffle).toList();
     }

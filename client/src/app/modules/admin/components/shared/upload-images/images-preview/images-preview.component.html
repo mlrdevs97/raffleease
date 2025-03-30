@@ -1,8 +1,9 @@
 <div class="flex flex-col items-center w-full">
-    @for (file of files; track file; let i = $index) {
+    @if (images) {
+    @for (image of images; track image; let i = $index) {
     <div
         class="flex flex-col md:flex-row items-center justify-between w-full max-w-full p-4 bg-gray-100 rounded-md shadow-sm hover:shadow-lg transition-shadow duration-300 mb-4">
-        <img [src]="file.url" alt="Selected Image" class="w-full md:w-32 h-auto rounded-md" />
+        <img [src]="image.url" alt="Selected Image" class="w-full md:w-32 h-auto rounded-md" />
         <div class="flex items-center gap-4 mt-4 md:mt-0">
             <button type="button" (click)="onMoveUp(i)" aria-label="Move up" class="p-1">
                 <svg class="w-6 h-6 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"
@@ -33,5 +34,6 @@
             </button>
         </div>
     </div>
+    }
     }
 </div>

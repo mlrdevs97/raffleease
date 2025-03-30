@@ -1,12 +1,12 @@
 package com.raffleease.raffleease.Domains.Reservations.Services.Impls;
 
-import com.raffleease.raffleease.Domains.Cart.DTO.CartDTO;
-import com.raffleease.raffleease.Domains.Cart.Mappers.ICartsMapper;
-import com.raffleease.raffleease.Domains.Cart.Model.Cart;
-import com.raffleease.raffleease.Domains.Cart.Services.ICartsService;
+import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
+import com.raffleease.raffleease.Domains.Carts.Mappers.ICartsMapper;
+import com.raffleease.raffleease.Domains.Carts.Model.Cart;
+import com.raffleease.raffleease.Domains.Carts.Services.ICartsService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Services.IAvailabilityService;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesPersistenceService;
+import com.raffleease.raffleease.Domains.Raffles.Services.AvailabilityService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Reservations.DTOs.ReservationRequest;
 import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsCreateService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
@@ -26,9 +26,9 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.RESER
 @RequiredArgsConstructor
 @Service
 public class ReservationsCreateServiceImpl implements IReservationsCreateService {
-    private final IRafflesPersistenceService rafflePersistence;
+    private final RafflesPersistenceService rafflePersistence;
     private final ITicketsQueryService ticketsQueryService;
-    private final IAvailabilityService availabilityService;
+    private final AvailabilityService availabilityService;
     private final ITicketsService ticketsService;
     private final ICartsService cartsService;
     private final ICartsMapper cartsMapper;

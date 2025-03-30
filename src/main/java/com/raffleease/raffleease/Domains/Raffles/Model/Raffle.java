@@ -37,9 +37,6 @@ public class Raffle {
 
     private LocalDateTime endDate;
 
-    @OneToMany(mappedBy = "raffle", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Image> images;
-
     @Column(nullable = false)
     private BigDecimal ticketPrice;
 
@@ -52,6 +49,9 @@ public class Raffle {
     private Long availableTickets;
 
     private Long soldTickets;
+
+    @OneToMany(mappedBy = "raffle", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Image> images;
 
     @OneToMany(mappedBy = "raffle", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ticket> tickets;

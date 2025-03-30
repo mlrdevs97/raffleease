@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Configs;
 
-import com.raffleease.raffleease.Domains.Token.Filters.JwtAuthenticationFilter;
+import com.raffleease.raffleease.Domains.Tokens.Filters.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -41,6 +41,7 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/api/v1/auth/login",
                                         "/api/v1/auth/register",
+                                        "/api/v1/raffles/images/{uuid}",
                                         "/api/v1/tickets/reservations"
                                 ).permitAll()
                                 .anyRequest().authenticated()

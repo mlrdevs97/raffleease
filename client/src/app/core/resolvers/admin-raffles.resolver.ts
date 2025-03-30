@@ -13,8 +13,10 @@ export const AdminRafflesResolver: ResolveFn<SuccessResponse<Raffle[]> | null> =
     const tokenService = inject(AccessTokenService);
     const rafflesService: RafflesService = inject(RafflesService);
     const router: Router = inject(Router);
+
     const token = tokenService.getToken();
     if (!token) return of(null);
+    
     return rafflesService.getAll().pipe(
         catchError(() => {
             router.navigate(['/error']);

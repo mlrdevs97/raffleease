@@ -103,8 +103,18 @@ export class RaffleManagementComponent {
     this.route.paramMap.subscribe({
       next: (params: ParamMap) => {
         const id: string | null = params.get('id');
-        if (id) this.raffleId = this.parseId(id);
-        else this.router.navigate(['/admin']);
+        if (id) {
+          this.raffleId = this.parseId(id);
+          const raffle: Raffle | undefined = this.shareRaffles.get(this.raffleId);
+          if (!raffle) {
+             this.router.navigate(['/admin']);
+          } else {
+            this.raffle = raffle;
+            console.log(this.raffle);
+          }
+        } else {
+          this.router.navigate(['/admin'])
+        };
       }
     });
   }

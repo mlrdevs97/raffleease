@@ -20,9 +20,9 @@
 
     <!-- Raffle List -->
     <section class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        @if (raffles && images) {
+        @if (raffles) {
         @for (raffle of raffles; track raffle.id) {
-        <app-raffle-card [raffle]="raffle" [images]="images.get(raffle.id) ?? []"></app-raffle-card>
+        <app-raffle-card [raffle]="raffle"></app-raffle-card>
         }
         } @else {
         <div class="text-center text-gray-500 mt-5">

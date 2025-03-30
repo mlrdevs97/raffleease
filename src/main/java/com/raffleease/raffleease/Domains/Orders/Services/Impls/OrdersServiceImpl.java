@@ -1,7 +1,7 @@
 package com.raffleease.raffleease.Domains.Orders.Services.Impls;
 
-import com.raffleease.raffleease.Domains.Cart.Model.Cart;
-import com.raffleease.raffleease.Domains.Cart.Services.ICartsService;
+import com.raffleease.raffleease.Domains.Carts.Model.Cart;
+import com.raffleease.raffleease.Domains.Carts.Services.ICartsService;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderEdit;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Repository.IOrdersRepository;

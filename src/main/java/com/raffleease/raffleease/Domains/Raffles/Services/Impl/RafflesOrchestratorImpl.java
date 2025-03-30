@@ -3,56 +3,48 @@ package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.StatusUpdate;
 import com.raffleease.raffleease.Domains.Raffles.Services.*;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @RequiredArgsConstructor
 @Service
-public class RafflesOrchestratorImpl implements IRafflesOrchestrator {
-    private final IRafflesQueryService queryService;
-    private final IRaffleCreateService createService;
-    private final IRafflesStatusService rafflesStatusService;
-    private final IRafflesPersistenceService rafflesPersistence;
-    private final IRafflesEditService rafflesEditService;
+public class RafflesOrchestratorImpl implements RafflesOrchestrator {
+    private final RafflesQueryService queryService;
+    private final RaffleCreateService createService;
+    private final RafflesStatusService rafflesStatusService;
+    private final RafflesPersistenceService rafflesPersistence;
+    private final RafflesEditService rafflesEditService;
 
     @Override
     public void delete(Long id) { rafflesPersistence.deleteById(id); }
 
     @Override
-    public PublicRaffleDTO publish(Long id) {
-        return rafflesStatusService.publish(id);
+    public PublicRaffleDTO updateStatus(Long id, StatusUpdate request) {
+        return rafflesStatusService.updateStatus(id, request);
     }
 
     @Override
-    public PublicRaffleDTO pause(Long id) {
-        return rafflesStatusService.pause(id);
+    public PublicRaffleDTO getAll(Long id) {
+        return queryService.getAll(id);
     }
 
     @Override
-    public PublicRaffleDTO restart(Long id) {
-        return rafflesStatusService.restart(id);
+    public List<PublicRaffleDTO> getAll(HttpServletRequest request) {
+        return queryService.getAll(request);
     }
 
     @Override
-    public PublicRaffleDTO get(Long id) {
-        return queryService.get(id);
+    public PublicRaffleDTO create(HttpServletRequest request, RaffleCreate raffleData) {
+        return createService.create(request, raffleData);
     }
 
     @Override
-    public List<PublicRaffleDTO> getAll(String token) {
-        return queryService.getAll(token);
-    }
-
-    @Override
-    public PublicRaffleDTO createRaffle(String token, RaffleCreate request, List<MultipartFile> images) {
-        return createService.createRaffle(token, request, images);
-    }
-
     public PublicRaffleDTO edit(Long id, RaffleEdit raffleEdit) {
-        return rafflesEditService.edit(id, raffleEdit);
+        return rafflesEditService.updateStatistics(id, raffleEdit);
     }
 }

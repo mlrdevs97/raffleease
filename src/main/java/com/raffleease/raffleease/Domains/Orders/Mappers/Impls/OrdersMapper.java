@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Orders.Mappers.Impls;
 
-import com.raffleease.raffleease.Domains.Cart.Mappers.ICartsMapper;
+import com.raffleease.raffleease.Domains.Carts.Mappers.ICartsMapper;
 import com.raffleease.raffleease.Domains.Customers.Mappers.ICustomersMapper;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderDTO;
 import com.raffleease.raffleease.Domains.Orders.Mappers.IOrdersMapper;

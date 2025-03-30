@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Tickets.Model;
 
-import com.raffleease.raffleease.Domains.Cart.Model.Cart;
+import com.raffleease.raffleease.Domains.Carts.Model.Cart;
+import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,6 +25,6 @@ public class Ticket {
     private Raffle raffle;
 
     @ManyToOne
-    @JoinColumn(name = "cart_id")
-    private Cart cart;
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 }

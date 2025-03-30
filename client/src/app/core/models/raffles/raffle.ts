@@ -1,4 +1,4 @@
-import { Image } from "./images/image";
+import { Image } from "../images/image";
 
 export interface Raffle {
     id: number;

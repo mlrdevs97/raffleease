@@ -1,6 +1,6 @@
 import { Component, Input, SimpleChanges } from '@angular/core';
-import { Image } from '../../../../../../../core/models/raffles/images/image';
-import { ImageFile } from '../../../../../../../core/models/raffles/images/image-file';
+import { Image } from '../../../../../../../core/models/images/image';
+import { ImageFile } from '../../../../../../../core/models/images/image-file';
 import { ThumbnailsComponent } from './thumbnails/thumbnails.component';
 
 @Component({
@@ -12,16 +12,10 @@ import { ThumbnailsComponent } from './thumbnails/thumbnails.component';
 })
 export class RaffleImagesComponent {
   @Input() images!: Image[];
-  urls!: string[];
-  mainImage!: string;
+  mainURL!: string;
   
-  onImageSelected(image: string): void {
-    this.mainImage = image;
-  }
-
-  convertImagesToUrls(images: Image[]): void {
-    this.urls = images.map(image => this.createImageUrl(image.imageFile));
-    this.mainImage = this.urls[0];
+  onImageSelected(url: string): void {
+    this.mainURL = url;
   }
 
   createImageUrl(imageFile: ImageFile): string {
@@ -29,9 +23,9 @@ export class RaffleImagesComponent {
     return URL.createObjectURL(blob);
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['images'] && this.images) {
-      this.convertImagesToUrls(this.images);
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['images']) {
+      this.mainURL = this.images[0].url;
     }
   }
 }

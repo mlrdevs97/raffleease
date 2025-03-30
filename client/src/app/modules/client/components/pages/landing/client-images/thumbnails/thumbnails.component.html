@@ -1,7 +1,7 @@
 <div class="w-full mt-4 flex items-center justify-center gap-2 space-x-2 cursor-pointer">
-    @for (url of urls; track url; let i = $index) {
-    <img [src]="url" [alt]="'Miniatura ' + (i + 1)" [class.active-img]="url === activeImage" (click)="selectImage(url)"
+    @for (image of images; track image; let i = $index) {
+    <img [src]="image.url" [alt]="'Miniatura ' + (i + 1)" [class.active-img]="image.url === activeImage" (click)="selectImage(image.url)"
         class="w-[90px] h-[60px] object-cover w-20 h-20 rounded-md"
-        [class]="url === activeImage ? 'border-b-4 border-red-500' : ''" />
+        [class]="image.url === activeImage ? 'border-b-4 border-red-500' : ''" />
     }
 </div>

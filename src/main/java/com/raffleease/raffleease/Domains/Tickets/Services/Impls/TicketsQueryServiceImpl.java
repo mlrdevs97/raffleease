@@ -1,13 +1,15 @@
 package com.raffleease.raffleease.Domains.Tickets.Services.Impls;
 
+import com.raffleease.raffleease.Domains.Customers.Model.Customer;
+import com.raffleease.raffleease.Domains.Customers.Services.ICustomersService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesPersistenceService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketDTO;
 import com.raffleease.raffleease.Domains.Tickets.Mappers.ITicketsMapper;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 import com.raffleease.raffleease.Domains.Tickets.Repository.ICustomTicketsRepository;
-import com.raffleease.raffleease.Domains.Tickets.Repository.ITicketsRepository;
+import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsQueryService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
@@ -22,10 +24,11 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAIL
 @RequiredArgsConstructor
 @Service
 public class TicketsQueryServiceImpl implements ITicketsQueryService {
-    private final IRafflesPersistenceService rafflePersistence;
-    private final ITicketsRepository repository;
+    private final RafflesPersistenceService rafflePersistence;
+    private final TicketsRepository repository;
     private final ICustomTicketsRepository customRepository;
     private final ITicketsMapper mapper;
+    private final ICustomersService customersService;
 
     @Override
     public List<Ticket> findAllById(List<Long> ticketIds) {
@@ -38,13 +41,18 @@ public class TicketsQueryServiceImpl implements ITicketsQueryService {
     }
 
     @Override
-    public List<TicketDTO> findByTicketNumber(Long raffleId, String ticketNumber) {
+    public List<TicketDTO> get(Long raffleId, String ticketNumber, TicketStatus status, Long customerId) {
         Raffle raffle = rafflePersistence.findById(raffleId);
+
+        // TODO
+        Customer customer = new Customer();
+
         try {
-            List<Ticket> searchResults = customRepository.findByTicketNumber(
+            List<Ticket> searchResults = customRepository.search(
                     raffle,
+                    ticketNumber,
                     AVAILABLE,
-                    ticketNumber
+                    customer
             );
             if (searchResults.isEmpty()) {
                 throw new NotFoundException("No ticket for search was found");

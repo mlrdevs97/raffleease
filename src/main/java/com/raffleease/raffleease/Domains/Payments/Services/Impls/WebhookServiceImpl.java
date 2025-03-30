@@ -1,7 +1,7 @@
 package com.raffleease.raffleease.Domains.Payments.Services.Impls;
 
-import com.raffleease.raffleease.Domains.Cart.Model.Cart;
-import com.raffleease.raffleease.Domains.Cart.Services.ICartsService;
+import com.raffleease.raffleease.Domains.Carts.Model.Cart;
+import com.raffleease.raffleease.Domains.Carts.Services.ICartsService;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Customers.Services.ICustomersService;
 import com.raffleease.raffleease.Domains.Notifications.Services.INotificationsService;
@@ -13,7 +13,7 @@ import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
 import com.raffleease.raffleease.Domains.Payments.Services.IPaymentsService;
 import com.raffleease.raffleease.Domains.Payments.Services.IWebhookService;
-import com.raffleease.raffleease.Domains.Raffles.Services.IRafflesEditService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesEditService;
 import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsReleaseService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsService;
@@ -35,7 +35,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static com.raffleease.raffleease.Domains.Cart.Model.CartStatus.CLOSED;
+import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
 import static com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus.*;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 
@@ -46,7 +46,7 @@ public class WebhookServiceImpl implements IWebhookService {
     private final ICustomersService customersService;
     private final ITicketsService ticketsService;
     private final IOrdersService ordersService;
-    private final IRafflesEditService rafflesEditService;
+    private final RafflesEditService rafflesEditService;
     private final ICartsService cartsService;
     private final IReservationsReleaseService reservationsReleaseService;
     private final INotificationsService notificationsCreateService;
@@ -105,7 +105,7 @@ public class WebhookServiceImpl implements IWebhookService {
                 .build()
         );
         List<Ticket> purchasedTickets = ticketsService.edit(order.getCart().getTickets(), SOLD);
-        rafflesEditService.edit(
+        rafflesEditService.updateStatistics(
                 order.getCart().getRaffle(),
                 Optional.ofNullable(order.getPayment().getTotal()).orElse(BigDecimal.ZERO),
                 (long) purchasedTickets.size()

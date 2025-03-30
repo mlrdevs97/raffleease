@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Reservations.Controller;
 
-import com.raffleease.raffleease.Domains.Cart.DTO.CartDTO;
+import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
 import com.raffleease.raffleease.Domains.Reservations.DTOs.ReleaseRequest;
 import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsCreateService;
 import com.raffleease.raffleease.Domains.Reservations.DTOs.GenerateRandom;
@@ -22,7 +22,7 @@ import java.util.Objects;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/tickets/reservations")
+@RequestMapping("/api/v1/raffles/{raffleId}/reservations")
 public class ReservationsController {
     private final IReservationsRandomService randomService;
     private final IReservationsReleaseService releaseService;
@@ -55,7 +55,7 @@ public class ReservationsController {
             HttpServletRequest httpRequest,
             @Valid @RequestBody ReservationRequest reservationRequest
     ) {
-        String cartId = (String) httpRequest.getAttribute("carId");
+        String cartId = (String) httpRequest.getAttribute("cartId");
         CartDTO cartDTO = reservationsService.reserve(reservationRequest, cartId);
         return ResponseEntity.ok(
                 ResponseFactory.success(

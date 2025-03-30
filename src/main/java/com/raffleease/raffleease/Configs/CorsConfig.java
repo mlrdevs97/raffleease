@@ -14,7 +14,7 @@ import static org.springframework.http.HttpHeaders.*;
 
 @Configuration
 public class CorsConfig {
-    @Value("${spring.application.config.cors.allowed_origin}")
+    @Value("${spring.application.host.client}")
     private String allowedOrigin;
 
     @Bean
