@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Helpers;
 
-import com.raffleease.raffleease.Domains.Associations.Model.Address;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;

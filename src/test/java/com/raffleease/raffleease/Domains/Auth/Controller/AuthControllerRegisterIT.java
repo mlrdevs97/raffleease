@@ -1,24 +1,11 @@
 package com.raffleease.raffleease.Domains.Auth.Controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRepository;
-import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
-import com.raffleease.raffleease.Domains.Users.Repository.CustomUsersRepository;
-import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
-import com.raffleease.raffleease.Helpers.AssociationRegisterBuilder;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterPhoneNumber;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
+import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -26,35 +13,12 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@Testcontainers
-@ExtendWith(SpringExtension.class)
-class AuthControllerRegisterIT {
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private CustomUsersRepository customUsersRepository;
-
-    @Autowired
-    private UsersRepository usersRepository;
-
-    @Autowired
-    private AssociationsRepository associationsRepository;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    private AssociationRegisterBuilder validBuilder;
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16.0");
+class AuthControllerRegisterIT extends BaseAuthIT {
+    private RegisterBuilder validBuilder;
 
     @BeforeEach
     void setUp() {
-        validBuilder = new AssociationRegisterBuilder();
+        validBuilder = new RegisterBuilder();
     }
 
     @AfterEach
@@ -64,14 +28,16 @@ class AuthControllerRegisterIT {
     }
 
     @Test
-    void ConnectionEstablished() {
+    void connectionEstablished() {
         assertThat(postgres.isCreated()).isTrue();
         assertThat(postgres.isRunning()).isTrue();
+        assertThat(redisContainer.isCreated()).isTrue();
+        assertThat(redisContainer.isRunning()).isTrue();
     }
 
     @Test
     void shouldRegisterSuccessfullyWithValidData() throws Exception {
-        AssociationRegister request = validBuilder.build();
+        RegisterRequest request = validBuilder.build();
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(APPLICATION_JSON)
@@ -81,265 +47,305 @@ class AuthControllerRegisterIT {
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
                 .andExpect(cookie().exists("refresh_token"));
 
-        assertThat(customUsersRepository.findByIdentifier(request.email())).isPresent();
+        String phoneNumber = request.userData().phoneNumber().prefix() + request.userData().phoneNumber().nationalNumber();
+        assertThat(usersRepository.findByIdentifier(request.userData().email())).isPresent();
+        assertThat(usersRepository.findByIdentifier(request.userData().userName())).isPresent();
+        assertThat(usersRepository.findByIdentifier(phoneNumber)).isPresent();
     }
 
-    @Test
-    void shouldFailIfPasswordIsMissing() throws Exception {
-        AssociationRegister request = validBuilder.withPassword(null).build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+    @Test void shouldFailWhenUserNameIsNull() throws Exception {
+        performRegisterRequest(validBuilder.withUserName(null).build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.password").value("Password is required"));
+                .andExpect(jsonPath("$.errors['userData.userName']").value("Association's name is required"));
+    }
+
+    @Test void shouldFailWhenUserNameDoesNotMatchLengthConstraint() throws Exception {
+        performRegisterRequest(validBuilder.withUserName("A").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['userData.userName']").value("Name must be between 2 and 25 characters"));
+    }
+
+    @Test void shouldFailWhenUserEmailIsNull() throws Exception {
+        performRegisterRequest(validBuilder.withUserEmail(null).build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['userData.email']").value("Association's email is required"));
+    }
+
+    @Test void shouldFailWhenUserEmailIsInvalid() throws Exception {
+        performRegisterRequest(validBuilder.withUserEmail("invalid-email").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['userData.email']").value("Must provide a valid email"));
+    }
+
+    @Test void shouldFailWhenPhonePrefixIsNull() throws Exception {
+        performRegisterRequest(validBuilder.withUserPhone(null, "600123456").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['userData.phoneNumber.prefix']").value("Must provide a prefix for phone number"));
+    }
+
+    @Test void shouldFailWhenPhoneNumberInvalid() throws Exception {
+        performRegisterRequest(validBuilder.withUserPhone("+34", "abc").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['userData.phoneNumber.nationalNumber']").value("Must provide a valid phone number"));
+    }
+
+    @Test void shouldFailWhenAssociationPhonePrefixIsInvalid() throws Exception {
+        performRegisterRequest(validBuilder.withAssociationPhone("-x", "600009999").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.phoneNumber.prefix']").value("Must provide a valid prefix"));
+    }
+
+    @Test void shouldFailWhenAssociationPhoneNumberIsInvalid() throws Exception {
+        performRegisterRequest(validBuilder.withAssociationPhone("+34", "invalid").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.phoneNumber.nationalNumber']").value("Must provide a valid phone number"));
+    }
+
+    @Test void shouldFailWhenPasswordTooWeak() throws Exception {
+        performRegisterRequest(validBuilder.withPassword("short").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['userData.password']").exists());
+    }
+
+    @Test void shouldFailWhenPasswordMismatch() throws Exception {
+        performRegisterRequest(validBuilder.withConfirmPassword("Different123!").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['userData.confirmPassword']").value("Password and confirm password don't match"));
+    }
+
+    @Test void shouldFailWhenAssociationNameIsNull() throws Exception {
+        performRegisterRequest(validBuilder.withAssociationName(null).build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.associationName']").value("Association's name is required"));
+    }
+
+    @Test void shouldFailWhenDescriptionTooLong() throws Exception {
+        performRegisterRequest(validBuilder.withDescription("a".repeat(501)).build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.description']").exists());
+    }
+
+    @Test void shouldFailWhenAssociationEmailInvalid() throws Exception {
+        performRegisterRequest(validBuilder.withAssociationEmail("invalid").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.email']").value("Must provide a valid email"));
+    }
+
+    @Test void shouldFailWhenAddressPlaceIdIsNull() throws Exception {
+        performRegisterRequest(validBuilder.withAddress(null, "Address", 40.0, -3.0, "Madrid", "Madrid", "28001").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.addressData.placeId']").value("Google Place ID is required"));
+    }
+
+    @Test void shouldFailWhenAddressFormattedAddressIsNull() throws Exception {
+        performRegisterRequest(validBuilder.withAddress("placeId", null, 40.0, -3.0, "Madrid", "Madrid", "28001").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.addressData.formattedAddress']").value("Formatted address is required"));
+    }
+
+    @Test void shouldFailWhenLatitudeIsNull() throws Exception {
+        performRegisterRequest(validBuilder.withAddress("placeId", "Address", null, -3.0, "Madrid", "Madrid", "28001").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.addressData.latitude']").exists());
+    }
+
+    @Test void shouldFailWhenLongitudeIsNull() throws Exception {
+        performRegisterRequest(validBuilder.withAddress("placeId", "Address", 40.0, null, "Madrid", "Madrid", "28001").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.addressData.longitude']").exists());
+    }
+
+    @Test void shouldFailWhenLatitudeIsOutOfRange() throws Exception {
+        performRegisterRequest(validBuilder.withAddress("placeId", "Address", -91.0, -3.0, "Madrid", "Madrid", "28001").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.addressData.latitude']").value("Latitude must be between -90 and 90"));
+    }
+
+    @Test void shouldFailWhenLongitudeIsOutOfRange() throws Exception {
+        performRegisterRequest(validBuilder.withAddress("placeId", "Address", 40.0, -181.0, "Madrid", "Madrid", "28001").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.addressData.longitude']").value("Longitude must be between -180 and 180"));
+    }
+
+    @Test void shouldFailWhenCityIsNull() throws Exception {
+        performRegisterRequest(validBuilder.withAddress("placeId", "Address", 40.0, -3.0, null, "Madrid", "28001").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.addressData.city']").value("City is required"));
+    }
+
+    @Test void shouldFailWhenProvinceTooShort() throws Exception {
+        performRegisterRequest(validBuilder.withAddress("placeId", "Address", 40.0, -3.0, "Madrid", "A", "28001").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.addressData.province']").value("Province must be between 2 and 100 characters"));
+    }
+
+    @Test void shouldFailWhenZipCodeInvalid() throws Exception {
+        performRegisterRequest(validBuilder.withAddress("placeId", "Address", 40.0, -3.0, "Madrid", "Madrid", "123").build())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['associationData.addressData.zipCode']").value("Must provide a valid zip code"));
     }
 
     @Test
     void shouldFailIfPasswordDoesNotMeetRegex() throws Exception {
-        AssociationRegister request = validBuilder.withPassword("weakpass").withConfirmPassword("weakpass").build();
+        RegisterRequest request = validBuilder.withPassword("weakpass").withConfirmPassword("weakpass").build();
 
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        performRegisterRequest(request)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.password").value(containsString("Password must be between 8 and 32 characters")));
+                .andExpect(jsonPath("$.errors['userData.password']").value(containsString("Password must be between 8 and 32 characters")));
+    }
+
+    @Test
+    void shouldFailIfPasswordIsMissing() throws Exception {
+        RegisterRequest request = validBuilder.withPassword(null).build();
+
+        performRegisterRequest(request)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['userData.password']").value("Password is required"));
     }
 
     @Test
     void shouldFailIfConfirmPasswordIsMissing() throws Exception {
-        AssociationRegister request = validBuilder.withConfirmPassword(null).build();
+        RegisterRequest request = validBuilder.withConfirmPassword(null).build();
 
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        performRegisterRequest(request)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.confirmPassword").value("Confirm password is required"));
+                .andExpect(jsonPath("$.errors['userData.confirmPassword']").exists());
     }
 
     @Test
     void shouldFailIfPasswordDoesNotMatchConfirmPassword() throws Exception {
-        AssociationRegister request = validBuilder.withPassword("MySecurePassword#123").withConfirmPassword("SecurePassword#123").build();
+        RegisterRequest request = validBuilder.withPassword("MySecurePassword#123").withConfirmPassword("SecurePassword#123").build();
 
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        performRegisterRequest(request)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.confirmPassword").value("Password and confirm password don't match"));
+                .andExpect(jsonPath("$.errors['userData.confirmPassword']").value("Password and confirm password don't match"));
     }
 
     @Test
-    void shouldFailIfNameDoesNotMatchSizeConstraint() throws Exception {
-        AssociationRegister request = validBuilder.withName("A").build();
+    void shouldFailWhenUserNameAlreadyExists() throws Exception {
+        RegisterRequest original = validBuilder.build();
+        performRegisterRequest(original);
 
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.name").value("Name must be between 2 and 100 characters"));
-    }
-
-    @Test
-    void shouldFailIfNameIsMissing() throws Exception {
-        AssociationRegister request = validBuilder.withName(null).build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.name").value("Association's name is required"));
-    }
-
-    @Test
-    void shouldFailIfEmailIsInvalid() throws Exception {
-        AssociationRegister request = validBuilder.withEmail("invalidemail").build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.email").value("Must provide a valid email"));
-    }
-
-    @Test
-    void shouldFailIfEMailIsMissing() throws Exception {
-        AssociationRegister request = validBuilder.withEmail(null).build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.email").value("Association's email is required"));
-    }
-
-    @Test
-    void shouldFailIfPhoneNumberIsInvalid() throws Exception {
-        AssociationRegister request = validBuilder.withPhoneNumber("invalid").build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.phoneNumber").value("Must provide a valid phone number"));
-    }
-
-    @Test
-    void shouldFailIfPhoneNumberIsMissing() throws Exception {
-        AssociationRegister request = validBuilder.withName(null).build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.name").value("Association's name is required"));
-    }
-
-    @Test
-    void shouldFailIfCityIsDoesNotMatchSizeConstraint() throws Exception {
-        AssociationRegister request = validBuilder.withCity("A").build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.city").value("City must be between 2 and 100 characters"));
-    }
-
-    @Test
-    void shouldFailIfCityIsMissing() throws Exception {
-        AssociationRegister request = validBuilder.withCity(null).build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.city").value("Association's city is required"));
-    }
-
-    @Test
-    void shouldFailIfProvinceDoesNotMatchSizeConstraint() throws Exception {
-        AssociationRegister request = validBuilder.withProvince("A").build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.province").value("Province must be between 2 and 100 characters"));
-    }
-
-    @Test
-    void shouldFailIfProvinceIsMissing() throws Exception {
-        AssociationRegister request = validBuilder.withProvince(null).build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.province").value("Association's province is required"));
-    }
-
-    @Test
-    void shouldFailIfZipCodeIsMissing() throws Exception {
-        AssociationRegister request = validBuilder.withZipCode(null).build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.zipCode").value("Association's zip code is required"));
-    }
-
-    @Test
-    void shouldFailIfZipCodeIsInvalid() throws Exception {
-        AssociationRegister request = validBuilder.withZipCode("123").build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.zipCode").value("Must provide a valid zip code"));
-    }
-
-    @Test
-    void shouldFailIfEmailIsAlreadyUsed() throws Exception {
-        AssociationRegister request = validBuilder.build();
-        performSuccessfulRegister(request);
-
-        AssociationRegister duplicateEmailRequest = new AssociationRegisterBuilder()
-                .withEmail(request.email())
-                .withPhoneNumber("+34660000111")
-                .withName("NewAssociation")
-                .withPassword("StrongPassw0rd!").withConfirmPassword("StrongPassw0rd!")
+        RegisterRequest duplicate = new RegisterBuilder()
+                .withUserEmail("random@mail.com")
+                .withUserPhone("+34", "600111111")
+                .withAssociationName("Another Association")
+                .withAssociationEmail("another@example.com")
+                .withAssociationPhone("+34", "600222222")
+                .withAddress("randomPlaceId", "Address", 40.0, -80.0, "Madrid", "Madrid", "28001")
+                .withPassword("MySecurePassword#123")
+                .withConfirmPassword("MySecurePassword#123")
                 .build();
 
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(duplicateEmailRequest)))
+        performRegisterRequest(duplicate)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(containsString("Failed to save user")));
+    }
+
+    @Test
+    void shouldFailWhenUserEmailAlreadyExists() throws Exception {
+        RegisterRequest original = validBuilder.build();
+        performRegisterRequest(original);
+
+        RegisterRequest duplicate = new RegisterBuilder()
+                .withUserName("new_user")
+                .withUserPhone("+34", "600111111")
+                .withAssociationName("Another Association")
+                .withAssociationEmail("another@example.com")
+                .withAssociationPhone("+34", "600222222")
+                .withAddress("randomPlaceId", "Address", 40.0, -81.0, "Madrid", "Madrid", "28001")
+                .withPassword("MySecurePassword#123")
+                .withConfirmPassword("MySecurePassword#123")
+                .build();
+
+        performRegisterRequest(duplicate)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(containsString("Failed to save user")));
+    }
+
+    @Test
+    void shouldFailWhenUserPhoneNumberAlreadyExists() throws Exception {
+        RegisterRequest original = validBuilder.build();
+        performRegisterRequest(original);
+
+        RegisterPhoneNumber phoneNumber = original.userData().phoneNumber();
+        RegisterRequest duplicate = new RegisterBuilder()
+                .withUserEmail("unexisting@email.com")
+                .withUserName("new_user")
+                .withAssociationName("Another Association")
+                .withAssociationEmail("another@example.com")
+                .withAssociationPhone("+34", "600222222")
+                .withAddress("randomPlaceId", "Address", 40.0, -81.0, "Madrid", "Madrid", "28001")
+                .withPassword("MySecurePassword#123")
+                .withConfirmPassword("MySecurePassword#123")
+                .build();
+
+        performRegisterRequest(duplicate)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(containsString("Failed to save user")));
+    }
+
+    @Test
+    void shouldFailWhenAssociationNameAlreadyExists() throws Exception {
+        RegisterRequest original = validBuilder.build();
+        performRegisterRequest(original);
+
+        RegisterRequest duplicate = new RegisterBuilder()
+                .withUserEmail("unexisting@email.com")
+                .withUserName("new_user")
+                .withUserPhone("+34", "600111111")
+                .withAssociationEmail("another@example.com")
+                .withAssociationPhone("+34", "600222222")
+                .withAddress("randomPlaceId", "Address", 40.0, -81.0, "Madrid", "Madrid", "28001")
+                .withPassword("MySecurePassword#123")
+                .withConfirmPassword("MySecurePassword#123")
+                .build();
+
+        performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value(containsString("Failed to save association")));
     }
 
     @Test
-    void shouldFailIfPhoneNumberIsAlreadyUsed() throws Exception {
-        AssociationRegister request = validBuilder.build();
-        performSuccessfulRegister(request);
+    void shouldFailWhenAssociationEmailAlreadyExists() throws Exception {
+        RegisterRequest original = validBuilder.build();
+        performRegisterRequest(original);
 
-        AssociationRegister duplicatePhoneRequest = new AssociationRegisterBuilder()
-                .withPhoneNumber(request.phoneNumber())
-                .withEmail("uniqueemail@example.com")
-                .withName("AnotherAssociation")
-                .withPassword("StrongPassw0rd!").withConfirmPassword("StrongPassw0rd!")
+        RegisterRequest duplicate = new RegisterBuilder()
+                .withUserEmail("unexisting@mail.com")
+                .withUserName("new_user")
+                .withUserPhone("+34", "600111111")
+                .withAssociationName("Another Association")
+                .withAssociationPhone("+34", "600222222")
+                .withAddress("randomPlaceId", "Address", 40.0, -81.0, "Madrid", "Madrid", "28001")
+                .withPassword("MySecurePassword#123")
+                .withConfirmPassword("MySecurePassword#123")
                 .build();
 
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(duplicatePhoneRequest)))
+        performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value(containsString("Failed to save association")));
     }
 
     @Test
-    void shouldFailIfAssociationNameIsAlreadyUsed() throws Exception {
-        AssociationRegister request = validBuilder.build();
-        performSuccessfulRegister(request);
+    void shouldFailWhenAssociationPhoneAlreadyExists() throws Exception {
+        RegisterRequest original = validBuilder.build();
+        performRegisterRequest(original);
 
-        AssociationRegister duplicateNameRequest = new AssociationRegisterBuilder()
-                .withName(request.name())
-                .withEmail("anotheremail@example.com")
-                .withPhoneNumber("+34660000222")
-                .withPassword("StrongPassw0rd!").withConfirmPassword("StrongPassw0rd!")
+        RegisterPhoneNumber phoneNumber = original.associationData().phoneNumber();
+        RegisterRequest duplicate = new RegisterBuilder()
+                .withUserEmail("unexisting@mail.com")
+                .withUserName("new_user")
+                .withUserPhone("+34", "600111111")
+                .withAssociationName("Another Association")
+                .withAssociationEmail("another@example.com")
+                .withAddress("randomPlaceId", "Address", 40.0, -81.0, "Madrid", "Madrid", "28001")
+                .withPassword("MySecurePassword#123")
+                .withConfirmPassword("MySecurePassword#123")
                 .build();
 
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(duplicateNameRequest)))
+        performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value(containsString("Failed to save association")));
-    }
-
-    @Test
-    void shouldFailIfUserNameIsAlreadyUsed() throws Exception {
-        AssociationRegister request = validBuilder.build();
-        performSuccessfulRegister(request);
-
-        AssociationRegister duplicateUserNameRequest = new AssociationRegisterBuilder()
-                .withEmail(request.email())
-                .withPhoneNumber("+34660000333")
-                .withName("UniqueNewAssociation")
-                .withPassword("StrongPassw0rd!").withConfirmPassword("StrongPassw0rd!")
-                .build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(duplicateUserNameRequest)))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value(containsString("Failed to save association")));
-    }
-
-    private void performSuccessfulRegister(AssociationRegister request) throws Exception {
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
     }
 }

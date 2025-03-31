@@ -1,9 +1,6 @@
 package com.raffleease.raffleease.Domains.Raffles.Controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
-import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
@@ -11,28 +8,19 @@ import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
-import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
-import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
-import com.raffleease.raffleease.Helpers.AssociationRegisterBuilder;
 import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
-import com.raffleease.raffleease.Helpers.TicketsCreateBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDING;
-import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;

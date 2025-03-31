@@ -1,17 +1,12 @@
 package com.raffleease.raffleease.Domains.Auth.Controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRepository;
-import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
-import com.raffleease.raffleease.Domains.Tokens.Model.TokenType;
 import com.raffleease.raffleease.Domains.Tokens.Services.BlackListService;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
-import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
-import com.raffleease.raffleease.Helpers.AssociationRegisterBuilder;
+import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import com.raffleease.raffleease.Helpers.TestUtils;
-import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +20,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -33,12 +27,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import java.util.Date;
-import java.util.UUID;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -48,24 +38,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Testcontainers
 @ExtendWith(SpringExtension.class)
-public class AuthControllerValidateIT {
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private UsersRepository usersRepository;
-
-    @Autowired
-    private AssociationsRepository associationsRepository;
-
+public class AuthControllerValidateIT extends BaseAuthIT {
     @Autowired
     private TokensQueryService tokensQueryService;
 
     @Autowired
     private BlackListService blackListService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     private String accessToken;
     private String refreshToken;
@@ -86,29 +64,11 @@ public class AuthControllerValidateIT {
 
     @BeforeEach
     void setUp() throws Exception {
-        AssociationRegister registerRequest = new AssociationRegisterBuilder().build();
-        performRegister(registerRequest);
-
-        LoginRequest loginRequest = new LoginRequest(registerRequest.email(), registerRequest.password());
-        MvcResult result = performLogin(loginRequest);
+        MvcResult result = performAuthentication(new RegisterBuilder().build());
 
         JsonNode jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
         accessToken = jsonNode.path("data").path("accessToken").asText();
         refreshToken = result.getResponse().getCookie("refresh_token").getValue();
-    }
-
-    @AfterEach
-    void cleanDatabase() {
-        associationsRepository.deleteAll();
-        usersRepository.deleteAll();
-    }
-
-    @Test
-    void ConnectionEstablished() {
-        assertThat(postgres.isCreated()).isTrue();
-        assertThat(postgres.isRunning()).isTrue();
-        assertThat(redisContainer.isCreated()).isTrue();
-        assertThat(redisContainer.isRunning()).isTrue();
     }
 
     @Test
@@ -150,20 +110,12 @@ public class AuthControllerValidateIT {
                 .andExpect(status().isForbidden());
     }
 
-    private void performRegister(AssociationRegister request) throws Exception {
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
+    private MvcResult performAuthentication(RegisterRequest registerRequest) throws Exception {
+        performRegisterRequest(registerRequest);
+        LoginRequest loginRequest = LoginRequest.builder()
+                .identifier(registerRequest.userData().email())
+                .password(registerRequest.userData().password())
+                .build();
+        return performLoginRequest(loginRequest).andReturn();
     }
-
-    private MvcResult performLogin(LoginRequest request) throws Exception {
-        return mockMvc.perform(post("/api/v1/auth/login")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(cookie().exists("refresh_token"))
-                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
-                .andReturn();
-    }
- }
+}

@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Auth.Controller;
 
-import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Auth.Services.AuthValidationService;
 import com.raffleease.raffleease.Domains.Auth.Services.LoginService;
@@ -27,7 +27,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(
-            @Valid @RequestBody AssociationRegister request,
+            @Valid @RequestBody RegisterRequest request,
             HttpServletResponse response
     ) {
         return ResponseEntity.ok().body(

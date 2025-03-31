@@ -3,7 +3,7 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
-import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
@@ -14,7 +14,7 @@ import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
-import com.raffleease.raffleease.Helpers.AssociationRegisterBuilder;
+import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
 import com.raffleease.raffleease.Helpers.TicketsCreateBuilder;
 import org.junit.jupiter.api.Test;
@@ -239,10 +239,10 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
     @Test
     void shouldFailWhenUsingImagesFromAnotherAssociation() throws Exception {
         // Register second association
-        AssociationRegister otherUser = new AssociationRegisterBuilder()
-                .withEmail("otheruser@example.com")
-                .withName("Another Association")
-                .withPhoneNumber("998877665")
+        RegisterRequest otherUser = new RegisterBuilder()
+                .withUserEmail("otheruser@example.com")
+                .withUserName("Another Association")
+                .withUserPhone("+34", "123456789")
                 .build();
         String token = performAuthentication(otherUser);
 

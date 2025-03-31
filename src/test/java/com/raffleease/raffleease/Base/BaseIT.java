@@ -3,13 +3,13 @@ package com.raffleease.raffleease.Base;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRepository;
-import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
-import com.raffleease.raffleease.Helpers.AssociationRegisterBuilder;
+import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,19 +54,17 @@ public class BaseIT {
 
     protected String accessToken;
 
-    protected String refreshToken;
+    @Autowired
+    protected UsersRepository usersRepository;
 
     @Autowired
-    private UsersRepository usersRepository;
+    protected AssociationsRepository associationsRepository;
 
     @Autowired
-    private AssociationsRepository associationsRepository;
+    protected ImagesRepository imagesRepository;
 
     @Autowired
-    private ImagesRepository imagesRepository;
-
-    @Autowired
-    private RafflesRepository rafflesRepository;
+    protected RafflesRepository rafflesRepository;
 
     @Container
     @ServiceConnection
@@ -84,7 +82,7 @@ public class BaseIT {
 
     @BeforeEach
     void setUp() throws Exception {
-        accessToken = performAuthentication(new AssociationRegisterBuilder().build());
+        accessToken = performAuthentication(new RegisterBuilder().build());
     }
 
     @AfterEach
@@ -103,10 +101,10 @@ public class BaseIT {
         assertThat(redisContainer.isRunning()).isTrue();
     }
 
-    protected String performAuthentication(AssociationRegister registerRequest) throws Exception {
+    protected String performAuthentication(RegisterRequest registerRequest) throws Exception {
         performRegister(registerRequest);
 
-        LoginRequest loginRequest = new LoginRequest(registerRequest.email(), registerRequest.password());
+        LoginRequest loginRequest = new LoginRequest(registerRequest.userData().email(), registerRequest.userData().password());
         MvcResult result = performLogin(loginRequest);
 
         JsonNode jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
@@ -149,7 +147,7 @@ public class BaseIT {
                 .build();
     }
 
-    private void performRegister(AssociationRegister request) throws Exception  {
+    private void performRegister(RegisterRequest request) throws Exception  {
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

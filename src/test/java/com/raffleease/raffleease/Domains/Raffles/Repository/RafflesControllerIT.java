@@ -3,11 +3,11 @@ package com.raffleease.raffleease.Domains.Raffles.Repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRepository;
-import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
-import com.raffleease.raffleease.Helpers.AssociationRegisterBuilder;
+import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,10 +72,10 @@ class RafflesControllerIT {
 
     @BeforeEach
     void setUp() throws Exception {
-        AssociationRegister registerRequest = new AssociationRegisterBuilder().build();
+        RegisterRequest registerRequest = new RegisterBuilder().build();
         performRegister(registerRequest);
 
-        LoginRequest loginRequest = new LoginRequest(registerRequest.email(), registerRequest.password());
+        LoginRequest loginRequest = new LoginRequest(registerRequest.userData().email(), registerRequest.userData().password());
         MvcResult result = performLogin(loginRequest);
 
         JsonNode jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
@@ -97,7 +97,7 @@ class RafflesControllerIT {
         assertThat(redisContainer.isRunning()).isTrue();
     }
 
-    private void performRegister(AssociationRegister request) throws Exception {
+    private void performRegister(RegisterRequest request) throws Exception {
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

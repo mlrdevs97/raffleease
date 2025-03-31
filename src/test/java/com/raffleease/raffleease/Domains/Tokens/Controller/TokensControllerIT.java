@@ -3,12 +3,12 @@ package com.raffleease.raffleease.Domains.Tokens.Controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRepository;
-import com.raffleease.raffleease.Domains.Auth.DTOs.AssociationRegister;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Tokens.Services.BlackListService;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
-import com.raffleease.raffleease.Helpers.AssociationRegisterBuilder;
+import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import com.raffleease.raffleease.Helpers.TestUtils;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
@@ -82,10 +82,10 @@ class TokensControllerIT {
 
     @BeforeEach
     void setUp() throws Exception {
-        AssociationRegister registerRequest = new AssociationRegisterBuilder().build();
+        RegisterRequest registerRequest = new RegisterBuilder().build();
         performRegister(registerRequest);
 
-        LoginRequest loginRequest = new LoginRequest(registerRequest.email(), registerRequest.password());
+        LoginRequest loginRequest = new LoginRequest(registerRequest.userData().email(), registerRequest.userData().password());
         MvcResult result = performLogin(loginRequest);
 
         JsonNode jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
@@ -163,7 +163,7 @@ class TokensControllerIT {
                 .andExpect(status().isForbidden());
     }
 
-    private void performRegister(AssociationRegister request) throws Exception {
+    private void performRegister(RegisterRequest request) throws Exception {
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

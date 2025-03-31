@@ -6,7 +6,7 @@ import com.raffleease.raffleease.Domains.Images.DTOs.UpdateOrderRequest;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Helpers.AssociationBuilder;
-import com.raffleease.raffleease.Helpers.AssociationRegisterBuilder;
+import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import com.raffleease.raffleease.Helpers.RaffleBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
@@ -116,12 +116,7 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
     @Test
     void shouldFailIfImageDoesNotBelongToAssociation() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
-        Association association = new AssociationBuilder().build();
-        String otherToken = performAuthentication(new AssociationRegisterBuilder()
-                .withName(association.getAssociationName())
-                .withEmail(association.getEmail())
-                .withPhoneNumber(association.getPhoneNumber())
-                .build());
+        String otherToken = performAuthentication(new RegisterBuilder().build());
 
         UpdateOrderRequest reorderRequest = new UpdateOrderRequest(List.of(copyWithNewOrder(images.get(0), 1)));
         sendReorderRequest(reorderRequest, reorderURL, otherToken)

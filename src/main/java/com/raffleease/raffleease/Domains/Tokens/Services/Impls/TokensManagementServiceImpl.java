@@ -3,7 +3,7 @@ package com.raffleease.raffleease.Domains.Tokens.Services.Impls;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Auth.Services.CookiesService;
 import com.raffleease.raffleease.Domains.Tokens.Services.*;
-import com.raffleease.raffleease.Domains.Users.Services.IUsersService;
+import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,7 +20,7 @@ public class TokensManagementServiceImpl implements TokensManagementService {
     private final TokensCreateService tokensCreateService;
     private final TokensValidateService tokensValidateService;
     private final TokensQueryService tokensQueryService;
-    private final IUsersService usersService;
+    private final UsersService usersService;
     private final BlackListService blackListService;
     private final CookiesService cookiesService;
 

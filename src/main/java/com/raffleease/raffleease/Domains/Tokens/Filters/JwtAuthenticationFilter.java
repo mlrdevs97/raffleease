@@ -4,7 +4,7 @@ import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensValidateService;
 import com.raffleease.raffleease.Domains.Users.Model.CostumUserDetails;
 import com.raffleease.raffleease.Domains.Users.Model.User;
-import com.raffleease.raffleease.Domains.Users.Services.IUsersService;
+import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import jakarta.servlet.FilterChain;
@@ -30,7 +30,7 @@ import java.util.Objects;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final TokensQueryService tokenQueryService;
     private final TokensValidateService tokenValidationService;
-    private final IUsersService usersService;
+    private final UsersService usersService;
 
     @Override
     protected void doFilterInternal(

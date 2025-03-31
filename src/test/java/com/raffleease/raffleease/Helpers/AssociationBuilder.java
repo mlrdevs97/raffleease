@@ -4,22 +4,23 @@ import com.raffleease.raffleease.Domains.Associations.Model.Address;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 
 public class AssociationBuilder {
-    private String associationName = "Default Association";
-    private String userName = "default_user";
-    private String email = "default@example.com";
-    private String phoneNumber = "+34123456789";
-    private String password = "password";
-    private String city = "Seville";
-    private String province = "Seville";
-    private String zipCode = "41001";
 
-    public AssociationBuilder withAssociationName(String name) {
-        this.associationName = name;
-        return this;
-    }
+    private String name = "Test Association";
+    private String email = "association@example.com";
+    private String phoneNumber = "+34660009999";
+    private String description = "Helping the world!";
+    private Address address = Address.builder()
+            .placeId("ChIJ1234567890")
+            .formattedAddress("123 Main Street, Madrid")
+            .latitude(40.4168)
+            .longitude(-3.7038)
+            .city("Madrid")
+            .province("Madrid")
+            .zipCode("28001")
+            .build();
 
-    public AssociationBuilder withUserName(String userName) {
-        this.userName = userName;
+    public AssociationBuilder withName(String name) {
+        this.name = name;
         return this;
     }
 
@@ -28,45 +29,28 @@ public class AssociationBuilder {
         return this;
     }
 
-    public AssociationBuilder withPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+    public AssociationBuilder withPhoneNumber(String value) {
+        this.phoneNumber = value;
         return this;
     }
 
-    public AssociationBuilder withPassword(String password) {
-        this.password = password;
+    public AssociationBuilder withDescription(String description) {
+        this.description = description;
         return this;
     }
 
-    public AssociationBuilder withCity(String city) {
-        this.city = city;
-        return this;
-    }
-
-    public AssociationBuilder withProvince(String province) {
-        this.province = province;
-        return this;
-    }
-
-    public AssociationBuilder withZipCode(String zipCode) {
-        this.zipCode = zipCode;
+    public AssociationBuilder withAddress(Address address) {
+        this.address = address;
         return this;
     }
 
     public Association build() {
-        Address address = new Address();
-        address.setCity(city);
-        address.setProvince(province);
-        address.setZipCode(zipCode);
-
-        Association association = new Association();
-        association.setAssociationName(associationName);
-        association.setUserName(userName);
-        association.setEmail(email);
-        association.setPhoneNumber(phoneNumber);
-        association.setPassword(password);
-        association.setAddress(address);
-
-        return association;
+        return Association.builder()
+                .name(name)
+                .email(email)
+                .phoneNumber(phoneNumber)
+                .description(description)
+                .address(address)
+                .build();
     }
 }

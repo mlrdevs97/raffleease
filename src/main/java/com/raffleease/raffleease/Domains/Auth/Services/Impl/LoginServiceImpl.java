@@ -6,22 +6,24 @@ import com.raffleease.raffleease.Domains.Auth.Services.CookiesService;
 import com.raffleease.raffleease.Domains.Auth.Services.LoginService;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensCreateService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
-import com.raffleease.raffleease.Domains.Users.Services.IUsersService;
+import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthenticationException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class LoginServiceImpl implements LoginService {
     private final AuthenticationManager authenticationManager;
     private final TokensCreateService tokensCreateService;
     private final CookiesService cookiesService;
-    private final IUsersService usersService;
+    private final UsersService usersService;
 
     @Value("${spring.application.security.jwt.refresh_token_expiration}")
     private Long refreshTokenExpiration;
@@ -39,7 +41,7 @@ public class LoginServiceImpl implements LoginService {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(identifier, password));
         } catch (org.springframework.security.core.AuthenticationException ex) {
-            throw new AuthenticationException("Authentication failed for provided credentials");
+            throw new AuthenticationException("Authentication failed for provided credentials: " + ex.getMessage());
         }
     }
 }
