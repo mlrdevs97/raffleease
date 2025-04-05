@@ -2,7 +2,7 @@ package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
+import com.raffleease.raffleease.Domains.Images.Services.ImagesAssociateService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
@@ -27,7 +27,7 @@ import java.util.List;
 public class RafflesEditServiceImpl implements RafflesEditService {
     private final RafflesPersistenceService rafflesPersistence;
     private final ITicketsService ticketsCreateService;
-    private final ImagesService imagesService;
+    private final ImagesAssociateService imagesAssociateService;
     private final IRafflesMapper rafflesMapper;
 
     @Transactional
@@ -74,8 +74,9 @@ public class RafflesEditServiceImpl implements RafflesEditService {
     }
 
     private void addNewImages(Raffle raffle, List<ImageDTO> imageDTOs) {
-        List<Image> images = imagesService.associateImagesToRaffleOnEdit(raffle, imageDTOs);
-        raffle.setImages(images);
+        List<Image> images = imagesAssociateService.associateImagesToRaffleOnEdit(raffle, imageDTOs);
+        raffle.getImages().clear();
+        raffle.getImages().addAll(images);
     }
 
     private void editTotalTickets(Raffle raffle, long editTotal) {
@@ -90,12 +91,12 @@ public class RafflesEditServiceImpl implements RafflesEditService {
         raffle.setAvailableTickets(raffle.getAvailableTickets() + ticketDifference);
 
         if (ticketDifference > 0) {
-            createAdditionalTickets(raffle, ticketDifference);
+            createAdditionalTickets(raffle, oldTotal, ticketDifference);
         }
     }
 
-    private void createAdditionalTickets(Raffle raffle, long amount) {
-        long lowerLimit = raffle.getFirstTicketNumber() + raffle.getTotalTickets();
+    private void createAdditionalTickets(Raffle raffle, long oldTotal, long amount) {
+        long lowerLimit = raffle.getFirstTicketNumber() + oldTotal;
 
         TicketsCreate request = TicketsCreate.builder()
                 .amount(amount)

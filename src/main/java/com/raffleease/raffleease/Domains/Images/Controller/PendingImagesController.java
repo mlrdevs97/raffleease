@@ -2,9 +2,10 @@ package com.raffleease.raffleease.Domains.Images.Controller;
 
 import com.raffleease.raffleease.Domains.Images.DTOs.UpdateOrderRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageUpload;
-import com.raffleease.raffleease.Domains.Images.Services.DeleteImagesService;
+import com.raffleease.raffleease.Domains.Images.Services.ImagesDeleteService;
+import com.raffleease.raffleease.Domains.Images.Services.ImagesCreateService;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
-import com.raffleease.raffleease.Domains.Images.Services.UpdateImagesOrderService;
+import com.raffleease.raffleease.Domains.Images.Services.ImagesUpdateOrderService;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,8 +21,9 @@ import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 @RequestMapping("/api/v1/images")
 public class PendingImagesController {
     private final ImagesService imagesService;
-    private final UpdateImagesOrderService updateImagesOrderService;
-    private final DeleteImagesService deleteImagesService;
+    private final ImagesCreateService imagesCreateService;
+    private final ImagesUpdateOrderService imagesUpdateOrderService;
+    private final ImagesDeleteService imagesDeleteService;
 
     @PostMapping(consumes = MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> uploadImages(
@@ -30,7 +32,7 @@ public class PendingImagesController {
     ) {
         return ResponseEntity.ok(
                 ResponseFactory.success(
-                        imagesService.create(request, imageUpload),
+                        imagesCreateService.create(request, imageUpload),
                         "New images created successfully"
                 )
         );
@@ -43,7 +45,7 @@ public class PendingImagesController {
     ) {
         return ResponseEntity.ok(
                 ResponseFactory.success(
-                        updateImagesOrderService.updateImageOrderOnCreate(request, updateOrderRequest),
+                        imagesUpdateOrderService.updateImageOrderOnCreate(request, updateOrderRequest),
                         "Image order updated successfully"
                 )
         );
@@ -54,7 +56,7 @@ public class PendingImagesController {
             HttpServletRequest request,
             @PathVariable Long id
     ) {
-        deleteImagesService.deleteImage(request, id);
+        imagesDeleteService.deleteImage(request, id);
         return ResponseEntity.noContent().build();
     }
 }

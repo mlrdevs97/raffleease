@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Helpers;
 
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Tokens.Model.TokenType;
 import com.raffleease.raffleease.Domains.Tokens.Services.BlackListService;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
@@ -24,5 +25,16 @@ public class TestUtils {
         Date expiration = tokensQueryService.getExpiration(token);
         Long expirationTime = expiration.getTime() - System.currentTimeMillis();
         blackListService.addTokenToBlackList(tokensQueryService.getTokenId(token), expirationTime);
+    }
+
+    public static RegisterRequest getOtherUserRegisterRequest() {
+        return new RegisterBuilder()
+                .withUserName("Random Name")
+                .withUserEmail("random@mail.com")
+                .withUserPhone("+34", "987987654")
+                .withAssociationName("Unexisting Association")
+                .withAssociationPhone("+34", "987876554")
+                .withAssociationEmail("random@association.com")
+                .build();
     }
 }

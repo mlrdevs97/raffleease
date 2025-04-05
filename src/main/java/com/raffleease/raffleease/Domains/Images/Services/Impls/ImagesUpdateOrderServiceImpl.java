@@ -3,13 +3,13 @@ package com.raffleease.raffleease.Domains.Images.Services.Impls;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
-import com.raffleease.raffleease.Domains.Images.DTOs.UpdateOrderRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageResponse;
+import com.raffleease.raffleease.Domains.Images.DTOs.UpdateOrderRequest;
 import com.raffleease.raffleease.Domains.Images.Mappers.ImagesMapper;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
-import com.raffleease.raffleease.Domains.Images.Services.UpdateImagesOrderService;
+import com.raffleease.raffleease.Domains.Images.Services.ImagesUpdateOrderService;
+import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
-public class UpdateImagesOrderServiceImpl implements UpdateImagesOrderService {
+public class ImagesUpdateOrderServiceImpl implements ImagesUpdateOrderService {
     private final AssociationsService associationsService;
     private final RafflesPersistenceService rafflesPersistenceService;
     private final ImagesMapper mapper;

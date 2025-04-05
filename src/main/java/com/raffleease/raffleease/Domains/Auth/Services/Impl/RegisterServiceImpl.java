@@ -12,14 +12,12 @@ import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.ADMIN;
 
-@Slf4j
 @RequiredArgsConstructor
 @Service
 public class RegisterServiceImpl implements RegisterService {
@@ -36,7 +34,6 @@ public class RegisterServiceImpl implements RegisterService {
     @Override
     public AuthResponse register(RegisterRequest request, HttpServletResponse response) {
         User user = usersService.create(request.userData(), passwordEncoder.encode(request.userData().password()));
-        log.info("PHONE NUMBER: " + user.getPhoneNumber());
         Association association = associationsService.create(request.associationData());
         associationsService.createMembership(association, user, ADMIN);
         String refreshToken = tokensCreateService.generateRefreshToken(user.getId());

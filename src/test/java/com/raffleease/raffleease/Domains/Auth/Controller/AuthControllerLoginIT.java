@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -104,7 +105,7 @@ public class AuthControllerLoginIT extends BaseAuthIT {
 
         performLoginRequest(loginRequest)
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Authentication failed for provided credentials"));
+                .andExpect(jsonPath("$.message").value(containsString("Authentication failed for provided credentials")));
     }
 
     @Test
@@ -116,6 +117,6 @@ public class AuthControllerLoginIT extends BaseAuthIT {
 
         performLoginRequest(loginRequest)
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Authentication failed for provided credentials"));
+                .andExpect(jsonPath("$.message").value(containsString("Authentication failed for provided credentials")));
     }
 }

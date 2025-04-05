@@ -59,7 +59,7 @@ public class ImageValidatorImpl implements ImageValidator {
                 .toList();
 
         if (!invalidImageIds.isEmpty()) {
-            throw new BusinessException("The following images are already linked to another raffle: " + invalidImageIds);
+            throw new BusinessException("One or more images are already associated with a different raffle");
         }
     }
 
@@ -67,7 +67,7 @@ public class ImageValidatorImpl implements ImageValidator {
     public void validateAllArePending(List<Image> images) {
         boolean anyLinked = images.stream().anyMatch(img -> img.getRaffle() != null);
         if (anyLinked) {
-            throw new BusinessException("One or more images are already linked to a raffle and cannot be reordered.");
+            throw new BusinessException("One or more images are already linked to a raffle.");
         }
     }
 

@@ -6,9 +6,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+import static com.raffleease.raffleease.Constants.ImagesConstraints.MAX_IMAGES;
+import static com.raffleease.raffleease.Constants.ImagesConstraints.MIN_IMAGES;
+
 public record ImageUpload(
         @NotEmpty(message = "Must provide at least one image")
-        @Size(min = 1, max = 10, message = "Must provide between 1 and 10 images")
+        @Size(min = MIN_IMAGES, max = MAX_IMAGES, message = "Must provide between 1 and 10 images")
         List<MultipartFile> files
 ) {
 }

@@ -1,13 +1,13 @@
 package com.raffleease.raffleease.Domains.Images.Controller;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.DTOs.UpdateOrderRequest;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Helpers.AssociationBuilder;
-import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import com.raffleease.raffleease.Helpers.RaffleBuilder;
+import com.raffleease.raffleease.Helpers.TestUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -116,7 +116,9 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
     @Test
     void shouldFailIfImageDoesNotBelongToAssociation() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
-        String otherToken = performAuthentication(new RegisterBuilder().build());
+
+        RegisterRequest registerRequest = TestUtils.getOtherUserRegisterRequest();
+        String otherToken = performAuthentication(registerRequest);
 
         UpdateOrderRequest reorderRequest = new UpdateOrderRequest(List.of(copyWithNewOrder(images.get(0), 1)));
         sendReorderRequest(reorderRequest, reorderURL, otherToken)
@@ -136,7 +138,7 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
         UpdateOrderRequest reorderRequest = new UpdateOrderRequest(List.of(copyWithNewOrder(images.get(0), 1)));
         sendReorderRequest(reorderRequest, reorderURL, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("One or more images are already linked to a raffle and cannot be reordered."));
+                .andExpect(jsonPath("$.message").value("One or more images are already linked to a raffle."));
     }
 
     @Test

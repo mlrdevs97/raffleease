@@ -4,8 +4,10 @@ import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
-import com.raffleease.raffleease.Domains.Images.Services.DeleteImagesService;
+import com.raffleease.raffleease.Domains.Images.Services.ImagesDeleteService;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
+import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
@@ -16,27 +18,33 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
-public class DeleteImagesServiceImpl implements DeleteImagesService {
+public class ImagesDeleteServiceImpl implements ImagesDeleteService {
     private final AssociationsService associationsService;
     private final ImagesService imagesService;
+    private final RafflesPersistenceService rafflesPersistenceService;
     private final ImagesRepository repository;
 
     @Override
     @Transactional
     public void deleteImage(HttpServletRequest request, Long id) {
         Image image = imagesService.findById(id);
-        if (image.getRaffle() != null) {
-            throw new BusinessException("You cannot delete an image already associated with a raffle");
-        }
 
         Association association = associationsService.findFromRequest(request);
         if (!image.getAssociation().equals(association)) {
             throw new AuthorizationException("You are not authorized to delete this image");
         }
 
+        if (Objects.nonNull(image.getRaffle())) {
+            Raffle raffle = image.getRaffle();
+            List<Image> raffleImages = image.getRaffle().getImages();
+            raffleImages.remove(image);
+            image.setRaffle(null);
+            rafflesPersistenceService.save(raffle);
+        }
         delete(image);
         updateImagesOrder(association, image.getImageOrder());
     }

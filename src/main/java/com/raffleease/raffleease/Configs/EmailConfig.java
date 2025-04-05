@@ -6,12 +6,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
-@Configuration
 @RequiredArgsConstructor
+@Configuration
 public class EmailConfig {
     private final JavaMailSenderImpl mailSender;
 
-    @Value("${MAIL_PASSWORD}")
+    @Value("${spring.mail.password}")
     private String mailPassword;
 
     @PostConstruct

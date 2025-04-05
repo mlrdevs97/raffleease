@@ -5,7 +5,7 @@ import com.raffleease.raffleease.Domains.Carts.Mappers.ICartsMapper;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Carts.Services.ICartsService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Services.AvailabilityService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RaffleTicketsAvailabilityService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Reservations.DTOs.ReservationRequest;
 import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsCreateService;
@@ -28,7 +28,7 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.RESER
 public class ReservationsCreateServiceImpl implements IReservationsCreateService {
     private final RafflesPersistenceService rafflePersistence;
     private final ITicketsQueryService ticketsQueryService;
-    private final AvailabilityService availabilityService;
+    private final RaffleTicketsAvailabilityService raffleTicketsAvailabilityService;
     private final ITicketsService ticketsService;
     private final ICartsService cartsService;
     private final ICartsMapper cartsMapper;
@@ -48,7 +48,7 @@ public class ReservationsCreateServiceImpl implements IReservationsCreateService
     @Transactional
     private CartDTO reserveInternal(Long raffleId, List<Ticket> tickets, String cartId) {
         List<Ticket> updatedTickets = ticketsService.edit(tickets, RESERVED);
-        availabilityService.reduceAvailableTickets(raffleId, updatedTickets.size());
+        raffleTicketsAvailabilityService.reduceAvailableTickets(raffleId, updatedTickets.size());
         Cart cart = createOrRetrieveCart(raffleId, tickets, cartId);
         return cartsMapper.fromCart(cart);
     }

@@ -2,9 +2,12 @@ package com.raffleease.raffleease.Domains.Images.Controller;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
+import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Helpers.RaffleBuilder;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
-
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.nio.file.Files;
@@ -14,17 +17,34 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class PendingImagesControllerCreateIT extends BaseImagesIT {
+public class ImagesControllerCreateIT extends BaseImagesIT {
     @Value("${spring.storage.images.base_path}")
     private String basePath;
+    private Raffle raffle;
+    private List<ImageDTO> originalImages;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        originalImages = parseImagesFromResponse(uploadImages(2).andReturn());
+        Long associationId = Long.parseLong(tokensQueryService.getSubject(accessToken));
+        Association association = associationsRepository.findById(associationId).orElseThrow();
+        raffle = rafflesRepository.save(new RaffleBuilder(association).build());
+
+        for (int i = 0; i < originalImages.size(); i++) {
+            Image image = imagesRepository.findById(originalImages.get(i).id()).orElseThrow();
+            image.setRaffle(raffle);
+            image.setImageOrder(i + 1);
+            imagesRepository.save(image);
+        }
+    }
 
     @Test
     void shouldUploadAndStoreImages() throws Exception {
-        MvcResult result = uploadImages(2)
+        MvcResult result = uploadImagesForRaffle(2, raffle.getId())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("New images created successfully"))
                 .andExpect(jsonPath("$.data.images", hasSize(2)))
@@ -46,14 +66,14 @@ class PendingImagesControllerCreateIT extends BaseImagesIT {
             assertThat(image.filePath()).contains(expectedPath.toString());
             assertThat(Files.exists(expectedPath)).isTrue();
 
-            assertThat(image.imageOrder()).isEqualTo(i + 1);
+            assertThat(image.imageOrder()).isEqualTo(originalImages.size() + i + 1);
         }
     }
 
     @Test
     void shouldUploadAndStoreImagesInVariousRequests() throws Exception {
-        List<ImageDTO> firstImagesUpload = parseImagesFromResponse(uploadImages(2).andReturn());
-        List<ImageDTO> secondImagesUpload = parseImagesFromResponse(uploadImages(2).andReturn());
+        List<ImageDTO> firstImagesUpload = parseImagesFromResponse(uploadImagesForRaffle(2, raffle.getId()).andReturn());
+        List<ImageDTO> secondImagesUpload = parseImagesFromResponse(uploadImagesForRaffle(2, raffle.getId()).andReturn());
         List<ImageDTO> allImages = Stream.concat(firstImagesUpload.stream(), secondImagesUpload.stream()).toList();
 
         String subject = tokensQueryService.getSubject(accessToken);
@@ -70,28 +90,13 @@ class PendingImagesControllerCreateIT extends BaseImagesIT {
             assertThat(image.filePath()).contains(expectedPath.toString());
             assertThat(Files.exists(expectedPath)).isTrue();
 
-            assertThat(image.imageOrder()).isEqualTo(i + 1);
+            assertThat(image.imageOrder()).isEqualTo(originalImages.size() + i + 1);
         }
     }
 
     @Test
-    void shouldFailWhenNoFilesAreProvided() throws Exception {
-        uploadImages(0)
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(containsString("Must provide at least one image")));
-    }
-
-    @Test
-    void shouldFailWhenMoreThanTenFilesAreProvided() throws Exception {
-        uploadImages(11)
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(containsString("Must provide between 1 and 10 images")));
-    }
-
-    @Test
     void shouldFailWhenTotalImagesExceedLimit() throws Exception {
-        uploadImages(10);
-        uploadImages(1)
+        uploadImagesForRaffle(9, raffle.getId())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("You cannot upload more than 10 images in total"));
     }

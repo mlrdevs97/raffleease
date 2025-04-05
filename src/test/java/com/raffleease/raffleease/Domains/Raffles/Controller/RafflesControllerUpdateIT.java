@@ -1,26 +1,34 @@
 package com.raffleease.raffleease.Domains.Raffles.Controller;
 
-import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
-import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
-import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
+import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
+import com.raffleease.raffleease.Helpers.TestUtils;
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
+import java.util.Optional;
+import java.util.stream.Stream;
 
+import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
+import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -30,73 +38,313 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class RafflesControllerUpdateIT extends BaseRafflesIT {
-    @Autowired
-    private RafflesRepository rafflesRepository;
-
-    @Autowired
-    private ImagesRepository imagesRepository;
-
-    @Autowired
-    private TicketsRepository ticketsRepository;
-
-    @Autowired
-    private TokensQueryService tokensQueryService;
-
-    @Autowired
-    private AssociationsService associationsService;
-
     @Value("${spring.storage.images.base_path}")
     private String basePath;
 
-    @Test
-    void shouldEditRaffleSuccessfully() throws Exception {
-        // 1. Upload initial images and create raffle
-        List<ImageDTO> originalImages = parseImagesFromResponse(uploadImages(2).andReturn());
-        RaffleCreate originalRaffle = new RaffleCreateBuilder()
+    private Long raffleId;
+    private List<ImageDTO> originalImages;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        originalImages = parseImagesFromResponse(uploadImages(2).andReturn());
+        RaffleCreate createRequest = new RaffleCreateBuilder()
                 .withImages(originalImages)
                 .build();
-
-        MvcResult createResult = performCreateRaffleRequest(originalRaffle)
-                .andExpect(status().isCreated())
-                .andReturn();
-
-        Long raffleId = objectMapper.readTree(createResult.getResponse().getContentAsString())
+        MvcResult result = performCreateRaffleRequest(createRequest).andReturn();
+        raffleId = objectMapper.readTree(result.getResponse().getContentAsString())
                 .path("data").path("id").asLong();
+    }
 
-        // 2. Upload new images
-        List<ImageDTO> newImages = parseImagesFromResponse(uploadImages(2).andReturn());
-        List<ImageDTO> reordered = IntStream.range(0, newImages.size())
-                .mapToObj(i -> copyWithNewOrder(newImages.get(i), i + 1))
-                .toList();
+    @Test
+    void shouldEditRaffleSuccessfully() throws Exception {
+        // 1. Upload new images
+        MvcResult uploadResult = uploadImagesForRaffle(2, raffleId).andReturn();
+        List<ImageDTO> newImages = parseImagesFromResponse(uploadResult);
+        List<ImageDTO> allImages = Stream.concat(originalImages.stream(), newImages.stream()).toList();
 
-        // 3. Build edit request
+        // 2. Build edit request
         RaffleEdit editRequest = RaffleEdit.builder()
                 .title("Updated Title")
                 .description("Updated description")
                 .endDate(LocalDateTime.now().plusDays(10))
-                .images(reordered)
+                .images(allImages)
                 .ticketPrice(new BigDecimal("2.50"))
-                .totalTickets(10L)
+                .totalTickets(15L)
                 .price(new BigDecimal("2.50"))
                 .build();
 
-        // 4. Perform edit request
-        mockMvc.perform(put("/api/v1/raffles/{id}", raffleId)
-                        .header(AUTHORIZATION, "Bearer " + accessToken)
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(editRequest)))
+        // 3. Perform edit request
+        performEditRaffleRequest(raffleId, editRequest)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.title").value("Updated Title"))
                 .andExpect(jsonPath("$.data.description").value("Updated description"))
-                .andExpect(jsonPath("$.data.images", hasSize(3)))
-                .andExpect(jsonPath("$.data.totalTickets").value(10))
-                .andExpect(jsonPath("$.data.ticketPrice").value("2.50"));
+                .andExpect(jsonPath("$.data.images", hasSize(4)))
+                .andExpect(jsonPath("$.data.totalTickets").value(15))
+                .andExpect(jsonPath("$.data.ticketPrice").value("2.5"));
 
-        // 5. Validate images updated in DB
+        // 4. Validate images updated in DB
         Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
         List<Image> updatedImages = imagesRepository.findAllByRaffle(raffle);
-        assertThat(updatedImages.size()).isEqualTo(3);
-        // assertThat(updatedImages.stream().map(Image::getImageOrder)).containsExactlyInAnyOrder(1, 2, 3);
+        assertThat(updatedImages.size()).isEqualTo(originalImages.size() + newImages.size());
+
+        for (Image img : updatedImages) {
+            assertThat(img.getRaffle().getId()).isEqualTo(raffle.getId());
+
+            assertThat(imagesRepository.findById(img.getId())).isNotNull();
+            assertThat(img.getUrl()).contains("/api/v1/raffles/" + raffle.getId() + "/images/" + img.getId());
+
+            Path expectedPath = Paths.get(basePath, "associations", raffle.getAssociation().getId().toString(), "raffles", raffle.getId().toString(), "images");
+            assertThat(img.getFilePath()).startsWith(expectedPath.toString());
+            assertThat(Files.exists(expectedPath)).isTrue();
+        }
+
+        List<Ticket> ticketsInDb = ticketsRepository.findAllByRaffle(raffle);
+        assertThat(ticketsInDb.size()).isEqualTo(15);
+
+        long expectedTicketNumber = raffle.getFirstTicketNumber();
+        for (Ticket ticket : ticketsInDb) {
+            assertThat(ticket.getTicketNumber()).isEqualTo(String.valueOf(expectedTicketNumber++));
+            assertThat(ticket.getStatus()).isEqualTo(AVAILABLE);
+            assertThat(ticket.getRaffle().getId()).isEqualTo(raffle.getId());
+        }
     }
 
+    @Test
+    void shouldFailWhenTitleExceedsMaxLength() throws Exception {
+        RaffleEdit edit = RaffleEdit.builder()
+                .title("A".repeat(101))
+                .images(parseImagesFromResponse(uploadImages(2).andReturn()))
+                .build();
+
+        performEditRaffleRequest(raffleId, edit)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.title").value("Tile cannot exceed 100 characters"));
+    }
+
+    @Test
+    void shouldFailWhenDescriptionExceedsMaxLength() throws Exception {
+        RaffleEdit edit = RaffleEdit.builder()
+                .description("A".repeat(5001))
+                .images(parseImagesFromResponse(uploadImages(2).andReturn()))
+                .build();
+
+        performEditRaffleRequest(raffleId, edit)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.description").value("Description cannot exceed 5000 characters"));
+    }
+
+    @Test
+    void shouldFailWhenEndDateIsInPast() throws Exception {
+        RaffleEdit edit = RaffleEdit.builder()
+                .endDate(LocalDateTime.now().minusDays(1))
+                .images(parseImagesFromResponse(uploadImages(2).andReturn()))
+                .build();
+
+        performEditRaffleRequest(raffleId, edit)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.endDate").value("End date must be in the future"));
+    }
+
+    @Test
+    void shouldFailWhenImagesListIsEmpty() throws Exception {
+        RaffleEdit edit = RaffleEdit.builder().images(List.of()).build();
+
+        performEditRaffleRequest(raffleId, edit)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.images").value("A minimum of 1 and a maximum of 10 images are allowed"));
+    }
+
+    @Test
+    void shouldFailWhenImagesListIsTooShort() throws Exception {
+        RaffleEdit editWithZero = RaffleEdit.builder()
+                .images(List.of())
+                .build();
+
+        performEditRaffleRequest(raffleId, editWithZero)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.images").value("A minimum of 1 and a maximum of 10 images are allowed"));
+    }
+
+    @Test
+    void shouldFailWhenImageIdsAreDuplicatedOnEdit() throws Exception {
+        List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
+        ImageDTO image = images.get(0);
+
+        RaffleEdit edit = RaffleEdit.builder()
+                .images(List.of(image, image))
+                .build();
+
+        performEditRaffleRequest(raffleId, edit)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Duplicate image IDs found in request"));
+    }
+
+
+    @Test
+    void shouldFailWhenImageOrdersAreDuplicated() throws Exception {
+        List<ImageDTO> images = parseImagesFromResponse(uploadImages(2).andReturn());
+        ImageDTO image1 = copyWithNewOrder(images.get(0), 1);
+        ImageDTO image2 = copyWithNewOrder(images.get(1), 1);
+
+        RaffleEdit edit = RaffleEdit.builder().images(List.of(image1, image2)).build();
+
+        performEditRaffleRequest(raffleId, edit)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Duplicate image orders detected"));
+    }
+
+    @Test
+    void shouldFailWhenImageOrdersAreNotConsecutive() throws Exception {
+        List<ImageDTO> images = parseImagesFromResponse(uploadImages(2).andReturn());
+        ImageDTO image1 = copyWithNewOrder(images.get(0), 1);
+        ImageDTO image2 = copyWithNewOrder(images.get(1), 3);
+
+        RaffleEdit edit = RaffleEdit.builder().images(List.of(image1, image2)).build();
+
+        performEditRaffleRequest(raffleId, edit)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Image orders must be consecutive starting from 1"));
+    }
+
+    @Test
+    void shouldFailWhenImageIdsDoNotExist() throws Exception {
+        long nonExistentImageId = 99999L;
+
+        ImageDTO fakeImage = ImageDTO.builder()
+                .id(nonExistentImageId)
+                .fileName("fake.jpg")
+                .filePath("some/path/fake.jpg")
+                .contentType("image/jpeg")
+                .url("http://localhost/api/v1/images/" + nonExistentImageId)
+                .imageOrder(1)
+                .build();
+
+        RaffleEdit edit = RaffleEdit.builder()
+                .images(List.of(fakeImage))
+                .build();
+
+        performEditRaffleRequest(raffleId, edit)
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("One or more images were not found"));
+    }
+
+    @Test
+    void shouldFailWhenTicketPriceIsZeroOrNegativeOnEdit() throws Exception {
+        RaffleEdit edit = RaffleEdit.builder()
+                .ticketPrice(new BigDecimal("0.00"))
+                .images(parseImagesFromResponse(uploadImages(2).andReturn()))
+                .build();
+
+        performEditRaffleRequest(raffleId, edit)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.ticketPrice").value("Ticket price must be greater than 0"));
+    }
+
+    @Test
+    void shouldFailWhenImageBelongsToAnotherAssociation() throws Exception {
+        // Create image with different user
+        RegisterRequest otherUser = TestUtils.getOtherUserRegisterRequest();
+        String otherToken = performAuthentication(otherUser);
+        List<ImageDTO> images = parseImagesFromResponse(uploadImages(1, otherToken).andReturn());
+
+        RaffleEdit edit = RaffleEdit.builder()
+                .images(images)
+                .build();
+
+        performEditRaffleRequest(raffleId, edit)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You are not authorized to use the specified image(s)"));
+    }
+
+    @Test
+    void shouldFailWhenImageBelongsToDifferentRaffle() throws Exception {
+        List<ImageDTO> otherImages = parseImagesFromResponse(uploadImages(2).andReturn());
+        performCreateRaffleRequest(new RaffleCreateBuilder()
+                .withImages(otherImages)
+                .build()).andReturn();
+
+        RaffleEdit editRequest = RaffleEdit.builder().images(otherImages).build();
+        performEditRaffleRequest(raffleId, editRequest)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("One or more images are already associated with a different raffle"));
+    }
+
+    @Test
+    @Transactional
+    void shouldDeleteImageReorderAndUpdateRaffleImages() throws Exception {
+        // 1. Delete first image
+        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
+        Image toDeleteImage = raffle.getImages().get(0);
+
+        ImageDTO toDelete = originalImages.get(0);
+        Long imageIdToDelete = toDelete.id();
+        performImageDelete("/api/v1/raffles/" + raffleId + "/images/" + imageIdToDelete);
+
+        // 2. Check that the deleted image is not in DB
+        Optional<Image> deleted = imagesRepository.findById(imageIdToDelete);
+        assertThat(deleted).isEmpty();
+
+        // 3. Check that the file is removed from the filesystem
+        Path deletedPath = Paths.get(toDelete.filePath());
+        assertThat(Files.exists(deletedPath)).isFalse();
+
+        // 4. Reorder remaining images
+        List<ImageDTO> reordered = new ArrayList<>();
+        int order = 1;
+        for (ImageDTO image : originalImages) {
+            if (!image.id().equals(imageIdToDelete)) {
+                reordered.add(copyWithNewOrder(image, order++));
+            }
+        }
+
+        // 5. Update the raffle with remaining images
+        RaffleEdit editAfterDelete = RaffleEdit.builder()
+                .images(reordered)
+                .build();
+
+        MvcResult result = performEditRaffleRequest(raffleId, editAfterDelete)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        Long raffleId = json.path("data").path("id").asLong();
+        Raffle saved = rafflesRepository.findById(raffleId).orElseThrow();
+
+        // 6. Check that the deleted image is not associated to the raffle
+        List<Image> raffleImages = imagesRepository.findAllByRaffle(saved);
+        assertThat(raffleImages.stream().noneMatch(img -> img.getId().equals(imageIdToDelete))).isTrue();
+
+        // 7. Check that the stored images match the reordered list
+        assertThat(raffleImages.size()).isEqualTo(reordered.size());
+        for (int i = 0; i < raffleImages.size(); i++) {
+            assertThat(raffleImages.get(i).getImageOrder()).isEqualTo(i + 1);
+            assertThat(raffleImages.get(i).getRaffle().getId()).isEqualTo(raffleId);
+            assertThat(Files.exists(Paths.get(raffleImages.get(i).getFilePath()))).isTrue();
+        }
+    }
+
+    @Test
+    @Transactional
+    void shouldFailWhenTotalTicketsIsLessThanSold() throws Exception {
+        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
+        raffle.getTickets().forEach(ticket -> ticket.setStatus(SOLD));
+        raffle.setSoldTickets((long) raffle.getTickets().size());
+        rafflesRepository.save(raffle);
+
+        RaffleEdit edit = RaffleEdit.builder()
+                .totalTickets(2L)
+                .images(parseImagesFromResponse(uploadImages(2).andReturn()))
+                .build();
+
+        performEditRaffleRequest(raffleId, edit)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("The total tickets count cannot be less than the number of tickets already sold for this raffle"));
+    }
+
+    private ResultActions performEditRaffleRequest(Long id, RaffleEdit edit) throws Exception {
+        return mockMvc.perform(put("/api/v1/raffles/" + id)
+                .header(AUTHORIZATION, "Bearer " + accessToken)
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(edit)));
+    }
 }

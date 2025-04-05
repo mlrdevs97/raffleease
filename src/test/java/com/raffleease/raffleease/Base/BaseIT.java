@@ -1,122 +1,47 @@
 package com.raffleease.raffleease.Base;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRepository;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
-import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
-import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
-import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
-import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
 import com.raffleease.raffleease.Helpers.RegisterBuilder;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ActiveProfiles("test")
-@SpringBootTest
-@AutoConfigureMockMvc
-@Testcontainers
-public class BaseIT {
-    @Autowired
-    protected MockMvc mockMvc;
-
-    @Autowired
-    protected ObjectMapper objectMapper;
-
-    protected String accessToken;
-
-    @Autowired
-    protected UsersRepository usersRepository;
-
-    @Autowired
-    protected AssociationsRepository associationsRepository;
-
-    @Autowired
-    protected ImagesRepository imagesRepository;
-
-    @Autowired
-    protected RafflesRepository rafflesRepository;
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16.0");
-
-    @Container
-    @ServiceConnection
-    static GenericContainer<?> redisContainer = new GenericContainer<>(DockerImageName.parse("redis:7.2")).withExposedPorts(6379);
-
-    @DynamicPropertySource
-    static void configureRedis(DynamicPropertyRegistry registry) {
-        registry.add("spring.data.redis.host", redisContainer::getHost);
-        registry.add("spring.data.redis.port", () -> redisContainer.getMappedPort(6379));
-    }
-
+public class BaseIT extends BaseSharedIT {
     @BeforeEach
     void setUp() throws Exception {
         accessToken = performAuthentication(new RegisterBuilder().build());
     }
 
-    @AfterEach
-    void cleanDatabase() {
-        imagesRepository.deleteAll();
-        rafflesRepository.deleteAll();
-        associationsRepository.deleteAll();
-        usersRepository.deleteAll();
-    }
-
-    @Test
-    void ConnectionEstablished() {
-        assertThat(postgres.isCreated()).isTrue();
-        assertThat(postgres.isRunning()).isTrue();
-        assertThat(redisContainer.isCreated()).isTrue();
-        assertThat(redisContainer.isRunning()).isTrue();
-    }
-
     protected String performAuthentication(RegisterRequest registerRequest) throws Exception {
-        performRegister(registerRequest);
-
-        LoginRequest loginRequest = new LoginRequest(registerRequest.userData().email(), registerRequest.userData().password());
-        MvcResult result = performLogin(loginRequest);
+        MvcResult result = performRegisterRequest(registerRequest).andReturn();
 
         JsonNode jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
+        refreshToken = result.getResponse().getCookie("refresh_token").getValue();
         return jsonNode.path("data").path("accessToken").asText();
     }
 
     protected ResultActions uploadImages(int numImages) throws Exception {
-        return performImageUpload(numImages, accessToken);
+        return performImageUpload(numImages, accessToken, "/api/v1/images");
     }
 
     protected ResultActions uploadImages(int numImages, String token) throws Exception {
-        return performImageUpload(numImages, token);
+        return performImageUpload(numImages, token, "/api/v1/images");
+    }
+
+    protected ResultActions uploadImagesForRaffle(int numImages, long raffleId) throws Exception {
+        String url = "/api/v1/raffles/" + raffleId + "/images";
+        return performImageUpload(numImages, accessToken, url);
     }
 
     protected List<ImageDTO> parseImagesFromResponse(MvcResult result) throws Exception {
@@ -147,29 +72,17 @@ public class BaseIT {
                 .build();
     }
 
-    private void performRegister(RegisterRequest request) throws Exception  {
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
-    }
-
-    private MvcResult performLogin(LoginRequest request) throws Exception {
-        return mockMvc.perform(post("/api/v1/auth/login")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(cookie().exists("refresh_token"))
-                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
-                .andReturn();
-    }
-
-    private ResultActions performImageUpload(int numImages, String token) throws Exception {
-        MockMultipartHttpServletRequestBuilder requestBuilder = multipart("/api/v1/images");
+    private ResultActions performImageUpload(int numImages, String token, String url) throws Exception {
+        MockMultipartHttpServletRequestBuilder requestBuilder = multipart(url);
         requestBuilder.header(AUTHORIZATION, "Bearer " + token);
         for (int i = 0; i < numImages; i++) {
             requestBuilder.file(new MockMultipartFile("files", "image" + i + ".jpg", "image/jpeg", "testdata".getBytes()));
         }
         return mockMvc.perform(requestBuilder);
+    }
+
+    protected ResultActions performImageDelete(String url) throws Exception {
+        return mockMvc.perform(delete(url)
+                .header(AUTHORIZATION, "Bearer " + accessToken));
     }
 }

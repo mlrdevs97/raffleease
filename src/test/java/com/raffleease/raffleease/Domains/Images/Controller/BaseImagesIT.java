@@ -2,14 +2,10 @@ package com.raffleease.raffleease.Domains.Images.Controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.raffleease.raffleease.Base.BaseIT;
-import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRepository;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.DTOs.UpdateOrderRequest;
 import com.raffleease.raffleease.Domains.Images.Mappers.ImagesMapper;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
-import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
-import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -23,18 +19,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 public abstract class BaseImagesIT extends BaseIT {
-    @Autowired
-    protected ImagesRepository imagesRepository;
-
-    @Autowired
-    protected TokensQueryService tokensQueryService;
-
-    @Autowired
-    protected AssociationsRepository associationsRepository;
-
-    @Autowired
-    protected RafflesRepository rafflesRepository;
-
     @Autowired
     protected ImagesMapper mapper;
 

@@ -4,7 +4,7 @@ import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Carts.Repository.ICustomCartRepository;
 import com.raffleease.raffleease.Domains.Carts.Services.ICartsService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Services.AvailabilityService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RaffleTicketsAvailabilityService;
 import com.raffleease.raffleease.Domains.Reservations.DTOs.ReleaseRequest;
 import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsReleaseService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
@@ -26,7 +26,7 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAIL
 public class ReservationsReleaseServiceImpl implements IReservationsReleaseService {
     private final ITicketsQueryService ticketsQueryService;
     private final ITicketsService ticketsService;
-    private final AvailabilityService availabilityService;
+    private final RaffleTicketsAvailabilityService raffleTicketsAvailabilityService;
     private final ICartsService cartsService;
     private final ICustomCartRepository customCartRepository;
 
@@ -46,7 +46,7 @@ public class ReservationsReleaseServiceImpl implements IReservationsReleaseServi
 
     private void releaseInternal(Cart cart, List<Ticket> tickets) {
         ticketsService.edit(tickets, AVAILABLE);
-        availabilityService.increaseAvailableTickets(cart.getRaffle(), tickets.size());
+        raffleTicketsAvailabilityService.increaseAvailableTickets(cart.getRaffle(), tickets.size());
         cartsService.removeTickets(cart, tickets);
     }
 
@@ -69,7 +69,7 @@ public class ReservationsReleaseServiceImpl implements IReservationsReleaseServi
             List<Ticket> tickets = entry.getValue();
 
             ticketsService.edit(tickets, AVAILABLE);
-            availabilityService.increaseAvailableTickets(raffle, tickets.size());
+            raffleTicketsAvailabilityService.increaseAvailableTickets(raffle, tickets.size());
         }
 
         customCartRepository.updateExpiredCart(lastModified);

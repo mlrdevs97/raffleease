@@ -3,7 +3,6 @@ package com.raffleease.raffleease.Domains.Auth.Controller;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterPhoneNumber;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Helpers.RegisterBuilder;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -19,20 +18,6 @@ class AuthControllerRegisterIT extends BaseAuthIT {
     @BeforeEach
     void setUp() {
         validBuilder = new RegisterBuilder();
-    }
-
-    @AfterEach
-    void cleanDatabase() {
-        associationsRepository.deleteAll();
-        usersRepository.deleteAll();
-    }
-
-    @Test
-    void connectionEstablished() {
-        assertThat(postgres.isCreated()).isTrue();
-        assertThat(postgres.isRunning()).isTrue();
-        assertThat(redisContainer.isCreated()).isTrue();
-        assertThat(redisContainer.isRunning()).isTrue();
     }
 
     @Test

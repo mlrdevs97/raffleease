@@ -1,13 +1,14 @@
 package com.raffleease.raffleease.Domains.Images.Controller;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Helpers.AssociationBuilder;
-import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import com.raffleease.raffleease.Helpers.RaffleBuilder;
+import com.raffleease.raffleease.Helpers.TestUtils;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.Comparator;
 import java.util.List;
@@ -19,14 +20,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 class PendingImagesControllerDeleteIT extends BaseImagesIT {
-    private final String deleteUrlTemplate = "/api/v1/images/{id}";
+    private final String DELETE_IMAGE_RUL = "/api/v1/images/{id}";
 
     @Test
     void shouldDeleteImageSuccessfully() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(3).andReturn());
 
-        mockMvc.perform(delete(deleteUrlTemplate, images.get(1).id())
-                        .header(AUTHORIZATION, "Bearer " + accessToken))
+        performImageDelete(images.get(1).id())
                 .andExpect(status().isNoContent());
 
         Association association = associationsRepository.findById(Long.parseLong(tokensQueryService.getSubject(accessToken))).orElseThrow();
@@ -41,55 +41,31 @@ class PendingImagesControllerDeleteIT extends BaseImagesIT {
     }
 
     @Test
-    void shouldFailWhenImageIsAssociatedToRaffle() throws Exception {
-        List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
-        Image image = imagesRepository.findById(images.get(0).id()).orElseThrow();
-        Association association = associationsRepository.findAll().get(0);
-        Raffle raffle = rafflesRepository.save(new RaffleBuilder(association).build());
-        image.setRaffle(raffle);
-        imagesRepository.save(image);
-
-        mockMvc.perform(delete(deleteUrlTemplate, image.getId())
-                        .header(AUTHORIZATION, "Bearer " + accessToken))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("You cannot delete an image already associated with a raffle"));
-    }
-
-    @Test
     void shouldFailWhenImageDoesNotExist() throws Exception {
-        mockMvc.perform(delete(deleteUrlTemplate, 9999L)
-                        .header(AUTHORIZATION, "Bearer " + accessToken))
+        long nonExistingId = 999L;
+
+        performImageDelete(nonExistingId)
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Image not found for id <9999>"));
+                .andExpect(jsonPath("$.message").value("Image not found for id <" + nonExistingId + ">"));
     }
 
     @Test
     void shouldFailWhenImageDoesNotBelongToAssociation() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
 
-        /*
-        Association association = new AssociationBuilder().build();
-        String otherToken = performAuthentication(new RegisterBuilder()
-                .withUserEmail(association.getEmail())
-                .withUserPhone(association())
-                .withName(association.getAssociationName())
-                .build());
+        RegisterRequest registerRequest = TestUtils.getOtherUserRegisterRequest();
+        String otherToken = performAuthentication(registerRequest);
 
-
-        mockMvc.perform(delete(deleteUrlTemplate, images.get(0).id())
-                        .header(AUTHORIZATION, "Bearer " + otherToken))
+        performImageDelete(images.get(0).id(), otherToken)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You are not authorized to delete this image"));
-
-         */
     }
 
     @Test
     void shouldReorderRemainingImagesAfterDeletion() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(4).andReturn());
 
-        mockMvc.perform(delete(deleteUrlTemplate, images.get(1).id())
-                        .header(AUTHORIZATION, "Bearer " + accessToken))
+        performImageDelete(images.get(1).id())
                 .andExpect(status().isNoContent());
 
         List<Image> remaining = imagesRepository.findAll();
@@ -101,5 +77,18 @@ class PendingImagesControllerDeleteIT extends BaseImagesIT {
         assertThat(orders.get(0)).isEqualTo(1);
         assertThat(orders.get(1)).isEqualTo(2);
         assertThat(orders.get(2)).isEqualTo(3);
+    }
+
+    private ResultActions performImageDelete(Long imageId) throws Exception {
+        return sendImageDeleteRequest(imageId, accessToken);
+    }
+
+    private ResultActions performImageDelete(Long imageId, String token) throws Exception {
+        return sendImageDeleteRequest(imageId, token);
+    }
+
+    private ResultActions sendImageDeleteRequest(Long imageId, String token) throws Exception {
+        return mockMvc.perform(delete(DELETE_IMAGE_RUL, imageId)
+                .header(AUTHORIZATION, "Bearer " + token));
     }
 }

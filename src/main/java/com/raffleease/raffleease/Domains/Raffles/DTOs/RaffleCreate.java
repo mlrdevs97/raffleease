@@ -11,6 +11,9 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.raffleease.raffleease.Constants.ImagesConstraints.MAX_IMAGES;
+import static com.raffleease.raffleease.Constants.ImagesConstraints.MIN_IMAGES;
+
 public record RaffleCreate(
         @NotBlank(message = "Raffle title is required")
         @Size(max = 100, message = "Tile cannot exceed 100 characters")
@@ -25,7 +28,7 @@ public record RaffleCreate(
         LocalDateTime endDate,
 
         @NotNull(message = "Must provide at least one picture for raffle")
-        @Size(min = 1, max = 10, message = "A minimum of 1 and a maximum of 10 images are allowed")
+        @Size(min = MIN_IMAGES, max = MAX_IMAGES, message = "A minimum of 1 and a maximum of 10 images are allowed")
         List<ImageDTO> images,
 
         @NotNull(message = "Raffle ticket's info is required")

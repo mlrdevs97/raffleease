@@ -2,55 +2,39 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
-import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
-import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
-import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
-import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
+import com.raffleease.raffleease.Helpers.TestUtils;
 import com.raffleease.raffleease.Helpers.TicketsCreateBuilder;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.web.servlet.MvcResult;
+import org.testcontainers.shaded.com.google.common.net.HttpHeaders;
 
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDING;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.testcontainers.shaded.com.google.common.net.HttpHeaders.AUTHORIZATION;
 
 class RafflesControllerCreateIT extends BaseRafflesIT {
-    @Autowired
-    private RafflesRepository rafflesRepository;
-
-    @Autowired
-    private ImagesRepository imagesRepository;
-
-    @Autowired
-    private TicketsRepository ticketsRepository;
-
-    @Autowired
-    private TokensQueryService tokensQueryService;
-
-    @Autowired
-    private AssociationsService associationsService;
-
     @Value("${spring.storage.images.base_path}")
     private String basePath;
 
@@ -85,17 +69,19 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
         assertThat(raffle.getTitle()).isEqualTo(raffleCreate.title());
         assertThat(raffle.getDescription()).isEqualTo(raffleCreate.description());
         assertThat(raffle.getStatus()).isEqualTo(PENDING);
+        assertThat(raffle.getFirstTicketNumber()).isEqualTo(raffleCreate.ticketsInfo().lowerLimit());
 
         String subject = tokensQueryService.getSubject(accessToken);
-        Association association = associationsService.findById(Long.parseLong(subject));
+        Association association = associationsRepository.findById(Long.parseLong(subject)).orElseThrow();
         assertThat(raffle.getAssociation()).isNotNull();
         assertThat(raffle.getAssociation().equals(association));
 
         // 7. Verify images
         List<Image> storedImages = imagesRepository.findAllByRaffle(raffle);
-        assertThat(storedImages.size()).isEqualTo(2);
+        assertThat(storedImages.size()).isEqualTo(images.size());
         for (Image img : storedImages) {
             assertThat(img.getRaffle().getId()).isEqualTo(raffle.getId());
+
             assertThat(imagesRepository.findById(img.getId())).isNotNull();
             assertThat(img.getUrl()).contains("/api/v1/raffles/" + raffle.getId() + "/images/" + img.getId());
 
@@ -239,11 +225,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
     @Test
     void shouldFailWhenUsingImagesFromAnotherAssociation() throws Exception {
         // Register second association
-        RegisterRequest otherUser = new RegisterBuilder()
-                .withUserEmail("otheruser@example.com")
-                .withUserName("Another Association")
-                .withUserPhone("+34", "123456789")
-                .build();
+        RegisterRequest otherUser = TestUtils.getOtherUserRegisterRequest();
         String token = performAuthentication(otherUser);
 
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1, token).andReturn());
@@ -276,8 +258,8 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
     void shouldFailWhenImageOrdersAreDuplicated() throws Exception {
         List<ImageDTO> uploaded = parseImagesFromResponse(uploadImages(2).andReturn());
 
-        ImageDTO image1 = withCustomOrder(uploaded.get(0), 1);
-        ImageDTO image2 = withCustomOrder(uploaded.get(1), 1);
+        ImageDTO image1 = copyWithNewOrder(uploaded.get(0), 1);
+        ImageDTO image2 = copyWithNewOrder(uploaded.get(1), 1);
 
         RaffleCreate raffle = new RaffleCreateBuilder()
                 .withImages(List.of(image1, image2))
@@ -292,8 +274,8 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
     void shouldFailWhenImageOrdersAreNotConsecutive() throws Exception {
         List<ImageDTO> uploaded = parseImagesFromResponse(uploadImages(2).andReturn());
 
-        ImageDTO image1 = withCustomOrder(uploaded.get(0), 1);
-        ImageDTO image2 = withCustomOrder(uploaded.get(1), 3);
+        ImageDTO image1 = copyWithNewOrder(uploaded.get(0), 1);
+        ImageDTO image2 = copyWithNewOrder(uploaded.get(1), 3);
 
         RaffleCreate raffle = new RaffleCreateBuilder()
                 .withImages(List.of(image1, image2))
@@ -304,15 +286,57 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .andExpect(jsonPath("$.message").value("Image orders must be consecutive starting from 1"));
     }
 
-    private ImageDTO withCustomOrder(ImageDTO original, int order) {
-        return ImageDTO.builder()
-                .id(original.id())
-                .fileName(original.fileName())
-                .filePath(original.filePath())
-                .contentType(original.contentType())
-                .url(original.url())
-                .imageOrder(order)
+    @Test
+    void shouldCreateRaffleExcludingDeletedImage() throws Exception {
+        // 1. Upload 3 images
+        List<ImageDTO> uploaded = parseImagesFromResponse(uploadImages(3).andReturn());
+
+        // 2. Delete second image
+        ImageDTO toDelete = uploaded.get(1);
+        Long imageIdToDelete = toDelete.id();
+        performImageDelete("/api/v1/images/" + imageIdToDelete);
+
+        // 3. Check that the deleted image is not in DB
+        Optional<Image> deleted = imagesRepository.findById(imageIdToDelete);
+        assertThat(deleted).isEmpty();
+
+        // 4. Check that the file is removed from the filesystem
+        Path deletedPath = Paths.get(toDelete.filePath());
+        assertThat(Files.exists(deletedPath)).isFalse();
+
+        // 5. Reorder remaining images
+        List<ImageDTO> reordered = new ArrayList<>();
+        int order = 1;
+        for (ImageDTO image : uploaded) {
+            if (!image.id().equals(imageIdToDelete)) {
+                reordered.add(copyWithNewOrder(image, order++));
+            }
+        }
+
+        // 6. Create the raffle with the remaining images
+        RaffleCreate raffle = new RaffleCreateBuilder()
+                .withImages(reordered)
                 .build();
+
+        MvcResult result = performCreateRaffleRequest(raffle)
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        Long raffleId = json.path("data").path("id").asLong();
+        Raffle saved = rafflesRepository.findById(raffleId).orElseThrow();
+
+        // 7. Check that the deleted image is not associated to the raffle
+        List<Image> raffleImages = imagesRepository.findAllByRaffle(saved);
+        assertThat(raffleImages.stream().noneMatch(img -> img.getId().equals(imageIdToDelete))).isTrue();
+
+        // 8. Check that the stored images match the reordered list
+        assertThat(raffleImages.size()).isEqualTo(2);
+        for (int i = 0; i < raffleImages.size(); i++) {
+            assertThat(raffleImages.get(i).getImageOrder()).isEqualTo(i + 1);
+            assertThat(raffleImages.get(i).getRaffle().getId()).isEqualTo(raffleId);
+            assertThat(Files.exists(Paths.get(raffleImages.get(i).getFilePath()))).isTrue();
+        }
     }
 
     @Test

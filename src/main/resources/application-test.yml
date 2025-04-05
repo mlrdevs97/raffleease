@@ -23,14 +23,13 @@ spring:
         cron: ${IMAGES_CLEANUP_CRON}
         cutoff_seconds: ${IMAGES_CLEANUP_CUTOFF_SECONDS}
 
-  datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME_TEST}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+  job:
+    scheduling:
+      enabled: false
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     database: postgresql
 
   mail:

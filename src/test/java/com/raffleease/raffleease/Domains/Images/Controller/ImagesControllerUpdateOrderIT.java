@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -20,24 +21,30 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 public class ImagesControllerUpdateOrderIT extends BaseImagesIT {
     private Raffle raffle;
+    private List<Image> originalImages;
 
     @BeforeEach
-    void setUpRaffle() throws Exception {
-        List<ImageDTO> images = parseImagesFromResponse(uploadImages(2).andReturn());
-        Association association = associationsRepository.findById(Long.parseLong(tokensQueryService.getSubject(accessToken))).orElseThrow();
+    void setUp() throws Exception {
+        List<ImageDTO> imageDTOs = parseImagesFromResponse(uploadImages(2).andReturn());
+        Long associationId = Long.parseLong(tokensQueryService.getSubject(accessToken));
+        Association association = associationsRepository.findById(associationId).orElseThrow();
         raffle = rafflesRepository.save(new RaffleBuilder(association).build());
 
-        for (int i = 0; i < images.size(); i++) {
-            Image image = imagesRepository.findById(images.get(i).id()).orElseThrow();
+        originalImages = new ArrayList<>();
+        for (int i = 0; i < imageDTOs.size(); i++) {
+            long imageId = imageDTOs.get(i).id();
+
+            Image image = imagesRepository.findById(imageId).orElseThrow();
             image.setRaffle(raffle);
             image.setImageOrder(i + 1);
-            imagesRepository.save(image);
+
+            originalImages.add(imagesRepository.save(image));
         }
     }
 
     @Test
     void shouldReorderAssociatedAndPendingImages() throws Exception {
-        List<ImageDTO> associated = mapper.fromImagesList(imagesRepository.findAllByRaffle(raffle));
+        List<ImageDTO> associated = mapper.fromImagesList(originalImages);
 
         List<ImageDTO> pending = parseImagesFromResponse(uploadImages(2).andReturn());
         UpdateOrderRequest reorderRequest = new UpdateOrderRequest(List.of(
@@ -131,9 +138,15 @@ public class ImagesControllerUpdateOrderIT extends BaseImagesIT {
     @Test
     void shouldFailIfImageIsLinkedToAnotherRaffle() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
-        Association association = associationsRepository.findById(Long.parseLong(tokensQueryService.getSubject(accessToken))).orElseThrow();
+
+        long associationId = Long.parseLong(tokensQueryService.getSubject(accessToken));
+        Association association = associationsRepository.findById(associationId).orElseThrow();
+
         Raffle otherRaffle = rafflesRepository.save(new RaffleBuilder(association).build());
-        Image image = imagesRepository.findById(images.get(0).id()).orElseThrow();
+
+        long imageId = images.get(0).id();
+        Image image = imagesRepository.findById(imageId).orElseThrow();
+
         image.setRaffle(otherRaffle);
         imagesRepository.save(image);
 

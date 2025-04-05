@@ -3,7 +3,7 @@ package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
+import com.raffleease.raffleease.Domains.Images.Services.ImagesAssociateService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
@@ -27,7 +27,7 @@ public class RaffleCreateServiceImpl implements RaffleCreateService {
     private final ITicketsService ticketsCreateService;
     private final IRafflesMapper rafflesMapper;
     private final AssociationsService associationsService;
-    private final ImagesService imagesService;
+    private final ImagesAssociateService imagesAssociateService;
 
     @Value("${spring.application.host.client}")
     private String host;
@@ -38,7 +38,7 @@ public class RaffleCreateServiceImpl implements RaffleCreateService {
         Raffle mappedRaffle = rafflesMapper.toRaffle(raffleData, association);
         Raffle raffle = rafflesPersistence.save(mappedRaffle);
         raffle.setURL(host + "/client/raffle/" + raffle.getId());
-        List<Image> images = imagesService.associateImagesToRaffleOnCreate(raffle, raffleData.images());
+        List<Image> images = imagesAssociateService.associateImagesToRaffleOnCreate(raffle, raffleData.images());
         raffle.setImages(images);
         List<Ticket> tickets = ticketsCreateService.create(raffle, raffleData.ticketsInfo());
         raffle.setTickets(tickets);

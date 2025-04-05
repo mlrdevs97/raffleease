@@ -46,7 +46,7 @@ public class CookiesServiceImpl implements CookiesService {
         }
 
         for (Cookie cookie : cookies) {
-            if (cookie.getName().equals(cookieName)) {
+            if (Objects.nonNull(cookie) && cookie.getName().equals(cookieName)) {
                 return cookie;
             }
         }

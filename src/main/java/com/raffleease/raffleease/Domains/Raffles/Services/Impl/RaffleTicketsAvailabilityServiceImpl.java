@@ -1,7 +1,7 @@
 package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Services.AvailabilityService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RaffleTicketsAvailabilityService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
-public class AvailabilityServiceImpl implements AvailabilityService {
+public class RaffleTicketsAvailabilityServiceImpl implements RaffleTicketsAvailabilityService {
     private final RafflesPersistenceService rafflesPersistence;
 
     @Override

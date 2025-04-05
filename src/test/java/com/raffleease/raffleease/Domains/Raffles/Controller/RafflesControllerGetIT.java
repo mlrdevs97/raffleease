@@ -1,14 +1,8 @@
 package com.raffleease.raffleease.Domains.Raffles.Controller;
 
-import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
-import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
-import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
-import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
-import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
 import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -19,21 +13,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class RafflesControllerGetIT extends BaseRafflesIT {
-    @Autowired
-    private RafflesRepository rafflesRepository;
-
-    @Autowired
-    private ImagesRepository imagesRepository;
-
-    @Autowired
-    private TicketsRepository ticketsRepository;
-
-    @Autowired
-    private TokensQueryService tokensQueryService;
-
-    @Autowired
-    private AssociationsService associationsService;
-
     @Value("${spring.storage.images.base_path}")
     private String basePath;
 

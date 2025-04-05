@@ -4,7 +4,7 @@ import com.raffleease.raffleease.Domains.Images.DTOs.UpdateOrderRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
-public interface UpdateImagesOrderService {
+public interface ImagesUpdateOrderService {
     ImageResponse updateImageOrderOnCreate(HttpServletRequest request, UpdateOrderRequest updateOrderRequest);
     ImageResponse updateImageOrderOnEdit(HttpServletRequest request, Long raffleId, UpdateOrderRequest updateOrderRequest);
 }
