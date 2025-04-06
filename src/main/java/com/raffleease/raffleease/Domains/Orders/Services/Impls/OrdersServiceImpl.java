@@ -54,7 +54,7 @@ public class OrdersServiceImpl implements IOrdersService {
         }
 
         if (Objects.nonNull(orderEdit.orderDate())) {
-            order.setOrderDate(orderEdit.orderDate());
+            order.setCreatedAt(orderEdit.orderDate());
         }
 
         return save(order);

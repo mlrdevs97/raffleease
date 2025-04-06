@@ -33,7 +33,7 @@ public class CartsServiceImpl implements ICartsService {
                         .raffle(raffle)
                         .tickets(tickets)
                         .status(ACTIVE)
-                        .lastModified(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
                         .build());
     }
 

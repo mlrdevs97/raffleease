@@ -23,7 +23,7 @@ public class OrdersMapper implements IOrdersMapper {
         return OrderDTO.builder()
                 .id(order.getId())
                 .orderReference(order.getOrderReference())
-                .orderDate(order.getOrderDate())
+                .orderDate(order.getCreatedAt())
                 .cart(cartsMapper.fromCart(order.getCart()))
                 .customer(customersMapper.fromCustomer(order.getCustomer()))
                 .payment(paymentsMapper.fromPayment(order.getPayment()))

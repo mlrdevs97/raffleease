@@ -3,9 +3,7 @@ package com.raffleease.raffleease.Domains.Reservations.Controller;
 import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
 import com.raffleease.raffleease.Domains.Reservations.DTOs.ReleaseRequest;
 import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsCreateService;
-import com.raffleease.raffleease.Domains.Reservations.DTOs.GenerateRandom;
 import com.raffleease.raffleease.Domains.Reservations.DTOs.ReservationRequest;
-import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsRandomService;
 import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsReleaseService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.CartHeaderMissingException;
 import com.raffleease.raffleease.Responses.ApiResponse;
@@ -15,16 +13,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.net.URI;
 import java.util.Objects;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/raffles/{raffleId}/reservations")
+@RequestMapping("/api/v1/reservations")
 public class ReservationsController {
-    private final IReservationsRandomService randomService;
     private final IReservationsReleaseService releaseService;
     private final IReservationsCreateService reservationsService;
 
@@ -39,28 +34,6 @@ public class ReservationsController {
                 ResponseFactory.success(
                         cartDTO,
                         "New reservation generated successfully"
-                )
-        );
-    }
-
-    @PostMapping("/random")
-    public ResponseEntity<ApiResponse> generateRandom(
-            @Valid @RequestBody GenerateRandom randomRequest,
-            HttpServletRequest httpRequest
-    ) {
-        String cartId = (String) httpRequest.getAttribute("carId");
-        CartDTO cartDTO = randomService.generateRandom(randomRequest, cartId);
-
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(cartDTO.cartId())
-                .toUri();
-
-        return ResponseEntity.created(location).body(
-                ResponseFactory.success(
-                        cartDTO,
-                        "New random reservation generated successfully"
                 )
         );
     }

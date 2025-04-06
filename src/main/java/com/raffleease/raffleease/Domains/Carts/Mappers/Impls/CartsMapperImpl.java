@@ -19,7 +19,7 @@ public class CartsMapperImpl implements ICartsMapper {
                 .raffleId(cart.getRaffle().getId())
                 .status(cart.getStatus())
                 .tickets(ticketsMapper.fromTicketList(cart.getTickets()))
-                .lastModified(cart.getLastModified())
+                .lastModified(cart.getUpdatedAt())
                 .build();
     }
 }

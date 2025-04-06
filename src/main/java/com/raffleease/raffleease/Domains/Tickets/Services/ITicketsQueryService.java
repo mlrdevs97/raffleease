@@ -12,4 +12,5 @@ public interface ITicketsQueryService {
     List<Ticket> findAllById(List<Long> ticketsIds);
     List<TicketDTO> get(Long raffleId, String ticketNumber, TicketStatus status, Long customerId);
     List<Ticket> findByRaffleAndStatus(Raffle raffle, TicketStatus status);
+    List<TicketDTO> getRandom(Long raffleId, Long quantity);
 }

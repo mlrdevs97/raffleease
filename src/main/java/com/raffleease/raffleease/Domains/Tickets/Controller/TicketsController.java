@@ -5,6 +5,7 @@ import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsQueryService;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,8 +33,19 @@ public class TicketsController {
                 )
         );
     }
+
+     @GetMapping("/random")
+     public ResponseEntity<ApiResponse> getRandom(
+             @PathVariable Long raffleId,
+             @RequestParam Long quantity
+     ) {
+         List<TicketDTO> tickets = queryService.getRandom(raffleId, quantity);
+         return ResponseEntity.ok(
+                 ResponseFactory.success(
+                         tickets,
+                         "Random tickets retrieved successfully"
+                 )
+         );
+     }
+
 }
-
-
-
-

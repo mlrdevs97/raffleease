@@ -24,10 +24,6 @@ public class Cart {
     @Column(nullable = false)
     private CartStatus status;
 
-    @ManyToOne
-    @JoinColumn(name = "raffle_id", nullable = false)
-    private Raffle raffle;
-
     @OneToOne
     @JoinColumn(name = "customer_id", nullable = false, unique = true)
     private Customer customer;
@@ -36,5 +32,6 @@ public class Cart {
     @JoinColumn(name = "cart_id")
     private List<Ticket> tickets;
 
-    private LocalDateTime lastModified;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

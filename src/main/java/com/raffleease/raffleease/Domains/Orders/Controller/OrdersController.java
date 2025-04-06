@@ -24,7 +24,6 @@ public class OrdersController {
             HttpServletRequest httpRequest
     ) {
         String cartId = (String) httpRequest.getAttribute("cartId");
-
         if (Objects.isNull(cartId)) throw new CartHeaderMissingException("Cannot complete order because the cart ID is missing");
 
         String sessionKey = ordersCreateService.create(Long.parseLong(cartId));

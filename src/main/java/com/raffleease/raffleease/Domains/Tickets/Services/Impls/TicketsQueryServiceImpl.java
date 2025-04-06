@@ -11,19 +11,19 @@ import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 import com.raffleease.raffleease.Domains.Tickets.Repository.CustomTicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsQueryService;
+import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
 
-@Slf4j
 @RequiredArgsConstructor
 @Service
 public class TicketsQueryServiceImpl implements ITicketsQueryService {
@@ -70,5 +70,25 @@ public class TicketsQueryServiceImpl implements ITicketsQueryService {
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while retrieving tickets: " + ex.getMessage());
         }
+    }
+
+    @Override
+    public List<TicketDTO> getRandom(Long raffleId, Long quantity) {
+        Raffle raffle = rafflePersistence.findById(raffleId);
+        List<Ticket> availableTickets = findByRaffleAndStatus(raffle, AVAILABLE);
+        validateTicketAvailability(availableTickets, quantity);
+        List<Ticket> selectedTickets = selectRandomTickets(availableTickets, quantity);
+        return mapper.fromTicketList(selectedTickets);
+    }
+
+    private void validateTicketAvailability(List<Ticket> availableTickets, Long requestedQuantity) {
+        if (availableTickets.isEmpty() || availableTickets.size() < requestedQuantity) {
+            throw new BusinessException("Not enough tickets were found for this order");
+        }
+    }
+
+    private List<Ticket> selectRandomTickets(List<Ticket> availableTickets, Long quantity) {
+        Collections.shuffle(availableTickets);
+        return availableTickets.subList(0, quantity.intValue());
     }
 }

@@ -5,6 +5,8 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Setter

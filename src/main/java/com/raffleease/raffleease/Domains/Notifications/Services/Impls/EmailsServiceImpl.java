@@ -49,7 +49,7 @@ public class EmailsServiceImpl implements IEmailsService {
         Map<String, Object> variables = new HashMap<>();
         Payment paymentData = order.getPayment();
         Customer customer = order.getCustomer();
-        String formattedOrderDate = order.getOrderDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm"));
+        String formattedOrderDate = order.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm"));
 
         List<String> ticketNumbers = order.getCart().getTickets().stream()
                 .map(Ticket::getTicketNumber)
