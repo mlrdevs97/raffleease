@@ -14,7 +14,6 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Service
-@Slf4j
 public class ImageCleanupScheduler {
     private final ImagesDeleteService imagesDeleteService;
     private final ImagesRepository imagesRepository;
@@ -22,7 +21,7 @@ public class ImageCleanupScheduler {
     @Value("${spring.storage.images.cleanup.cutoff_seconds}")
     private Long cutoffSeconds;
 
-    @Scheduled(cron = "${spring.storage.images.cleanup.cron}")
+    @Scheduled(cron = "${spring.application.configs.cron.images_cleanup}")
     public void cleanOrphanImages() {
         LocalDateTime cutoff = LocalDateTime.now().minusSeconds(cutoffSeconds);
         List<Image> oldOrphanImages = imagesRepository.findAllByRaffleIsNullAndCreatedAtBefore(cutoff);

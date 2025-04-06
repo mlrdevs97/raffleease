@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 
 public class TicketsCreateBuilder {
     private Long amount = 5L;
-    private BigDecimal price = BigDecimal.valueOf(1.50);
+    private BigDecimal price = new BigDecimal("1.50");
     private Long lowerLimit = 100L;
 
     public TicketsCreateBuilder withAmount(Long amount) {

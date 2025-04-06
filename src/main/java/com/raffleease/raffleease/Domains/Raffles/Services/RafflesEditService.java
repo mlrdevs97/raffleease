@@ -7,6 +7,6 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import java.math.BigDecimal;
 
 public interface RafflesEditService {
-    PublicRaffleDTO updateStatistics(Long id, RaffleEdit raffleEdit);
+    PublicRaffleDTO edit(Long id, RaffleEdit raffleEdit);
     void updateStatistics(Raffle raffle, BigDecimal revenue, Long soldTickets);
 }

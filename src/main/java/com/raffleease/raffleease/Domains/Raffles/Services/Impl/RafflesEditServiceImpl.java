@@ -15,13 +15,12 @@ import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
-@Slf4j
 @RequiredArgsConstructor
 @Service
 public class RafflesEditServiceImpl implements RafflesEditService {
@@ -31,7 +30,7 @@ public class RafflesEditServiceImpl implements RafflesEditService {
     private final IRafflesMapper rafflesMapper;
 
     @Transactional
-    public PublicRaffleDTO updateStatistics(Long id, RaffleEdit raffleEdit) {
+    public PublicRaffleDTO edit(Long id, RaffleEdit raffleEdit) {
         Raffle raffle = rafflesPersistence.findById(id);
 
         if (raffleEdit.title() != null) {
@@ -62,6 +61,7 @@ public class RafflesEditServiceImpl implements RafflesEditService {
             raffle.setTicketPrice(raffleEdit.ticketPrice());
         }
 
+        raffle.setUpdatedAt(LocalDateTime.now());
         Raffle savedRaffle = rafflesPersistence.save(raffle);
         return rafflesMapper.fromRaffle(savedRaffle);
     }

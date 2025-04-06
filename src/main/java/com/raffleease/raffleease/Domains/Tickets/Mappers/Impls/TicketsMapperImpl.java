@@ -1,7 +1,7 @@
 package com.raffleease.raffleease.Domains.Tickets.Mappers.Impls;
 
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketDTO;
-import com.raffleease.raffleease.Domains.Tickets.Mappers.ITicketsMapper;
+import com.raffleease.raffleease.Domains.Tickets.Mappers.TicketsMapper;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
-public class TicketsMapper implements ITicketsMapper {
+public class TicketsMapperImpl implements TicketsMapper {
     public TicketDTO fromTicket(Ticket ticket) {
         return TicketDTO.builder()
                 .id(ticket.getId())

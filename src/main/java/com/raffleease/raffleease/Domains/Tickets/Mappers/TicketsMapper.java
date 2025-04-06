@@ -5,6 +5,6 @@ import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 
 import java.util.List;
 
-public interface ITicketsMapper {
+public interface TicketsMapper {
     List<TicketDTO> fromTicketList(List<Ticket> tickets);
 }

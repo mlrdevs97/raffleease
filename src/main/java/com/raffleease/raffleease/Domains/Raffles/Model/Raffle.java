@@ -10,6 +10,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDING;
+import static java.math.BigDecimal.ZERO;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -33,22 +36,34 @@ public class Raffle {
 
     private String URL;
 
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
     private LocalDateTime startDate;
 
     private LocalDateTime endDate;
 
-    @Column(nullable = false)
+    private LocalDateTime completedAt;
+
+    private LocalDateTime updatedAt;
+
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal ticketPrice;
 
+    @Column(nullable = false)
     private Long firstTicketNumber;
 
-    private BigDecimal revenue;
-
+    @Column(nullable = false)
     private Long totalTickets;
 
+    @Column(nullable = false)
     private Long availableTickets;
 
+    @Column(nullable = false)
     private Long soldTickets;
+
+    @Column(nullable = false)
+    private BigDecimal revenue;
 
     @OneToMany(mappedBy = "raffle", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;
@@ -59,4 +74,10 @@ public class Raffle {
     @ManyToOne
     @JoinColumn(name = "association_id", nullable = false)
     private Association association;
+
+    private CompletionReason completionReason;
+
+    @OneToOne
+    @JoinColumn(name = "winning_ticket_id")
+    private Ticket winningTicket;
 }

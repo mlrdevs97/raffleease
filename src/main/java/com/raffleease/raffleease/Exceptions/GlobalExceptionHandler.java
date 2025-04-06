@@ -3,7 +3,9 @@ package com.raffleease.raffleease.Exceptions;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.*;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -151,6 +153,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(BAD_REQUEST)
                 .body(response);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        ApiResponse error = ResponseFactory.error(
+                "Invalid request payload.",
+                BAD_REQUEST.value(),
+                BAD_REQUEST.getReasonPhrase()
+        );
+
+        return ResponseEntity
+                .status(BAD_REQUEST)
+                .body(error);
     }
 
     @ExceptionHandler(EncryptionException.class)

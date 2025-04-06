@@ -3,7 +3,7 @@ package com.raffleease.raffleease.Domains.Payments.Services.Impls;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Carts.Services.ICartsService;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
-import com.raffleease.raffleease.Domains.Customers.Services.ICustomersService;
+import com.raffleease.raffleease.Domains.Customers.Services.CustomersService;
 import com.raffleease.raffleease.Domains.Notifications.Services.INotificationsService;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderEdit;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
@@ -38,12 +38,13 @@ import java.util.Optional;
 import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
 import static com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus.*;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
+import static java.math.BigDecimal.ZERO;
 
 @RequiredArgsConstructor
 @Service
 public class WebhookServiceImpl implements IWebhookService {
     private final IPaymentsService paymentsEditService;
-    private final ICustomersService customersService;
+    private final CustomersService customersService;
     private final ITicketsService ticketsService;
     private final IOrdersService ordersService;
     private final RafflesEditService rafflesEditService;
@@ -107,7 +108,7 @@ public class WebhookServiceImpl implements IWebhookService {
         List<Ticket> purchasedTickets = ticketsService.edit(order.getCart().getTickets(), SOLD);
         rafflesEditService.updateStatistics(
                 order.getCart().getRaffle(),
-                Optional.ofNullable(order.getPayment().getTotal()).orElse(BigDecimal.ZERO),
+                Optional.ofNullable(order.getPayment().getTotal()).orElse(ZERO),
                 (long) purchasedTickets.size()
         );
         notificationsCreateService.create(order);

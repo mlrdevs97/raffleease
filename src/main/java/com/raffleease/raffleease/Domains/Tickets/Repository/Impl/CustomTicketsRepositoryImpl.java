@@ -4,7 +4,7 @@ import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
-import com.raffleease.raffleease.Domains.Tickets.Repository.ICustomTicketsRepository;
+import com.raffleease.raffleease.Domains.Tickets.Repository.CustomTicketsRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-public class CustomTicketsRepositoryImpl implements ICustomTicketsRepository {
+public class CustomTicketsRepositoryImpl implements CustomTicketsRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -55,7 +55,7 @@ public class CustomTicketsRepositoryImpl implements ICustomTicketsRepository {
             predicates.add(cb.equal(ticket.get("status"), status));
         }
         if (ticketNumber != null) {
-            predicates.add(cb.equal(ticket.get("number"), ticketNumber));
+            predicates.add(cb.equal(ticket.get("ticketNumber"), ticketNumber));
         }
         if (customer != null) {
             predicates.add(cb.equal(ticket.get("customer"), customer));

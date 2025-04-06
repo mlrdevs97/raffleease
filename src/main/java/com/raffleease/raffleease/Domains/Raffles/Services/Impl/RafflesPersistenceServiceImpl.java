@@ -7,12 +7,12 @@ import com.raffleease.raffleease.Exceptions.CustomExceptions.ConflictException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-@Slf4j
+import java.util.List;
+
 @RequiredArgsConstructor
 @Service
 public class RafflesPersistenceServiceImpl implements RafflesPersistenceService {
@@ -28,6 +28,15 @@ public class RafflesPersistenceServiceImpl implements RafflesPersistenceService 
     }
 
     @Override
+    public void saveAll(List<Raffle> raffles) {
+        try {
+            repository.saveAll(raffles);
+        } catch (DataAccessException ex) {
+            throw new DatabaseException("Database error occurred while saving raffles: " + ex.getMessage());
+        }
+    }
+
+    @Override
     public Raffle save(Raffle raffles) {
         try {
             return repository.save(raffles);
@@ -35,10 +44,6 @@ public class RafflesPersistenceServiceImpl implements RafflesPersistenceService 
             throw new ConflictException("Failed to save raffle due to unique constraint violation: " + ex.getMessage());
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while saving raffle: " + ex.getMessage());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            log.info("ERROR: " + ex.getMessage());
-            throw ex;
         }
     }
 
@@ -48,15 +53,6 @@ public class RafflesPersistenceServiceImpl implements RafflesPersistenceService 
             repository.delete(raffle);
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while deleting raffle: " + ex.getMessage());
-        }
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        try {
-            repository.deleteById(id);
-        } catch (DataAccessException ex) {
-            throw new DatabaseException("Database error occurred while deleting raffle with id <" + id + ">: " + ex.getMessage());
         }
     }
 }

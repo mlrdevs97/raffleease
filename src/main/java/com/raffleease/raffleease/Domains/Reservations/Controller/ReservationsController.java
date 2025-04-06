@@ -28,6 +28,21 @@ public class ReservationsController {
     private final IReservationsReleaseService releaseService;
     private final IReservationsCreateService reservationsService;
 
+    @PostMapping
+    public ResponseEntity<ApiResponse> reserve(
+            HttpServletRequest httpRequest,
+            @Valid @RequestBody ReservationRequest reservationRequest
+    ) {
+        String cartId = (String) httpRequest.getAttribute("cartId");
+        CartDTO cartDTO = reservationsService.reserve(reservationRequest, cartId);
+        return ResponseEntity.ok(
+                ResponseFactory.success(
+                        cartDTO,
+                        "New reservation generated successfully"
+                )
+        );
+    }
+
     @PostMapping("/random")
     public ResponseEntity<ApiResponse> generateRandom(
             @Valid @RequestBody GenerateRandom randomRequest,
@@ -46,21 +61,6 @@ public class ReservationsController {
                 ResponseFactory.success(
                         cartDTO,
                         "New random reservation generated successfully"
-                )
-        );
-    }
-
-    @PostMapping
-    public ResponseEntity<ApiResponse> reserve(
-            HttpServletRequest httpRequest,
-            @Valid @RequestBody ReservationRequest reservationRequest
-    ) {
-        String cartId = (String) httpRequest.getAttribute("cartId");
-        CartDTO cartDTO = reservationsService.reserve(reservationRequest, cartId);
-        return ResponseEntity.ok(
-                ResponseFactory.success(
-                        cartDTO,
-                        "New reservation generated successfully"
                 )
         );
     }

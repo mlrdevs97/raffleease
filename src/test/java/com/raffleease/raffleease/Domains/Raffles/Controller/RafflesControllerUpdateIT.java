@@ -41,18 +41,9 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
     @Value("${spring.storage.images.base_path}")
     private String basePath;
 
-    private Long raffleId;
-    private List<ImageDTO> originalImages;
-
     @BeforeEach
     void setUp() throws Exception {
-        originalImages = parseImagesFromResponse(uploadImages(2).andReturn());
-        RaffleCreate createRequest = new RaffleCreateBuilder()
-                .withImages(originalImages)
-                .build();
-        MvcResult result = performCreateRaffleRequest(createRequest).andReturn();
-        raffleId = objectMapper.readTree(result.getResponse().getContentAsString())
-                .path("data").path("id").asLong();
+        createRaffle();
     }
 
     @Test

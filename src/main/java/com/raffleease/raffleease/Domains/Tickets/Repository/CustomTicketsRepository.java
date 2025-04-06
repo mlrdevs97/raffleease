@@ -7,7 +7,7 @@ import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 
 import java.util.List;
 
-public interface ICustomTicketsRepository {
+public interface CustomTicketsRepository {
     List<Ticket> edit(List<Ticket> tickets, TicketStatus status);
 
     List<Ticket> search(

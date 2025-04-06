@@ -15,28 +15,31 @@ import com.raffleease.raffleease.Helpers.TicketsCreateBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.web.servlet.MvcResult;
-import org.testcontainers.shaded.com.google.common.net.HttpHeaders;
 
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDING;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
+import static java.math.BigDecimal.ZERO;
+import static java.time.temporal.ChronoUnit.MILLIS;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.testcontainers.shaded.com.google.common.net.HttpHeaders.AUTHORIZATION;
 
 class RafflesControllerCreateIT extends BaseRafflesIT {
     @Value("${spring.storage.images.base_path}")
     private String basePath;
+
+    @Value("${spring.application.host.client}")
+    private String clientHost;
 
     @Test
     void shouldCreateRaffle() throws Exception {
@@ -66,10 +69,19 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         // 6. Verify raffle in database
         Raffle raffle = rafflesRepository.findById(createdRaffleId).orElseThrow();
+        assertThat(raffle).isNotNull();
         assertThat(raffle.getTitle()).isEqualTo(raffleCreate.title());
         assertThat(raffle.getDescription()).isEqualTo(raffleCreate.description());
         assertThat(raffle.getStatus()).isEqualTo(PENDING);
+        assertThat(raffle.getURL()).isEqualTo(clientHost + "/client/raffle/" + raffle.getId());
+        assertThat(raffle.getEndDate().truncatedTo(MILLIS)).isEqualTo(raffleCreate.endDate().truncatedTo(MILLIS));
+        assertThat(raffle.getTicketPrice()).isEqualTo(raffleCreate.ticketsInfo().price());
         assertThat(raffle.getFirstTicketNumber()).isEqualTo(raffleCreate.ticketsInfo().lowerLimit());
+        assertThat(raffle.getTotalTickets()).isEqualTo(raffleCreate.ticketsInfo().amount());
+        assertThat(raffle.getAvailableTickets()).isEqualTo(raffleCreate.ticketsInfo().amount());
+        assertThat(raffle.getSoldTickets()).isEqualTo(0L);
+        assertThat(raffle.getRevenue()).isEqualTo(ZERO.setScale(2));
+        assertThat(raffle.getCreatedAt()).isNotNull();
 
         String subject = tokensQueryService.getSubject(accessToken);
         Association association = associationsRepository.findById(Long.parseLong(subject)).orElseThrow();
@@ -92,7 +104,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         // 8. Verify tickets
         List<Ticket> ticketsInDb = ticketsRepository.findAllByRaffle(raffle);
-        assertThat(ticketsInDb.size()).isEqualTo(5);
+        assertThat((long) ticketsInDb.size()).isEqualTo(raffleCreate.ticketsInfo().amount());
 
         long expectedTicketNumber = raffleCreate.ticketsInfo().lowerLimit();
         for (Ticket ticket : ticketsInDb) {

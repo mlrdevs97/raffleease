@@ -15,11 +15,16 @@ spring:
         secret_key: ${SECRET_KEY}
         access_token_expiration: ${TOKEN_ACCESS_EXPIRATION}
         refresh_token_expiration: ${TOKEN_REFRESH_EXPIRATION}
+    configs:
+      cron:
+        raffles_completion: ${RAFFLES_COMPLETION_CRON}
+        images_cleanup: ${IMAGES_CLEANUP_CRON}
 
   storage:
     images:
       base_path: ${IMAGES_BASE_PATH}
-      cutoff_seconds: ${IMAGES_CUTOFF_SECONDS}
+      cleanup:
+        cutoff_seconds: ${IMAGES_CLEANUP_CUTOFF_SECONDS}
 
   data:
     redis:

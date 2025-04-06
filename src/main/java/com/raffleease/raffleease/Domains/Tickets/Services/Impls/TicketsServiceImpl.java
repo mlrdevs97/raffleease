@@ -4,7 +4,7 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
-import com.raffleease.raffleease.Domains.Tickets.Repository.ICustomTicketsRepository;
+import com.raffleease.raffleease.Domains.Tickets.Repository.CustomTicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
@@ -21,7 +21,7 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAIL
 @Service
 public class TicketsServiceImpl implements ITicketsService {
     private final TicketsRepository repository;
-    private final ICustomTicketsRepository customRepository;
+    private final CustomTicketsRepository customRepository;
 
     @Override
     public List<Ticket> create(Raffle raffle, TicketsCreate request) {

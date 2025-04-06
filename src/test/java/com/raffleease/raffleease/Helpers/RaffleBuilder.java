@@ -5,11 +5,14 @@ import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.math.BigDecimal.ZERO;
 
 public class RaffleBuilder {
     private String title = "Test Raffle";
@@ -20,7 +23,7 @@ public class RaffleBuilder {
     private LocalDateTime endDate = LocalDateTime.now().plusDays(10);
     private BigDecimal ticketPrice = new BigDecimal("5.00");
     private Long firstTicketNumber = 1L;
-    private BigDecimal revenue = BigDecimal.ZERO;
+    private BigDecimal revenue = ZERO;
     private Long totalTickets = 100L;
     private Long availableTickets = 100L;
     private Long soldTickets = 0L;

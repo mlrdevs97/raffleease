@@ -25,10 +25,12 @@ public class RafflesQueryServiceImpl implements RafflesQueryService {
     private final IRafflesMapper mapper;
     private final AssociationsService associationsService;
 
+    @Override
     public PublicRaffleDTO getAll(Long id) {
         return mapper.fromRaffle(rafflesPersistence.findById(id));
     }
 
+    @Override
     public List<PublicRaffleDTO> getAll(HttpServletRequest request) {
         Association association = associationsService.findFromRequest(request);
         return mapper.fromRaffleList(findByAssociation(association));

@@ -29,15 +29,12 @@ public class CartsServiceImpl implements ICartsService {
 
     @Override
     public Cart create(Raffle raffle, List<Ticket> tickets) {
-        Cart cart = save(
-                Cart.builder()
+        return save(Cart.builder()
                         .raffle(raffle)
                         .tickets(tickets)
                         .status(ACTIVE)
                         .lastModified(LocalDateTime.now())
-                        .build()
-        );
-        return save(cart);
+                        .build());
     }
 
     @Override

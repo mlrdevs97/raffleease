@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Domains.Tickets.Model;
 
-import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import jakarta.persistence.*;

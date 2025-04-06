@@ -13,10 +13,13 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDING;
+import static java.math.BigDecimal.ZERO;
 
 @RequiredArgsConstructor
 @Service
@@ -36,6 +39,9 @@ public class RafflesMapper implements IRafflesMapper {
                 .totalTickets(raffleData.ticketsInfo().amount())
                 .firstTicketNumber(raffleData.ticketsInfo().lowerLimit())
                 .association(association)
+                .soldTickets(0L)
+                .revenue(ZERO)
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 

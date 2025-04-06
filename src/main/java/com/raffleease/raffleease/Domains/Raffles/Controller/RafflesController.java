@@ -4,7 +4,10 @@ import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.StatusUpdate;
-import com.raffleease.raffleease.Domains.Raffles.Services.RafflesOrchestrator;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesEditService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatusService;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,14 +23,17 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/v1/raffles")
 public class RafflesController {
-    private final RafflesOrchestrator orchestrator;
+    private final RafflesService rafflesService;
+    private final RafflesEditService rafflesEditService;
+    private final RafflesStatusService rafflesStatusService;
+    private final RafflesQueryService rafflesQueryService;
 
     @PostMapping
     public ResponseEntity<ApiResponse> create(
             HttpServletRequest request,
             @RequestBody @Valid RaffleCreate raffleData
     ) {
-        PublicRaffleDTO createdRaffle = orchestrator.create(request, raffleData);
+        PublicRaffleDTO createdRaffle = rafflesService.create(request, raffleData);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -49,18 +55,18 @@ public class RafflesController {
             @RequestBody @Valid RaffleEdit raffleEdit
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                orchestrator.edit(id, raffleEdit),
+                rafflesEditService.edit(id, raffleEdit),
                 "Raffle edited successfully"
         ));
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<ApiResponse> publish(
+    public ResponseEntity<ApiResponse> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody StatusUpdate request
             ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                orchestrator.updateStatus(id, request),
+                rafflesStatusService.updateStatus(id, request),
                 "Raffle status updated successfully"
         ));
     }
@@ -70,7 +76,7 @@ public class RafflesController {
             @PathVariable Long id
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                orchestrator.getAll(id),
+                rafflesQueryService.getAll(id),
                 "Raffle retrieved successfully"
         ));
     }
@@ -80,7 +86,7 @@ public class RafflesController {
             HttpServletRequest request
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                orchestrator.getAll(request),
+                rafflesQueryService.getAll(request),
                 "All raffles retrieved successfully"
         ));
     }
@@ -89,7 +95,7 @@ public class RafflesController {
     public ResponseEntity<Void> delete(
             @PathVariable Long id
     ) {
-        orchestrator.delete(id);
+        rafflesService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }
