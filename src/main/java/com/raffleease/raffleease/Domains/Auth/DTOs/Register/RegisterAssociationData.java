@@ -19,7 +19,7 @@ public record RegisterAssociationData(
 
         @Nullable
         @Valid
-        RegisterPhoneNumber phoneNumber,
+        PhoneNumberData phoneNumber,
 
         @NotNull(message = "Must provide address data")
         @Valid

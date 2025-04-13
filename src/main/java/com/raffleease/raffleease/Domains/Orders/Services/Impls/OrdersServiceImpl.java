@@ -1,11 +1,11 @@
 package com.raffleease.raffleease.Domains.Orders.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
-import com.raffleease.raffleease.Domains.Carts.Services.ICartsService;
+import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderEdit;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Repository.IOrdersRepository;
-import com.raffleease.raffleease.Domains.Orders.Services.IOrdersService;
+import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Payments.Services.IPaymentsService;
 import com.raffleease.raffleease.Domains.Payments.Services.IStripeService;
@@ -15,13 +15,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
-public class OrdersServiceImpl implements IOrdersService {
+public class OrdersServiceImpl implements OrdersService {
     private final IOrdersRepository repository;
-    private final ICartsService cartsService;
+    private final CartsService cartsService;
     private final IPaymentsService paymentsService;
     private final IStripeService stripeService;
 
@@ -30,9 +31,10 @@ public class OrdersServiceImpl implements IOrdersService {
         Cart cart = cartsService.findById(cartId);
         Payment payment = paymentsService.create();
 
+        // TODO: Check and fix order items
         Order order = save(Order.builder()
                 .payment(payment)
-                .cart(cart)
+                .orderItems(new ArrayList<>())
                 .build()
         );
 
@@ -41,9 +43,13 @@ public class OrdersServiceImpl implements IOrdersService {
 
     @Override
     public Order edit(Order order, OrderEdit orderEdit) {
+        // TODO: CHeck and fix
+        /*
         if (Objects.nonNull(orderEdit.cart())) {
             order.setCart(orderEdit.cart());
         }
+
+         */
 
         if (Objects.nonNull(orderEdit.payment())) {
             order.setPayment(orderEdit.payment());

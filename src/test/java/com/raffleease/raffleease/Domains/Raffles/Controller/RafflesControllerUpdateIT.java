@@ -1,10 +1,10 @@
 package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
@@ -40,10 +40,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class RafflesControllerUpdateIT extends BaseRafflesIT {
     @Value("${spring.storage.images.base_path}")
     private String basePath;
+    private Long raffleId;
+    private List<ImageDTO> originalImages;
 
     @BeforeEach
     void setUp() throws Exception {
-        createRaffle();
+        originalImages = parseImagesFromResponse(uploadImages(2).andReturn());
+        raffleId = createRaffle(originalImages, accessToken);
     }
 
     @Test
@@ -206,7 +209,7 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
                 .fileName("fake.jpg")
                 .filePath("some/path/fake.jpg")
                 .contentType("image/jpeg")
-                .url("http://localhost/api/v1/images/" + nonExistentImageId)
+                .url("http://localhost/api/v1/associations/" + associationId + "/images/" + nonExistentImageId)
                 .imageOrder(1)
                 .build();
 
@@ -234,9 +237,10 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
     @Test
     void shouldFailWhenImageBelongsToAnotherAssociation() throws Exception {
         // Create image with different user
-        RegisterRequest otherUser = TestUtils.getOtherUserRegisterRequest();
-        String otherToken = performAuthentication(otherUser);
-        List<ImageDTO> images = parseImagesFromResponse(uploadImages(1, otherToken).andReturn());
+        AuthResponse authResponse = registerOtherUser();
+        String otherToken = authResponse.accessToken();
+        Long associationId = authResponse.association().id();
+        List<ImageDTO> images = parseImagesFromResponse(uploadImages(1, otherToken, associationId).andReturn());
 
         RaffleEdit edit = RaffleEdit.builder()
                 .images(images)
@@ -269,7 +273,7 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
 
         ImageDTO toDelete = originalImages.get(0);
         Long imageIdToDelete = toDelete.id();
-        performImageDelete("/api/v1/raffles/" + raffleId + "/images/" + imageIdToDelete);
+        performImageDelete("/api/v1/associations/" + associationId + "/raffles/" + raffleId + "/images/" + imageIdToDelete);
 
         // 2. Check that the deleted image is not in DB
         Optional<Image> deleted = imagesRepository.findById(imageIdToDelete);
@@ -333,7 +337,7 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
     }
 
     private ResultActions performEditRaffleRequest(Long id, RaffleEdit edit) throws Exception {
-        return mockMvc.perform(put("/api/v1/raffles/" + id)
+        return mockMvc.perform(put("/api/v1/associations/" + associationId + "/raffles/" + id)
                 .header(AUTHORIZATION, "Bearer " + accessToken)
                 .contentType(APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(edit)));

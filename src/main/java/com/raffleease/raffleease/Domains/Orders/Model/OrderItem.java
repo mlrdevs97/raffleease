@@ -26,7 +26,7 @@ public class OrderItem {
     private Long ticketId;
     private Long raffleId;
 
-    @OneToMany
+    @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
 }

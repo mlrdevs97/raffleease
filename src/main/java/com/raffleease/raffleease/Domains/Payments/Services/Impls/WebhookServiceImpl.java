@@ -1,22 +1,22 @@
 package com.raffleease.raffleease.Domains.Payments.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
-import com.raffleease.raffleease.Domains.Carts.Services.ICartsService;
+import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Customers.Services.CustomersService;
 import com.raffleease.raffleease.Domains.Notifications.Services.INotificationsService;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderEdit;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
-import com.raffleease.raffleease.Domains.Orders.Services.IOrdersService;
+import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
 import com.raffleease.raffleease.Domains.Payments.DTOs.PaymentEdit;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
 import com.raffleease.raffleease.Domains.Payments.Services.IPaymentsService;
 import com.raffleease.raffleease.Domains.Payments.Services.IWebhookService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesEditService;
-import com.raffleease.raffleease.Domains.Reservations.Services.IReservationsReleaseService;
+import com.raffleease.raffleease.Domains.Carts.Services.ReservationsService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
-import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsService;
+import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.CustomStripeException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DeserializationException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.InvalidSignatureException;
@@ -32,24 +32,22 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
 import static com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus.*;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
-import static java.math.BigDecimal.ZERO;
 
 @RequiredArgsConstructor
 @Service
 public class WebhookServiceImpl implements IWebhookService {
     private final IPaymentsService paymentsEditService;
     private final CustomersService customersService;
-    private final ITicketsService ticketsService;
-    private final IOrdersService ordersService;
+    private final TicketsService ticketsService;
+    private final OrdersService ordersService;
     private final RafflesEditService rafflesEditService;
-    private final ICartsService cartsService;
-    private final IReservationsReleaseService reservationsReleaseService;
+    private final CartsService cartsService;
+    private final ReservationsService reservationsService;
     private final INotificationsService notificationsCreateService;
 
     @Value("${STRIPE_WEBHOOK_KEY}")
@@ -81,7 +79,12 @@ public class WebhookServiceImpl implements IWebhookService {
         if (stripeObject instanceof PaymentIntent paymentIntent) {
             Order order = getOrder(paymentIntent);
             Payment payment = updatePayment(order.getPayment(), paymentIntent);
+
+            // TODO: Check and fix close Cart
+            /*
             Cart cart = cartsService.edit(order.getCart(), CLOSED);
+             */
+
             Customer customer = createCustomer(paymentIntent);
 
             switch (event.getType()) {
@@ -95,6 +98,9 @@ public class WebhookServiceImpl implements IWebhookService {
                     handlePaymentCanceled(order);
                     break;
             }
+
+            // TODO: Check and fix this
+            Cart cart = new Cart();
             updateOrder(order, payment, customer, cart);
         }
     }
@@ -105,12 +111,20 @@ public class WebhookServiceImpl implements IWebhookService {
                 .completedAt(LocalDateTime.now())
                 .build()
         );
-        List<Ticket> purchasedTickets = ticketsService.edit(order.getCart().getTickets(), SOLD);
+
+        // TODO: Get tickets and mark as sold
+        List<Ticket> tickets = new ArrayList<>();
+        List<Ticket> purchasedTickets = ticketsService.edit(tickets, SOLD);
+
+        // TODO: Update statistics
+        /*
         rafflesEditService.updateStatistics(
                 order.getCart().getRaffle(),
                 Optional.ofNullable(order.getPayment().getTotal()).orElse(ZERO),
                 (long) purchasedTickets.size()
         );
+
+         */
         notificationsCreateService.create(order);
     }
 
@@ -128,7 +142,11 @@ public class WebhookServiceImpl implements IWebhookService {
                 .completedAt(LocalDateTime.now())
                 .build()
         );
+
+        // TODO: Release tickets
+        /*
         reservationsReleaseService.release(order.getCart());
+         */
     }
 
     private Payment updatePayment(Payment payment, PaymentIntent paymentIntent) {
@@ -146,7 +164,7 @@ public class WebhookServiceImpl implements IWebhookService {
 
     private Customer createCustomer(PaymentIntent paymentIntent) {
         com.stripe.model.Customer customerData = retrieveStripeCustomerData(paymentIntent);
-        return customersService.createCustomer(
+        return customersService.create(
                 customerData.getId(),
                 customerData.getName(),
                 customerData.getEmail(),

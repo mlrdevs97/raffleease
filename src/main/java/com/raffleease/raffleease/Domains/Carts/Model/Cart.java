@@ -1,13 +1,17 @@
 package com.raffleease.raffleease.Domains.Carts.Model;
 
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
-import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static jakarta.persistence.CascadeType.ALL;
+import static jakarta.persistence.GenerationType.IDENTITY;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,20 +22,26 @@ import java.util.List;
 @Table(name = "Carts")
 public class Cart {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
     @Column(nullable = false)
     private CartStatus status;
 
     @OneToOne
-    @JoinColumn(name = "customer_id", nullable = false, unique = true)
+    @JoinColumn(name = "customer_id")
     private Customer customer;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = ALL)
     @JoinColumn(name = "cart_id")
     private List<Ticket> tickets;
 
+    private CartOwnerType ownerType;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 }

@@ -1,11 +1,14 @@
 package com.raffleease.raffleease.Domains.Raffles.Controller;
 
+import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason.MANUALLY_COMPLETED;
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.*;
@@ -15,9 +18,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class RafflesControllerUpdateStatusIT extends BaseRafflesIT {
+    private Long raffleId;
+
     @BeforeEach
     void setUp() throws Exception {
-        createRaffle();
+        raffleId = createRaffle();
     }
 
     @Test
@@ -114,6 +119,7 @@ class RafflesControllerUpdateStatusIT extends BaseRafflesIT {
     }
 
     @Test
+    @Transactional
     void shouldFailToReactivateIfWinnerWasSet() throws Exception {
         performUpdateStatusRequest(raffleId, ACTIVE).andExpect(status().isOk());
         performUpdateStatusRequest(raffleId, COMPLETED).andExpect(status().isOk());
@@ -124,7 +130,9 @@ class RafflesControllerUpdateStatusIT extends BaseRafflesIT {
         ticket.setStatus(SOLD);
         ticket.setRaffle(raffle);
         ticket = ticketsRepository.save(ticket);
+
         raffle.setWinningTicket(ticket);
+        raffle.getTickets().add(ticket);
         rafflesRepository.save(raffle);
 
         performUpdateStatusRequest(raffleId, ACTIVE)

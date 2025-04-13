@@ -1,7 +1,9 @@
 package com.raffleease.raffleease.Domains.Carts.DTO;
 
+import com.raffleease.raffleease.Domains.Carts.Model.CartOwnerType;
 import com.raffleease.raffleease.Domains.Carts.Model.CartStatus;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketDTO;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Builder;
@@ -13,15 +15,16 @@ import java.util.List;
 public record CartDTO(
         @NotNull(message = "Cart Id cannot be null")
         @Positive(message = "Cart id must be a positive number")
-        Long cartId,
+        Long id,
 
-        @NotNull(message = "Raffle Id cannot be null")
-        @Positive(message = "Raffle id must be a positive number")
-        Long raffleId,
+        Long customerId,
 
         List<TicketDTO> tickets,
 
         CartStatus status,
 
+        @Column(nullable = false)
+        CartOwnerType ownerType,
+        LocalDateTime createdAt,
         LocalDateTime lastModified
 ) { }

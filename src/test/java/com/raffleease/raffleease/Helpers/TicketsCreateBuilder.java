@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Helpers;
 
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
+
 import java.math.BigDecimal;
 
 public class TicketsCreateBuilder {

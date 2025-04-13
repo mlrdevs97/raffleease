@@ -6,7 +6,7 @@ import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 import com.raffleease.raffleease.Domains.Tickets.Repository.CustomTicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
-import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsService;
+import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
@@ -19,7 +19,7 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAIL
 
 @RequiredArgsConstructor
 @Service
-public class TicketsServiceImpl implements ITicketsService {
+public class TicketsServiceImpl implements TicketsService {
     private final TicketsRepository repository;
     private final CustomTicketsRepository customRepository;
 

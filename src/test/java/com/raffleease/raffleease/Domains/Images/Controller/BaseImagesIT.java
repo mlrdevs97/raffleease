@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 public abstract class BaseImagesIT extends BaseIT {
     @Autowired
@@ -30,7 +30,7 @@ public abstract class BaseImagesIT extends BaseIT {
     }
 
     protected ResultActions sendReorderRequest(UpdateOrderRequest reorderRequest, String url, String token) throws Exception {
-        return mockMvc.perform(post(url)
+        return mockMvc.perform(put(url)
                 .header(AUTHORIZATION, "Bearer " + token)
                 .contentType(APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(reorderRequest)));

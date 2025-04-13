@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.UUID;
 
+import static com.raffleease.raffleease.Domains.Tokens.Model.TokenType.ACCESS;
+
 @RequiredArgsConstructor
 @Service
 public class TokensCreateServiceImpl implements TokensCreateService {
@@ -19,7 +21,7 @@ public class TokensCreateServiceImpl implements TokensCreateService {
     public String generateAccessToken(Long userId) {
         return buildToken(
                 String.valueOf(userId),
-                TokenType.ACCESS,
+                ACCESS,
                 tokenQueryService.getAccessTokenExpirationValue()
         );
     }

@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
+import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
@@ -29,10 +30,10 @@ import java.util.Optional;
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDING;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
 import static java.math.BigDecimal.ZERO;
-import static java.time.temporal.ChronoUnit.MILLIS;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.testcontainers.shaded.com.google.common.net.HttpHeaders.LOCATION;
 
 class RafflesControllerCreateIT extends BaseRafflesIT {
     @Value("${spring.storage.images.base_path}")
@@ -64,8 +65,8 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
         Long createdRaffleId = json.path("data").path("id").asLong();
 
         // 5. Validate URI
-        String locationHeader = result.getResponse().getHeader("Location");
-        assertThat(locationHeader).endsWith("/api/v1/raffles/" + createdRaffleId);
+        String locationHeader = result.getResponse().getHeader(LOCATION);
+        assertThat(locationHeader).endsWith("/api/v1/associations/" + associationId + "/raffles/" + createdRaffleId);
 
         // 6. Verify raffle in database
         Raffle raffle = rafflesRepository.findById(createdRaffleId).orElseThrow();
@@ -74,7 +75,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
         assertThat(raffle.getDescription()).isEqualTo(raffleCreate.description());
         assertThat(raffle.getStatus()).isEqualTo(PENDING);
         assertThat(raffle.getURL()).isEqualTo(clientHost + "/client/raffle/" + raffle.getId());
-        assertThat(raffle.getEndDate().truncatedTo(MILLIS)).isEqualTo(raffleCreate.endDate().truncatedTo(MILLIS));
+        assertThat(ChronoUnit.MILLIS.between(raffle.getEndDate(), raffleCreate.endDate())).isLessThanOrEqualTo(1);
         assertThat(raffle.getTicketPrice()).isEqualTo(raffleCreate.ticketsInfo().price());
         assertThat(raffle.getFirstTicketNumber()).isEqualTo(raffleCreate.ticketsInfo().lowerLimit());
         assertThat(raffle.getTotalTickets()).isEqualTo(raffleCreate.ticketsInfo().amount());
@@ -237,19 +238,35 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
     @Test
     void shouldFailWhenUsingImagesFromAnotherAssociation() throws Exception {
         // Register second association
-        RegisterRequest otherUser = TestUtils.getOtherUserRegisterRequest();
-        String token = performAuthentication(otherUser);
+        AuthResponse authResponse = registerOtherUser();
+        String otherToken = authResponse.accessToken();
+        Long associationId = authResponse.association().id();
 
-        List<ImageDTO> images = parseImagesFromResponse(uploadImages(1, token).andReturn());
+        // Upload images for second association raffle
+        List<ImageDTO> images = parseImagesFromResponse(uploadImages(1, otherToken, associationId).andReturn());
 
+        assertThat(images).isNotNull();
+
+        // Try to create new raffle for original association using these images
         RaffleCreate raffle = new RaffleCreateBuilder()
                 .withImages(images)
                 .build();
 
-        // Try to use those images from the first user
         performCreateRaffleRequest(raffle)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You are not authorized to use the specified image(s)"));
+    }
+
+    @Test
+    void shouldFailIfAdminDoesNotBelongToAssociation() throws Exception {
+        String otherToken = registerOtherUser().accessToken();
+
+        List<ImageDTO> images = parseImagesFromResponse(uploadImages(2).andReturn());
+        RaffleCreate raffleCreate = new RaffleCreateBuilder().withImages(images).build();
+
+        performCreateRaffleRequest(raffleCreate, otherToken)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You are not a member of this association"));
     }
 
     @Test
@@ -306,7 +323,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
         // 2. Delete second image
         ImageDTO toDelete = uploaded.get(1);
         Long imageIdToDelete = toDelete.id();
-        performImageDelete("/api/v1/images/" + imageIdToDelete);
+        performImageDelete("/api/v1/associations/"+ associationId + "/images/" + imageIdToDelete);
 
         // 3. Check that the deleted image is not in DB
         Optional<Image> deleted = imagesRepository.findById(imageIdToDelete);

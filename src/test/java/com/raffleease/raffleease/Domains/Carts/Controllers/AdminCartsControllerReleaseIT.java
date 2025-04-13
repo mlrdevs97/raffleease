@@ -1,0 +1,160 @@
+package com.raffleease.raffleease.Domains.Carts.Controllers;
+
+import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
+import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
+import com.raffleease.raffleease.Domains.Carts.Model.Cart;
+import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.web.servlet.ResultActions;
+
+import java.util.List;
+
+import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT{
+    @Test
+    @Transactional
+    void shouldReleaseTickets() throws Exception {
+        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
+        List<Ticket> tickets = raffle.getTickets();
+        Long ticketId = tickets.get(0).getId();
+        Long cartId = createCart(getCreateCartURL(), accessToken);
+
+        performReserveRequest(buildReleaseRequest(ticketId), getReserveURL(cartId), accessToken);
+
+        performReleaseRequest(buildReleaseRequest(ticketId), getReleaseURL(cartId), accessToken)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Tickets released successfully"));
+
+        Cart cart = cartsRepository.findById(cartId).orElseThrow();
+        Ticket ticket = ticketsRepository.findById(ticketId).orElseThrow();
+
+        assertThat(cart.getTickets()).doesNotContain(ticket);
+        assertThat(ticket.getStatus()).isEqualTo(AVAILABLE);
+        assertThat(ticket.getRaffle().getAvailableTickets()).isEqualTo(tickets.size());
+    }
+
+    @Test
+    void shouldFailReleaseIfTicketsDoNotExist() throws Exception {
+        Long cartId = createCart(getCreateCartURL(), accessToken);
+
+        performReleaseRequest(buildReleaseRequest(999L), getReleaseURL(cartId), accessToken)
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("No tickets were found for provided ids"));
+    }
+
+    @Test
+    void shouldFailReleaseIfTicketsListIsNull() throws Exception {
+        Long cartId = createCart(getCreateCartURL(), accessToken);
+
+        ReservationRequest request = ReservationRequest.builder().ticketsIds(null).build();
+
+        performReleaseRequest(request, getReleaseURL(cartId), accessToken)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.ticketsIds").value("Must select at least one ticket"));
+    }
+
+    @Test
+    void shouldFailReleaseIfTicketsListIsEmpty() throws Exception {
+        Long cartId = createCart(getCreateCartURL(), accessToken);
+
+        ReservationRequest request = ReservationRequest.builder().ticketsIds(List.of()).build();
+
+        performReleaseRequest(request, getReleaseURL(cartId), accessToken)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.ticketsIds").value("Must select at least one ticket"));
+    }
+
+    @Test
+    @Transactional
+    void shouldFailReleaseIfTicketsDoNotBelongToAssociationRaffle() throws Exception {
+        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
+        Long ticketId = raffle.getTickets().get(0).getId();
+        Long cartId = createCart(getCreateCartURL(), accessToken);
+
+        AuthResponse authResponse = registerOtherUser();
+        Long associationId = authResponse.association().id();
+        String otherToken = authResponse.accessToken();
+
+        performReleaseRequest(buildReleaseRequest(ticketId), getReleaseURL(associationId, cartId), otherToken)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Some tickets do not belong to an association raffle"));
+    }
+
+    @Test
+    @Transactional
+    void shouldFailReleaseIfTicketsDoNotBelongToCart() throws Exception {
+        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
+        Long ticketId = raffle.getTickets().get(0).getId();
+        Long cartId = createCart(getCreateCartURL(), accessToken);
+
+        performReleaseRequest(buildReleaseRequest(ticketId), getReleaseURL(cartId), accessToken)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Cannot release a ticket that does not belong to the cart"));
+    }
+
+    private ReservationRequest buildReleaseRequest(Long... ids) {
+        return ReservationRequest.builder()
+                .ticketsIds(List.of(ids))
+                .build();
+    }
+
+    @Test
+    @Transactional
+    void shouldFailReleaseIfUserDoesNotBelongToAssociation() throws Exception {
+        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
+        Long ticketId = raffle.getTickets().get(0).getId();
+
+        Long cartId = createCart(getCreateCartURL(), accessToken);
+        performReserveRequest(buildReleaseRequest(ticketId), getReserveURL(cartId), accessToken);
+
+        String otherToken = registerOtherUser().accessToken();
+
+        performReleaseRequest(buildReleaseRequest(ticketId), getReleaseURL(cartId), otherToken)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You are not a member of this association"));
+    }
+
+    @Test
+    @Transactional
+    void shouldFailToReduceIfReleasedTicketsExceedLimit() throws Exception {
+        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
+        List<Ticket> tickets = raffle.getTickets();
+
+        ReservationRequest request = ReservationRequest.builder()
+                .ticketsIds(List.of(tickets.get(0).getId()))
+                .build();
+
+        Long cartId = createCart(getCreateCartURL(associationId), accessToken);
+        performReserveRequest(request, getReserveURL(associationId, cartId), accessToken);
+
+        raffle.setAvailableTickets((long) tickets.size());
+        rafflesRepository.save(raffle);
+
+        performReleaseRequest(buildReleaseRequest(tickets.get(0).getId()), getReleaseURL(cartId), accessToken);
+
+    }
+
+    private String getReleaseURL(Long cartId) {
+        return getReleaseURL(associationId, cartId);
+    }
+
+    private String getReleaseURL(Long associationId, Long cartId) {
+        return "/admin/api/v1/associations/" + associationId + "/carts/" + cartId + "/reservations";
+    }
+
+    private ResultActions performReleaseRequest(ReservationRequest request, String URL, String token) throws Exception {
+        return mockMvc.perform(put(URL)
+                .header(AUTHORIZATION, "Bearer " + token)
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+    }
+}

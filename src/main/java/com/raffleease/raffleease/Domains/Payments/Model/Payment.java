@@ -2,6 +2,8 @@ package com.raffleease.raffleease.Domains.Payments.Model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,6 +23,11 @@ public class Payment {
     private PaymentStatus status;
     private String paymentMethod;
     private BigDecimal total;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
     private LocalDateTime completedAt;
 }

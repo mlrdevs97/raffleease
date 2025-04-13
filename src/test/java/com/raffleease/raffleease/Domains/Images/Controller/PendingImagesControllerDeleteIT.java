@@ -1,11 +1,10 @@
 package com.raffleease.raffleease.Domains.Images.Controller;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
+import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Helpers.RaffleBuilder;
 import com.raffleease.raffleease.Helpers.TestUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.ResultActions;
@@ -20,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 class PendingImagesControllerDeleteIT extends BaseImagesIT {
-    private final String DELETE_IMAGE_RUL = "/api/v1/images/{id}";
+    private String deleteURL = "/api/v1/images/{id}";
 
     @Test
     void shouldDeleteImageSuccessfully() throws Exception {
@@ -53,12 +52,24 @@ class PendingImagesControllerDeleteIT extends BaseImagesIT {
     void shouldFailWhenImageDoesNotBelongToAssociation() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
 
-        RegisterRequest registerRequest = TestUtils.getOtherUserRegisterRequest();
-        String otherToken = performAuthentication(registerRequest);
+        AuthResponse authResponse = registerOtherUser();
+        String otherToken = authResponse.accessToken();
+        Long associationId = authResponse.association().id();
 
-        performImageDelete(images.get(0).id(), otherToken)
+        performImageDelete(images.get(0).id(), otherToken, associationId)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You are not authorized to delete this image"));
+    }
+
+    @Test
+    void shouldFailWhenUserIsNotMemberOfAssociation() throws Exception {
+        List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
+
+        String otherToken = registerOtherUser().accessToken();
+
+        performImageDelete(images.get(0).id(), otherToken, associationId)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You are not a member of this association"));
     }
 
     @Test
@@ -80,15 +91,15 @@ class PendingImagesControllerDeleteIT extends BaseImagesIT {
     }
 
     private ResultActions performImageDelete(Long imageId) throws Exception {
-        return sendImageDeleteRequest(imageId, accessToken);
+        return sendImageDeleteRequest(imageId, accessToken, associationId);
     }
 
-    private ResultActions performImageDelete(Long imageId, String token) throws Exception {
-        return sendImageDeleteRequest(imageId, token);
+    private ResultActions performImageDelete(Long imageId, String token, Long associationId) throws Exception {
+        return sendImageDeleteRequest(imageId, token, associationId);
     }
 
-    private ResultActions sendImageDeleteRequest(Long imageId, String token) throws Exception {
-        return mockMvc.perform(delete(DELETE_IMAGE_RUL, imageId)
+    private ResultActions sendImageDeleteRequest(Long imageId, String token, Long associationId) throws Exception {
+        return mockMvc.perform(delete("/api/v1/associations/" + associationId + "/images/" + imageId)
                 .header(AUTHORIZATION, "Bearer " + token));
     }
 }

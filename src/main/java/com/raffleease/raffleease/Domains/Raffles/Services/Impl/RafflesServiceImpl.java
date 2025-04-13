@@ -12,9 +12,8 @@ import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
-import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsService;
+import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +25,7 @@ import java.util.List;
 @Service
 public class RafflesServiceImpl implements RafflesService {
     private final RafflesPersistenceService rafflesPersistence;
-    private final ITicketsService ticketsCreateService;
+    private final TicketsService ticketsCreateService;
     private final IRafflesMapper rafflesMapper;
     private final AssociationsService associationsService;
     private final ImagesAssociateService imagesAssociateService;
@@ -35,8 +34,8 @@ public class RafflesServiceImpl implements RafflesService {
     private String host;
 
     @Transactional
-    public PublicRaffleDTO create(HttpServletRequest request, RaffleCreate raffleData) {
-        Association association = associationsService.findFromRequest(request);
+    public PublicRaffleDTO create(Long associationId, RaffleCreate raffleData) {
+        Association association = associationsService.findById(associationId);
         Raffle mappedRaffle = rafflesMapper.toRaffle(raffleData, association);
         Raffle raffle = rafflesPersistence.save(mappedRaffle);
         raffle.setURL(host + "/client/raffle/" + raffle.getId());

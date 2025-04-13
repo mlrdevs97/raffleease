@@ -13,8 +13,7 @@ public class RaffleTicketsAvailabilityServiceImpl implements RaffleTicketsAvaila
     private final RafflesPersistenceService rafflesPersistence;
 
     @Override
-    public void reduceAvailableTickets(Long raffleId, long reductionQuantity) {
-        Raffle raffle = rafflesPersistence.findById(raffleId);
+    public void reduceAvailableTickets(Raffle raffle, long reductionQuantity) {
         long availableTickets = raffle.getAvailableTickets() - reductionQuantity;
         if (availableTickets < 0) {
             throw new BusinessException("Insufficient tickets available to complete the operation");

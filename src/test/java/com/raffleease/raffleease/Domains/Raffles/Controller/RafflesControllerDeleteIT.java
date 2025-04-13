@@ -15,11 +15,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class RafflesControllerDeleteIT extends BaseRafflesIT {
-    private final String DELETE_URL = "/api/v1/raffles/{id}";
+    private Long raffleId;
 
     @BeforeEach
     void setUp() throws Exception {
-        createRaffle();
+        raffleId = createRaffle();
     }
 
     @Test
@@ -74,7 +74,7 @@ class RafflesControllerDeleteIT extends BaseRafflesIT {
     }
 
     private ResultActions performDelete() throws Exception {
-        return mockMvc.perform(delete(DELETE_URL, raffleId)
+        return mockMvc.perform(delete("/api/v1/associations/" + associationId + "/raffles/" + raffleId)
                 .header(AUTHORIZATION, "Bearer " + accessToken));
     }
 }

@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Orders.Controller;
 
-import com.raffleease.raffleease.Domains.Orders.Services.IOrdersService;
+import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.CartHeaderMissingException;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
@@ -17,13 +17,13 @@ import java.util.Objects;
 @RestController
 @RequestMapping("/api/v1/orders")
 public class OrdersController {
-    private final IOrdersService ordersCreateService;
+    private final OrdersService ordersCreateService;
 
     @PostMapping
     public ResponseEntity<ApiResponse> createOrder(
             HttpServletRequest httpRequest
     ) {
-        String cartId = (String) httpRequest.getAttribute("cartId");
+        String cartId = "";
         if (Objects.isNull(cartId)) throw new CartHeaderMissingException("Cannot complete order because the cart ID is missing");
 
         String sessionKey = ordersCreateService.create(Long.parseLong(cartId));

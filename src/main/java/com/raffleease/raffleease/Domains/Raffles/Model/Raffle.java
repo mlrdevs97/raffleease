@@ -5,12 +5,15 @@ import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDING;
+import static jakarta.persistence.CascadeType.ALL;
 import static java.math.BigDecimal.ZERO;
 
 @NoArgsConstructor
@@ -36,16 +39,18 @@ public class Raffle {
 
     private String URL;
 
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     private LocalDateTime startDate;
 
     private LocalDateTime endDate;
 
     private LocalDateTime completedAt;
-
-    private LocalDateTime updatedAt;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal ticketPrice;
@@ -65,10 +70,10 @@ public class Raffle {
     @Column(nullable = false)
     private BigDecimal revenue;
 
-    @OneToMany(mappedBy = "raffle", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "raffle", cascade = ALL, orphanRemoval = true)
     private List<Image> images;
 
-    @OneToMany(mappedBy = "raffle", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "raffle", cascade = ALL, orphanRemoval = true)
     private List<Ticket> tickets;
 
     @ManyToOne

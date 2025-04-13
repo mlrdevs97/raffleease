@@ -1,13 +1,8 @@
 package com.raffleease.raffleease.Domains.Images.Controller;
 
-import com.raffleease.raffleease.Domains.Associations.Model.Association;
-import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
+import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.DTOs.UpdateOrderRequest;
-import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Helpers.RaffleBuilder;
-import com.raffleease.raffleease.Helpers.TestUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -19,8 +14,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
-    private final String reorderURL = "/api/v1/images/order";
-
     @Test
     void shouldUpdateImagesOrder() throws Exception {
         MvcResult result = uploadImages(3).andExpect(status().isOk()).andReturn();
@@ -32,7 +25,7 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
                 copyWithNewOrder(images.get(0), 3)
         ));
 
-        sendReorderRequest(reorderRequest, reorderURL, accessToken)
+        sendReorderRequest(reorderRequest, getReorderURL(), accessToken)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Image order updated successfully"))
                 .andExpect(jsonPath("$.data.images", hasSize(3)));
@@ -57,7 +50,7 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
                 copyWithNewOrder(image, 2)
         ));
 
-        sendReorderRequest(reorderRequest, reorderURL, accessToken)
+        sendReorderRequest(reorderRequest, getReorderURL(), accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Duplicate image IDs found in request"));
     }
@@ -71,7 +64,7 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
                 copyWithNewOrder(images.get(1), 1)
         ));
 
-        sendReorderRequest(reorderRequest, reorderURL, accessToken)
+        sendReorderRequest(reorderRequest, getReorderURL(), accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Duplicate image orders detected"));
     }
@@ -85,7 +78,7 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
                 copyWithNewOrder(images.get(1), 3)
         ));
 
-        sendReorderRequest(reorderRequest, reorderURL, accessToken)
+        sendReorderRequest(reorderRequest, getReorderURL(), accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Image orders must be consecutive starting from 1"));
     }
@@ -108,7 +101,7 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
                 invalid
         ));
 
-        sendReorderRequest(reorderRequest, reorderURL, accessToken)
+        sendReorderRequest(reorderRequest, getReorderURL(), accessToken)
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("One or more images were not found"));
     }
@@ -117,11 +110,12 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
     void shouldFailIfImageDoesNotBelongToAssociation() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
 
-        RegisterRequest registerRequest = TestUtils.getOtherUserRegisterRequest();
-        String otherToken = performAuthentication(registerRequest);
+        AuthResponse authResponse = registerOtherUser();
+        String otherToken = authResponse.accessToken();
+        Long associationId = authResponse.association().id();
 
         UpdateOrderRequest reorderRequest = new UpdateOrderRequest(List.of(copyWithNewOrder(images.get(0), 1)));
-        sendReorderRequest(reorderRequest, reorderURL, otherToken)
+        sendReorderRequest(reorderRequest, getReorderURL(associationId), otherToken)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You are not authorized to use the specified image(s)"));
     }
@@ -129,22 +123,26 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
     @Test
     void shouldFailWhenAnyImageIsAlreadyLinkedToRaffle() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
-        Image image = imagesRepository.findById(images.get(0).id()).orElseThrow();
-        Association association = associationsRepository.findById(Long.parseLong(tokensQueryService.getSubject(accessToken))).orElseThrow();
-        Raffle raffle = rafflesRepository.save(new RaffleBuilder(association).build());
-        image.setRaffle(raffle);
-        imagesRepository.save(image);
+        createRaffle(images, accessToken);
 
         UpdateOrderRequest reorderRequest = new UpdateOrderRequest(List.of(copyWithNewOrder(images.get(0), 1)));
-        sendReorderRequest(reorderRequest, reorderURL, accessToken)
+        sendReorderRequest(reorderRequest, getReorderURL(), accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("One or more images are already linked to a raffle."));
     }
 
     @Test
     void shouldFailWhenImageListIsEmpty() throws Exception {
-        sendReorderRequest(new UpdateOrderRequest(List.of()), reorderURL, accessToken)
+        sendReorderRequest(new UpdateOrderRequest(List.of()), getReorderURL(), accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.images").value("Must provide images to reorder"));
+    }
+
+    private String getReorderURL() {
+        return "/api/v1/associations/" + associationId + "/images";
+    }
+
+    private String getReorderURL(Long associationId) {
+        return "/api/v1/associations/" + associationId + "/images";
     }
 }

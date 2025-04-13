@@ -5,7 +5,6 @@ import com.raffleease.raffleease.Domains.Associations.Mappers.Impl.AssociationsM
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Mappers.ImagesMapper;
-import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
@@ -13,8 +12,6 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
@@ -41,7 +38,6 @@ public class RafflesMapper implements IRafflesMapper {
                 .association(association)
                 .soldTickets(0L)
                 .revenue(ZERO)
-                .createdAt(LocalDateTime.now())
                 .build();
     }
 

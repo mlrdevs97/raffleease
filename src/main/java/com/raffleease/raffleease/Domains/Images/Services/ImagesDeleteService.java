@@ -1,11 +1,10 @@
 package com.raffleease.raffleease.Domains.Images.Services;
 
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
 public interface ImagesDeleteService {
-    void deleteImage(HttpServletRequest request, Long id);
+    void deleteImage(Long associationId, Long id);
     void deleteAll(List<Image> images);
 }

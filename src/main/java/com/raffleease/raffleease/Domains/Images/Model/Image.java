@@ -5,6 +5,8 @@ import com.raffleease.raffleease.Domains.Images.Services.Impls.ImageEntityListen
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -38,5 +40,9 @@ public class Image {
     private Association association;
 
     @Column(nullable = false, updatable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }

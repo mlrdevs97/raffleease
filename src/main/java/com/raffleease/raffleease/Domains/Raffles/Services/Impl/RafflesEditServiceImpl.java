@@ -11,7 +11,7 @@ import com.raffleease.raffleease.Domains.Raffles.Services.RafflesEditService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
-import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsService;
+import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import java.util.List;
 @Service
 public class RafflesEditServiceImpl implements RafflesEditService {
     private final RafflesPersistenceService rafflesPersistence;
-    private final ITicketsService ticketsCreateService;
+    private final TicketsService ticketsCreateService;
     private final ImagesAssociateService imagesAssociateService;
     private final IRafflesMapper rafflesMapper;
 

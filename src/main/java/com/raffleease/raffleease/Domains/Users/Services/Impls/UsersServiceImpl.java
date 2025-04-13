@@ -1,7 +1,6 @@
 package com.raffleease.raffleease.Domains.Users.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterUserData;
-import com.raffleease.raffleease.Domains.Users.Mappers.UsersMapper;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
@@ -13,15 +12,18 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
+import static com.raffleease.raffleease.Domains.Users.Model.UserRole.ASSOCIATION_MEMBER;
+
 @RequiredArgsConstructor
 @Service
 public class UsersServiceImpl implements UsersService {
     private final UsersRepository repository;
-    private final UsersMapper mapper;
 
     @Override
     public User create(RegisterUserData userData, String encodedPassword) {
-        return save(mapper.fromRegisterUserData(userData, encodedPassword));
+        return save(buildUser(userData, encodedPassword));
     }
 
     @Override
@@ -46,6 +48,20 @@ public class UsersServiceImpl implements UsersService {
         } catch (NotFoundException ex) {
             return false;
         }
+    }
+
+    private User buildUser(RegisterUserData data, String encodedPassword) {
+        String phoneNumber = Objects.nonNull(data.phoneNumber())
+                ? data.phoneNumber().prefix() + data.phoneNumber().nationalNumber()
+                : null;
+
+        return User.builder()
+                .userRole(ASSOCIATION_MEMBER)
+                .userName(data.userName())
+                .email(data.email())
+                .phoneNumber(phoneNumber)
+                .password(encodedPassword)
+                .build();
     }
 
     private User save(User user) {

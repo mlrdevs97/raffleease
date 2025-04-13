@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -21,37 +20,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 public class ImagesControllerUpdateOrderIT extends BaseImagesIT {
     private Raffle raffle;
-    private List<Image> originalImages;
+    private List<ImageDTO> originalImages;
 
     @BeforeEach
     void setUp() throws Exception {
-        List<ImageDTO> imageDTOs = parseImagesFromResponse(uploadImages(2).andReturn());
-        Long associationId = Long.parseLong(tokensQueryService.getSubject(accessToken));
-        Association association = associationsRepository.findById(associationId).orElseThrow();
-        raffle = rafflesRepository.save(new RaffleBuilder(association).build());
-
-        originalImages = new ArrayList<>();
-        for (int i = 0; i < imageDTOs.size(); i++) {
-            long imageId = imageDTOs.get(i).id();
-
-            Image image = imagesRepository.findById(imageId).orElseThrow();
-            image.setRaffle(raffle);
-            image.setImageOrder(i + 1);
-
-            originalImages.add(imagesRepository.save(image));
-        }
+        originalImages = parseImagesFromResponse(uploadImages(2).andReturn());
+        Long raffleId = createRaffle(originalImages, accessToken);
+        raffle = rafflesRepository.findById(raffleId).orElseThrow();
     }
 
     @Test
     void shouldReorderAssociatedAndPendingImages() throws Exception {
-        List<ImageDTO> associated = mapper.fromImagesList(originalImages);
-
         List<ImageDTO> pending = parseImagesFromResponse(uploadImages(2).andReturn());
         UpdateOrderRequest reorderRequest = new UpdateOrderRequest(List.of(
                 copyWithNewOrder(pending.get(1), 1),
-                copyWithNewOrder(associated.get(0), 2),
+                copyWithNewOrder(originalImages.get(0), 2),
                 copyWithNewOrder(pending.get(0), 3),
-                copyWithNewOrder(associated.get(1), 4)
+                copyWithNewOrder(originalImages.get(1), 4)
         ));
 
         MvcResult result = sendReorderRequest(reorderRequest, reorderURL(raffle.getId()), accessToken)
@@ -138,17 +123,7 @@ public class ImagesControllerUpdateOrderIT extends BaseImagesIT {
     @Test
     void shouldFailIfImageIsLinkedToAnotherRaffle() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
-
-        long associationId = Long.parseLong(tokensQueryService.getSubject(accessToken));
-        Association association = associationsRepository.findById(associationId).orElseThrow();
-
-        Raffle otherRaffle = rafflesRepository.save(new RaffleBuilder(association).build());
-
-        long imageId = images.get(0).id();
-        Image image = imagesRepository.findById(imageId).orElseThrow();
-
-        image.setRaffle(otherRaffle);
-        imagesRepository.save(image);
+        createRaffle(images, accessToken);
 
         UpdateOrderRequest reorderRequest = new UpdateOrderRequest(List.of(
                 copyWithNewOrder(images.get(0), 1)
@@ -156,10 +131,10 @@ public class ImagesControllerUpdateOrderIT extends BaseImagesIT {
 
         sendReorderRequest(reorderRequest, reorderURL(raffle.getId()), accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(containsString("already linked to another raffle")));
+                .andExpect(jsonPath("$.message").value(containsString("One or more images are already associated with a different raffle")));
     }
 
     private String reorderURL(Long raffleId) {
-        return "/api/v1/raffles/" + raffleId + "/images/order";
+        return "/api/v1/associations/" + associationId + "/raffles/" + raffleId + "/images";
     }
 }

@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Auth.Controller;
 
+import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Auth.Services.AuthValidationService;
@@ -15,6 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
@@ -30,10 +34,18 @@ public class AuthController {
             @Valid @RequestBody RegisterRequest request,
             HttpServletResponse response
     ) {
-        return ResponseEntity.ok().body(
+        AuthResponse authResponse = registerService.register(request, response);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentContextPath()
+                .path("/api/v1/associations/{id}")
+                .buildAndExpand(authResponse.association().id())
+                .toUri();
+
+        return ResponseEntity.created(location).body(
                 ResponseFactory.success(
-                        registerService.register(request, response),
-                        "Association registered successfully"
+                        authResponse,
+                        "New association account created successfully"
                 )
         );
     }

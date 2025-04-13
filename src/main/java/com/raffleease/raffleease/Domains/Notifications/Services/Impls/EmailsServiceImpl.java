@@ -3,6 +3,7 @@ package com.raffleease.raffleease.Domains.Notifications.Services.Impls;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Notifications.Services.IEmailsService;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
+import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import jakarta.mail.MessagingException;
@@ -51,8 +52,8 @@ public class EmailsServiceImpl implements IEmailsService {
         Customer customer = order.getCustomer();
         String formattedOrderDate = order.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm"));
 
-        List<String> ticketNumbers = order.getCart().getTickets().stream()
-                .map(Ticket::getTicketNumber)
+        List<String> ticketNumbers = order.getOrderItems().stream()
+                .map(OrderItem::getTicketNumber)
                 .collect(Collectors.toList());
 
         variables.put("customer", customer);

@@ -19,7 +19,7 @@ public record RegisterUserData(
 
         @Nullable
         @Valid
-        RegisterPhoneNumber phoneNumber,
+        PhoneNumberData phoneNumber,
 
         @NotBlank(message = "Password is required")
         @Pattern(

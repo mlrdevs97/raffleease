@@ -12,7 +12,6 @@ import com.raffleease.raffleease.Domains.Images.Services.ImagesUpdateOrderServic
 import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -32,9 +31,9 @@ public class ImagesUpdateOrderServiceImpl implements ImagesUpdateOrderService {
     private final ImageValidator imageValidator;
 
     @Override
-    public ImageResponse updateImageOrderOnCreate(HttpServletRequest request, UpdateOrderRequest updateOrderRequest) {
+    public ImageResponse updateImageOrderOnCreate(Long associationId, UpdateOrderRequest updateOrderRequest) {
         return updateImageOrder(
-                request,
+                associationId,
                 updateOrderRequest.images(),
                 null,
                 images -> imageValidator.validateAllArePending(images)
@@ -42,10 +41,10 @@ public class ImagesUpdateOrderServiceImpl implements ImagesUpdateOrderService {
     }
 
     @Override
-    public ImageResponse updateImageOrderOnEdit(HttpServletRequest request, Long raffleId, UpdateOrderRequest updateOrderRequest) {
+    public ImageResponse updateImageOrderOnEdit(Long associationId, Long raffleId, UpdateOrderRequest updateOrderRequest) {
         Raffle raffle = rafflesPersistenceService.findById(raffleId);
         return updateImageOrder(
-                request,
+                associationId,
                 updateOrderRequest.images(),
                 raffle,
                 images -> imageValidator.validateImagesArePendingOrBelongToRaffle(raffle, images)
@@ -53,7 +52,7 @@ public class ImagesUpdateOrderServiceImpl implements ImagesUpdateOrderService {
     }
 
     private ImageResponse updateImageOrder(
-            HttpServletRequest request,
+            Long associationId,
             List<ImageDTO> imageDTOs,
             Raffle raffle,
             Consumer<List<Image>> extraValidation
@@ -65,7 +64,7 @@ public class ImagesUpdateOrderServiceImpl implements ImagesUpdateOrderService {
         imageValidator.validateNoDuplicates(imageOrders, "Duplicate image orders detected");
         imageValidator.validateConsecutiveOrders(imageOrders);
 
-        Association association = associationsService.findFromRequest(request);
+        Association association = associationsService.findById(associationId);
         List<Image> images = imagesService.findAllById(imageIds);
         imageValidator.validateAllImagesExist(imageIds, images);
         imageValidator.validateImagesBelongToAssociation(association, images);

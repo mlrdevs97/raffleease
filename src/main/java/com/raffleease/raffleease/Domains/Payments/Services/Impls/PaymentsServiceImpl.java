@@ -24,7 +24,6 @@ public class PaymentsServiceImpl implements IPaymentsService {
     public Payment create() {
         Payment payment = Payment.builder()
                 .status(PENDING)
-                .createdAt(LocalDateTime.now())
                 .build();
         return save(payment);
     }

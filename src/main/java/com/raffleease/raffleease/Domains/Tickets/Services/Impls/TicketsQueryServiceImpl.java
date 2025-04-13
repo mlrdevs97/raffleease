@@ -10,7 +10,7 @@ import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 import com.raffleease.raffleease.Domains.Tickets.Repository.CustomTicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
-import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsQueryService;
+import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
@@ -26,7 +26,7 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAIL
 
 @RequiredArgsConstructor
 @Service
-public class TicketsQueryServiceImpl implements ITicketsQueryService {
+public class TicketsQueryServiceImpl implements TicketsQueryService {
     private final RafflesPersistenceService rafflePersistence;
     private final TicketsRepository repository;
     private final CustomTicketsRepository customRepository;

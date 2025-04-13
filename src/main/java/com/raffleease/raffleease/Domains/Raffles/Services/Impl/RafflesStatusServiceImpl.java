@@ -42,7 +42,6 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
             case PENDING -> throw new BusinessException("Cannot revert to 'PENDING' state.");
             default -> throw new BusinessException("Unsupported status transition.");
         }
-        raffle.setUpdatedAt(LocalDateTime.now());
         return saveAndMap(raffle);
     }
 

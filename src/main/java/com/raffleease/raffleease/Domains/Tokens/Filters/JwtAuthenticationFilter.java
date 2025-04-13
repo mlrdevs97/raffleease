@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,7 +25,6 @@ import java.util.Objects;
 
 @RequiredArgsConstructor
 @Component
-@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final TokensQueryService tokenQueryService;
     private final TokensValidateService tokenValidationService;

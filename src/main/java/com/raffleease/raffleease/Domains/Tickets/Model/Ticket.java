@@ -7,6 +7,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 
+import static jakarta.persistence.EnumType.STRING;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Setter
@@ -19,6 +21,8 @@ public class Ticket {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String ticketNumber;
+
+    @Enumerated(STRING)
     private TicketStatus status;
 
     @ManyToOne

@@ -1,10 +1,18 @@
 package com.raffleease.raffleease.Domains.Auth.Controller;
 
-import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterPhoneNumber;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.raffleease.raffleease.Domains.Associations.Model.Association;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.PhoneNumberData;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
+import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Helpers.RegisterBuilder;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.web.servlet.MvcResult;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -21,21 +29,48 @@ class AuthControllerRegisterIT extends BaseAuthIT {
     }
 
     @Test
-    void shouldRegisterSuccessfullyWithValidData() throws Exception {
+    @Transactional
+    void shouldRegisterWithValidData() throws Exception {
         RegisterRequest request = validBuilder.build();
 
-        mockMvc.perform(post("/api/v1/auth/register")
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Association registered successfully"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("New association account created successfully"))
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
-                .andExpect(cookie().exists("refresh_token"));
+                .andExpect(jsonPath("$.data.association").isNotEmpty())
+                .andExpect(cookie().exists("refresh_token"))
+                .andReturn();
 
+        // Get association id
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        Long associationId = json.path("data").path("association").path("id").asLong();
+
+        // Check that URL is correct
+        String locationHeader = result.getResponse().getHeader("Location");
+        assertThat(locationHeader).endsWith("/api/v1/associations/" + associationId);
+
+        // Check that association was created with correct fields
+        Optional<Association> optionalAssociation = associationsRepository.findById(associationId);
+        assertThat(optionalAssociation).isPresent();
+        Association association = optionalAssociation.get();
+        assertThat(association).isNotNull();
+        assertThat(association.getId()).isEqualTo(associationId);
+
+        // Check that user was created
         String phoneNumber = request.userData().phoneNumber().prefix() + request.userData().phoneNumber().nationalNumber();
-        assertThat(usersRepository.findByIdentifier(request.userData().email())).isPresent();
+        Optional<User> optionalUser = usersRepository.findByIdentifier(request.userData().email());
+        assertThat(optionalUser).isPresent();
+        User user = optionalUser.get();
+        assertThat(user).isNotNull();
         assertThat(usersRepository.findByIdentifier(request.userData().userName())).isPresent();
         assertThat(usersRepository.findByIdentifier(phoneNumber)).isPresent();
+
+        // Check that user membership for association was created
+        assertThat(association.getMemberships().size()).isEqualTo(1);
+        AssociationMembership membership = association.getMemberships().get(0);
+        assertThat(membership.getUser().getId()).isEqualTo(user.getId());
     }
 
     @Test void shouldFailWhenUserNameIsNull() throws Exception {
@@ -60,6 +95,12 @@ class AuthControllerRegisterIT extends BaseAuthIT {
         performRegisterRequest(validBuilder.withUserEmail("invalid-email").build())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors['userData.email']").value("Must provide a valid email"));
+    }
+
+    @Test void shouldRegisterWithoutPhoneNumber() throws Exception {
+        performRegisterRequest(validBuilder.withUserPhone(null, null).build())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("New association account created successfully"));
     }
 
     @Test void shouldFailWhenPhonePrefixIsNull() throws Exception {
@@ -253,7 +294,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
         RegisterRequest original = validBuilder.build();
         performRegisterRequest(original);
 
-        RegisterPhoneNumber phoneNumber = original.userData().phoneNumber();
+        PhoneNumberData phoneNumber = original.userData().phoneNumber();
         RegisterRequest duplicate = new RegisterBuilder()
                 .withUserEmail("unexisting@email.com")
                 .withUserName("new_user")
@@ -317,7 +358,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
         RegisterRequest original = validBuilder.build();
         performRegisterRequest(original);
 
-        RegisterPhoneNumber phoneNumber = original.associationData().phoneNumber();
+        PhoneNumberData phoneNumber = original.associationData().phoneNumber();
         RegisterRequest duplicate = new RegisterBuilder()
                 .withUserEmail("unexisting@mail.com")
                 .withUserName("new_user")

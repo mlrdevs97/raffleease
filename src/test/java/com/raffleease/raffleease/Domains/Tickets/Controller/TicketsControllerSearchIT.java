@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Tickets.Controller;
 
+import com.raffleease.raffleease.Base.BaseIT;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Customers.Repository.CustomersRepository;
 import com.raffleease.raffleease.Domains.Raffles.Controller.BaseRafflesIT;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -23,23 +25,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
-class TicketsControllerSearchIT extends BaseRafflesIT {
-
+class TicketsControllerSearchIT extends BaseIT {
     @Autowired
     protected CustomersRepository customersRepository;
-
     private TicketsCreate ticketsCreate = new TicketsCreateBuilder().build();
     private String getTicketsPath;
+    private String getRandomTicketsPath;
+    private Long raffleId;
 
     @BeforeEach
     void setUp() throws Exception {
-        createRaffle();
-        getTicketsPath = "/api/v1/raffles/" + raffleId + "/tickets";
+        raffleId = createRaffle();
+        getTicketsPath = "/api/v1/associations/" + associationId + "/raffles/" + raffleId + "/tickets";
+        getRandomTicketsPath = getTicketsPath + "/random";
     }
 
     @Test
     void shouldReturnAllAvailableTicketsForRaffle() throws Exception {
-        performSearch(null)
+        perGetRequest(null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(ticketsCreate.amount()))
                 .andExpect(jsonPath("$.data[0].status").value("AVAILABLE"))
@@ -48,7 +51,7 @@ class TicketsControllerSearchIT extends BaseRafflesIT {
 
     @Test
     void shouldReturnTicketByNumber() throws Exception {
-        performSearch(Map.of("ticketNumber", "102"))
+        perGetRequest(Map.of("ticketNumber", "102"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].ticketNumber").value("102"));
@@ -59,7 +62,7 @@ class TicketsControllerSearchIT extends BaseRafflesIT {
         Customer customer = createCustomer();
         assignTicketToCustomer(raffleId, "102", customer);
 
-        performSearch(Map.of("customerId", customer.getId().toString()))
+        perGetRequest(Map.of("customerId", customer.getId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].ticketNumber").value("102"));
@@ -70,7 +73,7 @@ class TicketsControllerSearchIT extends BaseRafflesIT {
         Customer customer = createCustomer();
         assignTicketToCustomer(raffleId, "103", customer);
 
-        performSearch(Map.of(
+        perGetRequest(Map.of(
                 "ticketNumber", "103",
                 "customerId", customer.getId().toString()
         ))
@@ -83,7 +86,7 @@ class TicketsControllerSearchIT extends BaseRafflesIT {
     void shouldReturnNotFoundIfRaffleDoesNotExist() throws Exception {
         long invalidRaffleId = 999L;
 
-        mockMvc.perform(get("/api/v1/raffles/" + invalidRaffleId + "/tickets")
+        mockMvc.perform(get("/api/v1/associations/" + associationId + "/raffles/" + invalidRaffleId + "/tickets")
                         .header(AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Raffle not found for id <" + invalidRaffleId + ">"));
@@ -93,19 +96,74 @@ class TicketsControllerSearchIT extends BaseRafflesIT {
     void shouldReturnNotFoundIfCustomerDoesNotExist() throws Exception {
         long nonExistentCustomerId = 999L;
 
-        performSearch(Map.of("customerId", String.valueOf(nonExistentCustomerId)))
+        perGetRequest(Map.of("customerId", String.valueOf(nonExistentCustomerId)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Customer not found for id <" + nonExistentCustomerId + ">"));
     }
 
     @Test
     void shouldReturnNotFoundWhenNoTicketsMatchSearch() throws Exception {
-        performSearch(Map.of("ticketNumber", "999"))
+        perGetRequest(Map.of("ticketNumber", "999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("No ticket was found for search"));
     }
 
-    private ResultActions performSearch(Map<String, String> params) throws Exception {
+    @Test
+    void shouldReturnRandomTicketsSuccessfully() throws Exception {
+        mockMvc.perform(get(getRandomTicketsPath)
+                        .param("quantity", "3")
+                        .header(AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(3))
+                .andExpect(jsonPath("$.data[0].status").value("AVAILABLE"))
+                .andExpect(jsonPath("$.message").value("Random tickets retrieved successfully"));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenQuantityIsMissing() throws Exception {
+        mockMvc.perform(get(getRandomTicketsPath)
+                        .header(AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Missing required request parameter: 'quantity'"));
+    }
+
+    @Test
+    void shouldReturnNotFoundIfRaffleDoesNotExistOnRandomRequest() throws Exception {
+        long invalidRaffleId = 999L;
+        String path = "/api/v1/associations/" + associationId + "/raffles/" + invalidRaffleId + "/tickets/random";
+
+        mockMvc.perform(get(path)
+                        .param("quantity", "2")
+                        .header(AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Raffle not found for id <" + invalidRaffleId + ">"));
+    }
+
+    @Test
+    void shouldReturnBusinessExceptionIfNotEnoughTicketsAvailable() throws Exception {
+        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
+        List<Ticket> tickets = ticketsRepository.findAllByRaffle(raffle).stream()
+                .peek(ticket -> ticket.setStatus(SOLD))
+                .toList();
+        ticketsRepository.saveAll(tickets);
+
+        mockMvc.perform(get(getRandomTicketsPath)
+                        .param("quantity", "2")
+                        .header(AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Not enough tickets were found for this order"));
+    }
+
+    @Test
+    void shouldReturnBusinessExceptionIfQuantityExceedsAvailableTickets() throws Exception {
+        mockMvc.perform(get(getRandomTicketsPath)
+                        .param("quantity", String.valueOf(ticketsCreate.amount() + 1))
+                        .header(AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Not enough tickets were found for this order"));
+    }
+
+    private ResultActions perGetRequest(Map<String, String> params) throws Exception {
         MockHttpServletRequestBuilder request = get(getTicketsPath)
                 .header(AUTHORIZATION, "Bearer " + accessToken);
 

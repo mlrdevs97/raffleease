@@ -2,9 +2,7 @@ package com.raffleease.raffleease.Domains.Images.Controller;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
-import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Helpers.RaffleBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,16 +28,8 @@ public class ImagesControllerCreateIT extends BaseImagesIT {
     @BeforeEach
     void setUp() throws Exception {
         originalImages = parseImagesFromResponse(uploadImages(2).andReturn());
-        Long associationId = Long.parseLong(tokensQueryService.getSubject(accessToken));
-        Association association = associationsRepository.findById(associationId).orElseThrow();
-        raffle = rafflesRepository.save(new RaffleBuilder(association).build());
-
-        for (int i = 0; i < originalImages.size(); i++) {
-            Image image = imagesRepository.findById(originalImages.get(i).id()).orElseThrow();
-            image.setRaffle(raffle);
-            image.setImageOrder(i + 1);
-            imagesRepository.save(image);
-        }
+        Long raffleId = createRaffle(originalImages, accessToken);
+        raffle = rafflesRepository.findById(raffleId).orElseThrow();
     }
 
     @Test
@@ -60,7 +50,7 @@ public class ImagesControllerCreateIT extends BaseImagesIT {
 
             assertThat(imagesRepository.findById(image.id())).isNotNull();
 
-            assertThat(image.url()).contains("/api/v1/images/" + image.id());
+            assertThat(image.url()).contains("/api/v1/associations/" + associationId + "/raffles/" + raffle.getId() +  "/images/" + image.id());
 
             Path expectedPath = Paths.get(basePath + "/associations/" + association.getId() + "/images/raffles/temp/");
             assertThat(image.filePath()).contains(expectedPath.toString());
@@ -84,7 +74,7 @@ public class ImagesControllerCreateIT extends BaseImagesIT {
 
             assertThat(imagesRepository.findById(image.id())).isNotNull();
 
-            assertThat(image.url()).contains("/api/v1/images/" + image.id());
+            assertThat(image.url()).contains("/api/v1/associations/" + associationId + "/raffles/" + raffle.getId() +  "/images/" + image.id());
 
             Path expectedPath = Paths.get(basePath + "/associations/" + association.getId() + "/images/raffles/temp/");
             assertThat(image.filePath()).contains(expectedPath.toString());

@@ -27,7 +27,7 @@ class RafflesControllerGetIT extends BaseRafflesIT {
         Long raffleId = objectMapper.readTree(creationResult.getResponse().getContentAsString())
                 .path("data").path("id").asLong();
 
-        mockMvc.perform(get("/api/v1/raffles/" + raffleId)
+        mockMvc.perform(get("/api/v1/associations/" + associationId + "/raffles/" + raffleId)
                         .header(AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Raffle retrieved successfully"))
@@ -41,16 +41,15 @@ class RafflesControllerGetIT extends BaseRafflesIT {
                 .withTitle("Raffle One")
                 .withImages(parseImagesFromResponse(uploadImages(1).andReturn()))
                 .build();
+        performCreateRaffleRequest(raffle1).andExpect(status().isCreated());
 
         RaffleCreate raffle2 = new RaffleCreateBuilder()
                 .withTitle("Raffle Two")
                 .withImages(parseImagesFromResponse(uploadImages(1).andReturn()))
                 .build();
-
-        performCreateRaffleRequest(raffle1).andExpect(status().isCreated());
         performCreateRaffleRequest(raffle2).andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/v1/raffles")
+        mockMvc.perform(get("/api/v1/associations/" + associationId + "/raffles")
                         .header(AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("All raffles retrieved successfully"))
@@ -62,7 +61,7 @@ class RafflesControllerGetIT extends BaseRafflesIT {
     @Test
     void shouldFailWhenRaffleDoesNotExist() throws Exception {
         long nonExistentId = 99999L;
-        mockMvc.perform(get("/api/v1/raffles/" + nonExistentId)
+        mockMvc.perform(get("/api/v1/associations/" + associationId + "/raffles/" + nonExistentId)
                         .header(AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Raffle not found for id <" + nonExistentId + ">"));

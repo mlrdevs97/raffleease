@@ -9,9 +9,7 @@ import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
@@ -30,10 +28,10 @@ public class ImagesDeleteServiceImpl implements ImagesDeleteService {
 
     @Override
     @Transactional
-    public void deleteImage(HttpServletRequest request, Long id) {
+    public void deleteImage(Long associationId, Long id) {
         Image image = imagesService.findById(id);
 
-        Association association = associationsService.findFromRequest(request);
+        Association association = associationsService.findById(associationId);
         if (!image.getAssociation().equals(association)) {
             throw new AuthorizationException("You are not authorized to delete this image");
         }

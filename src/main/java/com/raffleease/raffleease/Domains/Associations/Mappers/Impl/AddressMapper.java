@@ -1,14 +1,12 @@
 package com.raffleease.raffleease.Domains.Associations.Mappers.Impl;
 
 import com.raffleease.raffleease.Domains.Associations.DTO.AddressDTO;
-import com.raffleease.raffleease.Domains.Associations.Mappers.IAddressMapper;
 import com.raffleease.raffleease.Domains.Associations.Model.Address;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterAddressData;
-import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AddressMapper implements IAddressMapper {
+public class AddressMapper implements com.raffleease.raffleease.Domains.Associations.Mappers.AddressMapper {
     public Address toAddress(RegisterAddressData addressData) {
         return Address.builder()
                 .placeId(addressData.placeId())
@@ -23,7 +21,10 @@ public class AddressMapper implements IAddressMapper {
 
     public AddressDTO fromAddress(Address address) {
         return AddressDTO.builder()
-                .id(address.getId())
+                .placeId(address.getPlaceId())
+                .formattedAddress(address.getFormattedAddress())
+                .latitude(address.getLatitude())
+                .longitude(address.getLongitude())
                 .city(address.getCity())
                 .province(address.getProvince())
                 .zipCode(address.getZipCode())

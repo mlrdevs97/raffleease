@@ -9,6 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -191,6 +192,19 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse> handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
+        String message = String.format("Missing required request parameter: '%s'", ex.getParameterName());
+
+        ApiResponse response = ResponseFactory.error(
+                message,
+                BAD_REQUEST.value(),
+                BAD_REQUEST.getReasonPhrase()
+        );
+
+        return ResponseEntity.status(BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

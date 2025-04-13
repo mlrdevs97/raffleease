@@ -43,7 +43,12 @@ public class StripeServiceImpl implements IStripeService {
     }
 
     private SessionCreateParams buildSessionParams(Order order) {
+        // TODO: CHeck how to get raffle
+        Raffle raffle = new Raffle();
+        /*
         Raffle raffle = order.getCart().getRaffle();
+
+         */
 
         return SessionCreateParams.builder()
                 .setUiMode(SessionCreateParams.UiMode.EMBEDDED)
@@ -72,7 +77,10 @@ public class StripeServiceImpl implements IStripeService {
                                                 .setUnitAmount(raffle.getTicketPrice().multiply(BigDecimal.valueOf(100)).longValue())
                                                 .build()
                                 )
+                                // Check and fix how to set quantity
+                                /*
                                 .setQuantity((long) order.getCart().getTickets().size())
+                                 */
                                 .build()
                 )
                 .setReturnUrl(clientHost + paymentSuccessPath + raffle.getId())

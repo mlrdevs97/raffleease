@@ -15,7 +15,6 @@ import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.FileStorageException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,21 +42,21 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
 
     @Override
     @Transactional
-    public ImageResponse create(HttpServletRequest request, ImageUpload uploadRequest) {
-        String baseURL = host + "/api/v1/images/";
-        return processImagesCreation(request, uploadRequest, 0, baseURL);
+    public ImageResponse create(Long associationId, ImageUpload uploadRequest) {
+        String baseURL = host + "/api/v1/associations/" + associationId + "/images/";
+        return processImagesCreation(associationId, uploadRequest, 0, baseURL);
     }
 
     @Override
-    public ImageResponse create(HttpServletRequest request, Long raffleId, ImageUpload uploadRequest) {
+    public ImageResponse create(Long associationId, Long raffleId, ImageUpload uploadRequest) {
         Raffle raffle = rafflesPersistenceService.findById(raffleId);
         int currentImagesCount = raffle.getImages().size();
-        String baseURL = host + "/api/v1/raffles/" + raffleId + "/images/";
-        return processImagesCreation(request, uploadRequest, currentImagesCount, baseURL);
+        String baseURL = host + "/api/v1/associations/" + associationId + "/raffles/" + raffleId + "/images/";
+        return processImagesCreation(associationId, uploadRequest, currentImagesCount, baseURL);
     }
 
-    private ImageResponse processImagesCreation(HttpServletRequest request, ImageUpload uploadRequest, int currentImagesCount, String baseURL) {
-        Association association = associationsService.findFromRequest(request);
+    private ImageResponse processImagesCreation(Long associationId, ImageUpload uploadRequest, int currentImagesCount, String baseURL) {
+        Association association = associationsService.findById(associationId);
         List<MultipartFile> files = uploadRequest.files();
         int existingImagesCount = repository.countPendingImagesByAssociation(association);
         int totalImagesCount = existingImagesCount + currentImagesCount;
@@ -86,7 +85,6 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
                 .fileName(file.getOriginalFilename())
                 .contentType(file.getContentType())
                 .association(association)
-                .createdAt(LocalDateTime.now())
                 .build()).toList());
     }
 }

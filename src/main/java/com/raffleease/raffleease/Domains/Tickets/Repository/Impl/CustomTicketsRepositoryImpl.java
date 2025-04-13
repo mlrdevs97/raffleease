@@ -34,6 +34,9 @@ public class CustomTicketsRepositoryImpl implements CustomTicketsRepository {
                 .setParameter("ticketIds", ticketIds)
                 .executeUpdate();
 
+        entityManager.flush();
+        entityManager.clear();
+
         String selectQuery = "SELECT t FROM Ticket t " +
                 "WHERE t.id IN :ticketIds";
 

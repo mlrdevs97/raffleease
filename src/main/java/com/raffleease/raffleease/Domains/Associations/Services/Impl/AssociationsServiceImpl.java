@@ -4,17 +4,14 @@ import com.raffleease.raffleease.Domains.Associations.Mappers.IAssociationsMappe
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
-import com.raffleease.raffleease.Domains.Associations.Repository.AssociationMembershipsRepository;
+import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsMembershipsRepository;
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRepository;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterAssociationData;
-import com.raffleease.raffleease.Domains.Tokens.Services.TokensManagementService;
-import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.ConflictException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
@@ -25,23 +22,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class AssociationsServiceImpl implements AssociationsService {
     private final AssociationsRepository associationsRepository;
-    private final AssociationMembershipsRepository membershipsRepository;
+    private final AssociationsMembershipsRepository membershipsRepository;
     private final IAssociationsMapper mapper;
-    private final TokensManagementService tokensManagementService;
-    private final TokensQueryService tokensQueryService;
 
     @Transactional
     @Override
     public Association create(RegisterAssociationData associationData) {
         return save(mapper.toAssociation(associationData));
-    }
-
-    @Override
-    public Association findFromRequest(HttpServletRequest request) {
-        String token = tokensManagementService.extractTokenFromRequest(request);
-        String subject = tokensQueryService.getSubject(token);
-        Long id = Long.parseLong(subject);
-        return findById(id);
     }
 
     @Override

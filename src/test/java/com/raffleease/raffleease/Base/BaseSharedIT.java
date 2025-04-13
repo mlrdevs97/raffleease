@@ -4,13 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRepository;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
-import com.raffleease.raffleease.Domains.Customers.Model.Customer;
+import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
+import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
 import com.raffleease.raffleease.Domains.Tokens.Services.BlackListService;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
-import com.raffleease.raffleease.Helpers.CustomerBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +19,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.containers.GenericContainer;
@@ -58,13 +56,20 @@ public class BaseSharedIT {
     protected RafflesRepository rafflesRepository;
 
     @Autowired
+    protected TicketsRepository ticketsRepository;
+
+    @Autowired
     protected TokensQueryService tokensQueryService;
 
     @Autowired
     protected BlackListService blackListService;
 
+    @Autowired
+    protected CartsRepository cartsRepository;
+
     protected String accessToken;
     protected String refreshToken;
+    protected Long associationId;
 
     protected final String REGISTER_URL = "/api/v1/auth/register";
     protected final String LOGIN_URL = "/api/v1/auth/login";
@@ -81,6 +86,8 @@ public class BaseSharedIT {
     @AfterEach
     void cleanDatabase() {
         imagesRepository.deleteAll();
+        ticketsRepository.deleteAll();
+        cartsRepository.deleteAll();
         rafflesRepository.deleteAll();
         associationsRepository.deleteAll();
         usersRepository.deleteAll();

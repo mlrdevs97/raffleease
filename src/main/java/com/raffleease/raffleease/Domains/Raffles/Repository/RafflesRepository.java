@@ -25,4 +25,5 @@ public interface RafflesRepository extends JpaRepository<Raffle, Long> {
     """)
     List<Raffle> findAllEligibleForCompletion(@Param("status") RaffleStatus status);
 
+    List<Raffle> findAllByAssociation(Association association);
 }

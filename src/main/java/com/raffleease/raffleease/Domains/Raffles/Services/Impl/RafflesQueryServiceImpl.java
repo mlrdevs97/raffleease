@@ -26,21 +26,30 @@ public class RafflesQueryServiceImpl implements RafflesQueryService {
     private final AssociationsService associationsService;
 
     @Override
-    public PublicRaffleDTO getAll(Long id) {
+    public PublicRaffleDTO get(Long id) {
         return mapper.fromRaffle(rafflesPersistence.findById(id));
     }
 
     @Override
-    public List<PublicRaffleDTO> getAll(HttpServletRequest request) {
-        Association association = associationsService.findFromRequest(request);
+    public List<PublicRaffleDTO> getAll(Long associationId) {
+        Association association = associationsService.findById(associationId);
         return mapper.fromRaffleList(findByAssociation(association));
+    }
+
+    @Override
+    public List<Raffle> findAllByAssociation(Association association) {
+        try {
+            return rafflesRepository.findAllByAssociation(association);
+        } catch (DataAccessException exp) {
+            throw new DatabaseException("Database error occurred while retrieving raffles by association: " + exp.getMessage());
+        }
     }
 
     private List<Raffle> findByAssociation(Association association) {
         try {
             return rafflesRepository.findByAssociation(association);
         } catch (DataAccessException exp) {
-            throw new DatabaseException("Database error occurred while retrieving association: " + exp.getMessage());
+            throw new DatabaseException("Database error occurred while retrieving raffle by association: " + exp.getMessage());
         }
     }
 }

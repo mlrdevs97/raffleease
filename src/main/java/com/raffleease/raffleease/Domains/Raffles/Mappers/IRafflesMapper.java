@@ -9,8 +9,6 @@ import java.util.List;
 
 public interface IRafflesMapper {
     Raffle toRaffle(RaffleCreate request, Association association);
-
     PublicRaffleDTO fromRaffle(Raffle raffle);
-
     List<PublicRaffleDTO> fromRaffleList(List<Raffle> raffles);
 }

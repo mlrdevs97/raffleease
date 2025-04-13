@@ -1,7 +1,10 @@
 package com.raffleease.raffleease.Domains.Images.Controller;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
+import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
+import com.raffleease.raffleease.Helpers.TestUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -40,7 +43,7 @@ class PendingImagesControllerCreateIT extends BaseImagesIT {
 
             assertThat(imagesRepository.findById(image.id())).isNotNull();
 
-            assertThat(image.url()).contains("/api/v1/images/" + image.id());
+            assertThat(image.url()).contains("/api/v1/associations/" + associationId + "/images/" + image.id());
 
             Path expectedPath = Paths.get(basePath + "/associations/" + association.getId() + "/images/raffles/temp/");
             assertThat(image.filePath()).contains(expectedPath.toString());
@@ -64,7 +67,7 @@ class PendingImagesControllerCreateIT extends BaseImagesIT {
 
             assertThat(imagesRepository.findById(image.id())).isNotNull();
 
-            assertThat(image.url()).contains("/api/v1/images/" + image.id());
+            assertThat(image.url()).contains("/api/v1/associations/" + associationId + "/images/" + image.id());
 
             Path expectedPath = Paths.get(basePath + "/associations/" + association.getId() + "/images/raffles/temp/");
             assertThat(image.filePath()).contains(expectedPath.toString());
@@ -94,5 +97,14 @@ class PendingImagesControllerCreateIT extends BaseImagesIT {
         uploadImages(1)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("You cannot upload more than 10 images in total"));
+    }
+
+    @Test
+    void shouldFailWhenUserIsNotMemberOfAssociation() throws Exception {
+        String otherToken = registerOtherUser().accessToken();
+
+        uploadImages(1, otherToken)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You are not a member of this association"));
     }
 }

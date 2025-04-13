@@ -1,56 +1,38 @@
 package com.raffleease.raffleease.Domains.Carts.Services.Impl;
 
+import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
+import com.raffleease.raffleease.Domains.Carts.Mappers.CartsMapper;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
+import com.raffleease.raffleease.Domains.Carts.Model.CartOwnerType;
 import com.raffleease.raffleease.Domains.Carts.Model.CartStatus;
-import com.raffleease.raffleease.Domains.Carts.Repository.ICartsRepository;
-import com.raffleease.raffleease.Domains.Carts.Services.ICartsService;
-import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
-import com.raffleease.raffleease.Domains.Tokens.Services.TokensCreateService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
+import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
+import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.ArrayList;
 
+import static com.raffleease.raffleease.Domains.Carts.Model.CartOwnerType.ADMIN;
+import static com.raffleease.raffleease.Domains.Carts.Model.CartOwnerType.CUSTOMER;
 import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.ACTIVE;
 
 @RequiredArgsConstructor
 @Service
-public class CartsServiceImpl implements ICartsService {
-    private final ICartsRepository repository;
-    private final TokensCreateService tokenCreateService;
-
+public class CartsServiceImpl implements CartsService {
+    private final CartsRepository repository;
+    private final CartsMapper mapper;
+    
     @Override
-    public Cart create(Raffle raffle, List<Ticket> tickets) {
-        return save(Cart.builder()
-                        .raffle(raffle)
-                        .tickets(tickets)
-                        .status(ACTIVE)
-                        .updatedAt(LocalDateTime.now())
-                        .build());
+    public CartDTO createAdmin() {
+        return create(ADMIN);
     }
 
     @Override
-    public Cart addTickets(Cart cart, List<Ticket> tickets) {
-        cart.getTickets().addAll(tickets);
-        return save(cart);
-    }
-
-    @Override
-    public void removeTickets(Cart cart, List<Ticket> tickets) {
-        Set<Ticket> cartTickets = new HashSet<>(cart.getTickets());
-        if (tickets.stream().anyMatch(ticket -> !cartTickets.contains(ticket))) {
-            throw new BusinessException("Cannot release a ticket that does not belong to the cart");
-        }
-        cart.getTickets().removeAll(tickets);
-        save(cart);
+    public CartDTO createCustomer() {
+        return create(CUSTOMER);
     }
 
     @Override
@@ -69,11 +51,20 @@ public class CartsServiceImpl implements ICartsService {
     }
 
     @Override
-    public Cart save(Cart entity) {
+    public Cart save(Cart cart) {
         try {
-            return repository.save(entity);
+            return repository.save(cart);
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while saving cart: " + ex.getMessage());
         }
+    }
+
+    private CartDTO create(CartOwnerType ownerType) {
+        Cart newCart = save(Cart.builder()
+                .status(ACTIVE)
+                .ownerType(ownerType)
+                .tickets(new ArrayList<>())
+                .build());
+        return mapper.fromCart(newCart);
     }
 }

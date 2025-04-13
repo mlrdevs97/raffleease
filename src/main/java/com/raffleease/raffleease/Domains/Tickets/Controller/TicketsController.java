@@ -1,22 +1,23 @@
 package com.raffleease.raffleease.Domains.Tickets.Controller;
 
+import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAccess;
 import com.raffleease.raffleease.Domains.Tickets.DTO.*;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
-import com.raffleease.raffleease.Domains.Tickets.Services.ITicketsQueryService;
+import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/raffles/{raffleId}/tickets")
+@RequestMapping("/api/v1/associations/{associationId}/raffles/{raffleId}/tickets")
 public class TicketsController {
-    private final ITicketsQueryService queryService;
+    private final TicketsQueryService queryService;
 
     @GetMapping
     public ResponseEntity<ApiResponse> get(
@@ -47,5 +48,4 @@ public class TicketsController {
                  )
          );
      }
-
 }

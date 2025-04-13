@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Domains.Orders.DTOs;
 
 import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
 import com.raffleease.raffleease.Domains.Customers.DTO.CustomerDTO;
+import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
 import com.raffleease.raffleease.Domains.Payments.DTOs.PaymentDTO;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
@@ -10,6 +11,7 @@ import lombok.Builder;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Builder
 public record OrderDTO(
@@ -21,9 +23,9 @@ public record OrderDTO(
         @Size(min = 20, max = 40, message = "Amount of characters not valid")
         String orderReference,
 
-        @NotNull(message = "Order's cart is required")
+        @NotNull(message = "Order items are required")
         @Validated
-        CartDTO cart,
+        List<OrderItemDTO> orderItems,
 
         @NotNull(message = "Order's payment is required")
         @Validated

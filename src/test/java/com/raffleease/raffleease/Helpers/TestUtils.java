@@ -9,10 +9,12 @@ import io.jsonwebtoken.Jwts;
 import java.util.Date;
 import java.util.UUID;
 
+import static com.raffleease.raffleease.Domains.Tokens.Model.TokenType.REFRESH;
+
 public class TestUtils {
     public static String createExpiredToken(TokensQueryService tokensQueryService) {
         return Jwts.builder()
-                .claim("type", TokenType.REFRESH)
+                .claim("type", REFRESH)
                 .setId(UUID.randomUUID().toString())
                 .setSubject("1")
                 .setIssuedAt(new Date(System.currentTimeMillis() - 10000))
@@ -32,7 +34,7 @@ public class TestUtils {
                 .withUserName("Random Name")
                 .withUserEmail("random@mail.com")
                 .withUserPhone("+34", "987987654")
-                .withAssociationName("Unexisting Association")
+                .withAssociationName("Nonexistent Association")
                 .withAssociationPhone("+34", "987876554")
                 .withAssociationEmail("random@association.com")
                 .build();
