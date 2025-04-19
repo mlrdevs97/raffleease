@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Payments.Controller;
 
-import com.raffleease.raffleease.Domains.Payments.Services.IStripeService;
+import com.raffleease.raffleease.Domains.Payments.Services.StripeService;
 import com.raffleease.raffleease.Domains.Payments.Services.IWebhookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/stripe")
 public class StripeController {
-    private final IStripeService stripeService;
+    private final StripeService stripeService;
     private final IWebhookService webHookService;
 
     @GetMapping("/keys/public")

@@ -67,7 +67,7 @@ public class Raffle {
     @Column(nullable = false)
     private Long soldTickets;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal revenue;
 
     @OneToMany(mappedBy = "raffle", cascade = ALL, orphanRemoval = true)

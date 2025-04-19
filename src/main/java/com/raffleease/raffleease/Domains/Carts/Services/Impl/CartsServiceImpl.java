@@ -4,7 +4,6 @@ import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
 import com.raffleease.raffleease.Domains.Carts.Mappers.CartsMapper;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Carts.Model.CartOwnerType;
-import com.raffleease.raffleease.Domains.Carts.Model.CartStatus;
 import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
@@ -18,6 +17,7 @@ import java.util.ArrayList;
 import static com.raffleease.raffleease.Domains.Carts.Model.CartOwnerType.ADMIN;
 import static com.raffleease.raffleease.Domains.Carts.Model.CartOwnerType.CUSTOMER;
 import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.ACTIVE;
+import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
 
 @RequiredArgsConstructor
 @Service
@@ -26,18 +26,19 @@ public class CartsServiceImpl implements CartsService {
     private final CartsMapper mapper;
     
     @Override
-    public CartDTO createAdmin() {
+    public CartDTO createAdminCart() {
         return create(ADMIN);
     }
 
     @Override
-    public CartDTO createCustomer() {
+    public CartDTO createCustomerCart() {
         return create(CUSTOMER);
     }
 
     @Override
-    public Cart edit(Cart cart, CartStatus status) {
-        cart.setStatus(status);
+    public Cart closeCart(Cart cart) {
+        cart.setStatus(CLOSED);
+        cart.setTickets(null);
         return save(cart);
     }
 

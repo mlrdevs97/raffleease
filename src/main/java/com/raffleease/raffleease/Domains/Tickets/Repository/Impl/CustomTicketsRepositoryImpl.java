@@ -22,7 +22,7 @@ public class CustomTicketsRepositoryImpl implements CustomTicketsRepository {
     private EntityManager entityManager;
 
     @Override
-    public List<Ticket> edit(List<Ticket> tickets, TicketStatus status) {
+    public List<Ticket> updateStatus(List<Ticket> tickets, TicketStatus status) {
         List<Long> ticketIds = tickets.stream().map(Ticket::getId).toList();
 
         String updateQuery = "UPDATE Ticket t " +

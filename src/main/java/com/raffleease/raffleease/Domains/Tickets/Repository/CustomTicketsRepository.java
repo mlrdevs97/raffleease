@@ -8,7 +8,7 @@ import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 import java.util.List;
 
 public interface CustomTicketsRepository {
-    List<Ticket> edit(List<Ticket> tickets, TicketStatus status);
+    List<Ticket> updateStatus(List<Ticket> tickets, TicketStatus status);
 
     List<Ticket> search(
             Raffle raffle,

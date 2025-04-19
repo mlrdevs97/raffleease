@@ -42,7 +42,7 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
             case PENDING -> throw new BusinessException("Cannot revert to 'PENDING' state.");
             default -> throw new BusinessException("Unsupported status transition.");
         }
-        return saveAndMap(raffle);
+        return mapper.fromRaffle(rafflesPersistence.save(raffle));
     }
 
     private void updateToActive(Raffle raffle) {
@@ -90,9 +90,5 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
         raffle.setStatus(ACTIVE);
         raffle.setCompletedAt(null);
         raffle.setCompletionReason(null);
-    }
-
-    private PublicRaffleDTO saveAndMap(Raffle raffle) {
-        return mapper.fromRaffle(rafflesPersistence.save(raffle));
     }
 }

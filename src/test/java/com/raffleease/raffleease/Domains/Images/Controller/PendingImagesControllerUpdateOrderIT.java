@@ -3,6 +3,8 @@ package com.raffleease.raffleease.Domains.Images.Controller;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.DTOs.UpdateOrderRequest;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
+import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -123,7 +125,8 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
     @Test
     void shouldFailWhenAnyImageIsAlreadyLinkedToRaffle() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
-        createRaffle(images, accessToken);
+        RaffleCreate raffleCreate = new RaffleCreateBuilder().withImages(images).build();
+        performCreateRaffleRequest(raffleCreate, associationId, accessToken);
 
         UpdateOrderRequest reorderRequest = new UpdateOrderRequest(List.of(copyWithNewOrder(images.get(0), 1)));
         sendReorderRequest(reorderRequest, getReorderURL(), accessToken)

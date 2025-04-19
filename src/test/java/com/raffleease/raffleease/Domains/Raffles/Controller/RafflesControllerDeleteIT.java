@@ -19,7 +19,7 @@ class RafflesControllerDeleteIT extends BaseRafflesIT {
 
     @BeforeEach
     void setUp() throws Exception {
-        raffleId = createRaffle();
+        raffleId = createRaffle(associationId, accessToken);
     }
 
     @Test

@@ -44,7 +44,7 @@ public class ReservationsServiceImpl implements ReservationsService {
     public CartDTO reserve(ReservationRequest request, Long associationId, Long cartId) {
         List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketsIds());
         Association association = associationsService.findById(associationId);
-        checkTicketsBelongToAssociationRaffle(tickets, association);
+        validateTicketsBelongToAssociationRaffle(tickets, association);
         return reserveInternal(tickets, cartId);
     }
 
@@ -57,8 +57,9 @@ public class ReservationsServiceImpl implements ReservationsService {
 
     @Override
     @Transactional
-    public void release(Cart cart) {
-        releaseInternal(cart, cart.getTickets());
+    public void release(List<Long> ticketIds) {
+        List<Ticket> tickets = ticketsQueryService.findAllById(ticketIds);
+        releaseTickets(tickets);
     }
 
     @Override
@@ -66,7 +67,7 @@ public class ReservationsServiceImpl implements ReservationsService {
     public void release(ReservationRequest request, Long cartId) {
         Cart cart = cartsService.findById(cartId);
         List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketsIds());
-        releaseInternal(cart, tickets);
+        releaseTicketsFromCart(cart, tickets);
     }
 
     @Override
@@ -75,13 +76,13 @@ public class ReservationsServiceImpl implements ReservationsService {
         Cart cart = cartsService.findById(cartId);
         List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketsIds());
         Association association = associationsService.findById(associationId);
-        checkTicketsBelongToAssociationRaffle(tickets, association);
-        releaseInternal(cart, tickets);
+        validateTicketsBelongToAssociationRaffle(tickets, association);
+        releaseTicketsFromCart(cart, tickets);
     }
 
     private CartDTO reserveInternal(List<Ticket> tickets, Long cartId) {
-        checkTicketsAvailability(tickets);
-        List<Ticket> updatedTickets = ticketsService.edit(tickets, RESERVED);
+        validateTicketsAvailability(tickets);
+        List<Ticket> updatedTickets = ticketsService.updateStatus(tickets, RESERVED);
 
         Map<Raffle, Long> ticketsByRaffle = updatedTickets.stream().collect(
                 Collectors.groupingBy(Ticket::getRaffle, Collectors.counting())
@@ -93,20 +94,23 @@ public class ReservationsServiceImpl implements ReservationsService {
         return cartsMapper.fromCart(cartsService.save(cart));
     }
 
-    private void releaseInternal(Cart cart, List<Ticket> tickets) {
+    private void releaseTicketsFromCart(Cart cart, List<Ticket> tickets) {
         checkTicketsBelongToCart(cart, tickets);
-        ticketsService.edit(tickets, AVAILABLE);
+        releaseTickets(tickets);
+        cart.getTickets().removeAll(tickets);
+        cartsService.save(cart);
+    }
+
+    private void releaseTickets(List<Ticket> tickets) {
+        ticketsService.updateStatus(tickets, AVAILABLE);
 
         Map<Raffle, Long> ticketsByRaffle = tickets.stream().collect(
                 Collectors.groupingBy(Ticket::getRaffle, Collectors.counting())
         );
         ticketsByRaffle.forEach(raffleTicketsAvailabilityService::increaseAvailableTickets);
-
-        cart.getTickets().removeAll(tickets);
-        cartsService.save(cart);
     }
 
-    private void checkTicketsBelongToAssociationRaffle(List<Ticket> tickets, Association association) {
+    private void validateTicketsBelongToAssociationRaffle(List<Ticket> tickets, Association association) {
         Set<Raffle> associationRaffles = new HashSet<>(rafflesQueryService.findAllByAssociation(association));
         Set<Raffle> ticketsRaffles = tickets.stream().map(Ticket::getRaffle).collect(Collectors.toSet());
 
@@ -116,7 +120,7 @@ public class ReservationsServiceImpl implements ReservationsService {
         }
     }
 
-    private void checkTicketsAvailability(List<Ticket> tickets) {
+    private void validateTicketsAvailability(List<Ticket> tickets) {
         boolean anyUnavailable = tickets.stream().anyMatch(ticket -> ticket.getStatus() != AVAILABLE);
         if (anyUnavailable) {
             throw new BusinessException("Some tickets are not available");

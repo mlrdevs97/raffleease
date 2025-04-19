@@ -8,6 +8,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import static jakarta.persistence.EnumType.STRING;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -19,9 +21,16 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Enumerated(STRING)
+    private PaymentMethod paymentMethod;
+
     private String paymentIntentId;
+
+    @Column(nullable = false)
     private PaymentStatus status;
-    private String paymentMethod;
+
+    @Column(precision = 10, scale = 2)
     private BigDecimal total;
 
     @CreationTimestamp
@@ -29,5 +38,7 @@ public class Payment {
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
+    private LocalDateTime updatedAt;
     private LocalDateTime completedAt;
+    private LocalDateTime cancelledAt;
 }

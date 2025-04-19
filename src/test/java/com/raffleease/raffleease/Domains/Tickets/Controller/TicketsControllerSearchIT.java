@@ -3,7 +3,6 @@ package com.raffleease.raffleease.Domains.Tickets.Controller;
 import com.raffleease.raffleease.Base.BaseIT;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Customers.Repository.CustomersRepository;
-import com.raffleease.raffleease.Domains.Raffles.Controller.BaseRafflesIT;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
@@ -35,7 +34,7 @@ class TicketsControllerSearchIT extends BaseIT {
 
     @BeforeEach
     void setUp() throws Exception {
-        raffleId = createRaffle();
+        raffleId = createRaffle(associationId, accessToken);
         getTicketsPath = "/api/v1/associations/" + associationId + "/raffles/" + raffleId + "/tickets";
         getRandomTicketsPath = getTicketsPath + "/random";
     }

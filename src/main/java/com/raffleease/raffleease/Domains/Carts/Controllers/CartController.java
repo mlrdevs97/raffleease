@@ -23,7 +23,7 @@ public class CartController {
 
     @PostMapping
     public ResponseEntity<ApiResponse> create() {
-        CartDTO createdCart = cartsService.createCustomer();
+        CartDTO createdCart = cartsService.createCustomerCart();
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()

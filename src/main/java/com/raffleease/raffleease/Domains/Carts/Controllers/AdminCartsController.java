@@ -25,7 +25,7 @@ public class AdminCartsController {
 
     @PostMapping
     public ResponseEntity<ApiResponse> create() {
-        CartDTO createdCart = cartsService.createAdmin();
+        CartDTO createdCart = cartsService.createAdminCart();
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()

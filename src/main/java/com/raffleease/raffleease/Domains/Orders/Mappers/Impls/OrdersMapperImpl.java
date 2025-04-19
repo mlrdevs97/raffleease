@@ -3,11 +3,10 @@ package com.raffleease.raffleease.Domains.Orders.Mappers.Impls;
 import com.raffleease.raffleease.Domains.Customers.Mappers.ICustomersMapper;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderDTO;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderItemDTO;
-import com.raffleease.raffleease.Domains.Orders.Mappers.IOrdersMapper;
+import com.raffleease.raffleease.Domains.Orders.Mappers.OrdersMapper;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
 import com.raffleease.raffleease.Domains.Payments.Mappers.IPaymentsMapper;
-import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,18 +14,24 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Service
-public class OrdersMapper implements IOrdersMapper {
+public class OrdersMapperImpl implements OrdersMapper {
     private final ICustomersMapper customersMapper;
     private final IPaymentsMapper paymentsMapper;
 
-    public OrderDTO fromOrder(Order order, List<Ticket> purchasedTickets) {
+    public OrderDTO fromOrder(Order order) {
         return OrderDTO.builder()
                 .id(order.getId())
+                .orderSource(order.getOrderSource())
+                .status(order.getStatus())
                 .orderReference(order.getOrderReference())
-                .orderDate(order.getCreatedAt())
                 .orderItems(fromOrderItemList(order.getOrderItems()))
                 .customer(customersMapper.fromCustomer(order.getCustomer()))
                 .payment(paymentsMapper.fromPayment(order.getPayment()))
+                .comment(order.getComment())
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
+                .completedAt(order.getCompletedAt())
+                .cancelledAt(order.getCancelledAt())
                 .build();
     }
 

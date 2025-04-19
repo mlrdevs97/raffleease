@@ -9,5 +9,5 @@ import java.util.List;
 
 public interface TicketsService {
     List<Ticket> create(Raffle raffle, TicketsCreate request);
-    List<Ticket> edit(List<Ticket> tickets, TicketStatus status);
+    List<Ticket> updateStatus(List<Ticket> tickets, TicketStatus status);
 }

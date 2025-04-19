@@ -36,9 +36,8 @@ public class TicketsQueryServiceImpl implements TicketsQueryService {
     @Override
     public List<Ticket> findAllById(List<Long> ticketIds) {
         List<Ticket> tickets = repository.findAllById(ticketIds);
-        if (tickets.isEmpty()) throw new NotFoundException("No tickets were found for provided ids");
-        if (tickets.size() < ticketIds.size()) {
-            throw new NotFoundException("One or more tickets could not be found");
+        if (tickets.isEmpty() || tickets.size() < ticketIds.size()) {
+            throw new NotFoundException("Some tickets were not found");
         }
         return tickets;
     }

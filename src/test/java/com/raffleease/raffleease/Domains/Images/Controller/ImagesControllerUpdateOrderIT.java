@@ -1,11 +1,10 @@
 package com.raffleease.raffleease.Domains.Images.Controller;
 
-import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.DTOs.UpdateOrderRequest;
-import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Helpers.RaffleBuilder;
+import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
@@ -25,7 +24,7 @@ public class ImagesControllerUpdateOrderIT extends BaseImagesIT {
     @BeforeEach
     void setUp() throws Exception {
         originalImages = parseImagesFromResponse(uploadImages(2).andReturn());
-        Long raffleId = createRaffle(originalImages, accessToken);
+        Long raffleId = createRaffle(originalImages, associationId, accessToken);
         raffle = rafflesRepository.findById(raffleId).orElseThrow();
     }
 
@@ -123,7 +122,7 @@ public class ImagesControllerUpdateOrderIT extends BaseImagesIT {
     @Test
     void shouldFailIfImageIsLinkedToAnotherRaffle() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
-        createRaffle(images, accessToken);
+        createRaffle(images, associationId, accessToken);
 
         UpdateOrderRequest reorderRequest = new UpdateOrderRequest(List.of(
                 copyWithNewOrder(images.get(0), 1)

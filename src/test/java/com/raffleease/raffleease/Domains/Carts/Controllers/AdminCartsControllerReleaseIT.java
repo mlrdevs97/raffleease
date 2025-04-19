@@ -3,9 +3,9 @@ package com.raffleease.raffleease.Domains.Carts.Controllers;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
-import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -19,17 +19,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT{
+public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT {
+    Long cartId;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        super.setUp();
+        cartId = createCart(associationId, accessToken);
+        performReserveRequest(buildReleaseRequest(ticketId), associationId, cartId, accessToken);
+    }
+
     @Test
     @Transactional
     void shouldReleaseTickets() throws Exception {
-        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
-        List<Ticket> tickets = raffle.getTickets();
-        Long ticketId = tickets.get(0).getId();
-        Long cartId = createCart(getCreateCartURL(), accessToken);
-
-        performReserveRequest(buildReleaseRequest(ticketId), getReserveURL(cartId), accessToken);
-
         performReleaseRequest(buildReleaseRequest(ticketId), getReleaseURL(cartId), accessToken)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Tickets released successfully"));
@@ -44,17 +46,13 @@ public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT{
 
     @Test
     void shouldFailReleaseIfTicketsDoNotExist() throws Exception {
-        Long cartId = createCart(getCreateCartURL(), accessToken);
-
         performReleaseRequest(buildReleaseRequest(999L), getReleaseURL(cartId), accessToken)
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("No tickets were found for provided ids"));
+                .andExpect(jsonPath("$.message").value("Some tickets were not found"));
     }
 
     @Test
     void shouldFailReleaseIfTicketsListIsNull() throws Exception {
-        Long cartId = createCart(getCreateCartURL(), accessToken);
-
         ReservationRequest request = ReservationRequest.builder().ticketsIds(null).build();
 
         performReleaseRequest(request, getReleaseURL(cartId), accessToken)
@@ -64,7 +62,7 @@ public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT{
 
     @Test
     void shouldFailReleaseIfTicketsListIsEmpty() throws Exception {
-        Long cartId = createCart(getCreateCartURL(), accessToken);
+        Long cartId = createCart(associationId, accessToken);
 
         ReservationRequest request = ReservationRequest.builder().ticketsIds(List.of()).build();
 
@@ -76,10 +74,6 @@ public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT{
     @Test
     @Transactional
     void shouldFailReleaseIfTicketsDoNotBelongToAssociationRaffle() throws Exception {
-        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
-        Long ticketId = raffle.getTickets().get(0).getId();
-        Long cartId = createCart(getCreateCartURL(), accessToken);
-
         AuthResponse authResponse = registerOtherUser();
         Long associationId = authResponse.association().id();
         String otherToken = authResponse.accessToken();
@@ -92,9 +86,7 @@ public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT{
     @Test
     @Transactional
     void shouldFailReleaseIfTicketsDoNotBelongToCart() throws Exception {
-        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
-        Long ticketId = raffle.getTickets().get(0).getId();
-        Long cartId = createCart(getCreateCartURL(), accessToken);
+        Long cartId = createCart(associationId, accessToken);
 
         performReleaseRequest(buildReleaseRequest(ticketId), getReleaseURL(cartId), accessToken)
                 .andExpect(status().isBadRequest())
@@ -110,12 +102,6 @@ public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT{
     @Test
     @Transactional
     void shouldFailReleaseIfUserDoesNotBelongToAssociation() throws Exception {
-        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
-        Long ticketId = raffle.getTickets().get(0).getId();
-
-        Long cartId = createCart(getCreateCartURL(), accessToken);
-        performReserveRequest(buildReleaseRequest(ticketId), getReserveURL(cartId), accessToken);
-
         String otherToken = registerOtherUser().accessToken();
 
         performReleaseRequest(buildReleaseRequest(ticketId), getReleaseURL(cartId), otherToken)
@@ -126,20 +112,10 @@ public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT{
     @Test
     @Transactional
     void shouldFailToReduceIfReleasedTicketsExceedLimit() throws Exception {
-        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
-        List<Ticket> tickets = raffle.getTickets();
-
-        ReservationRequest request = ReservationRequest.builder()
-                .ticketsIds(List.of(tickets.get(0).getId()))
-                .build();
-
-        Long cartId = createCart(getCreateCartURL(associationId), accessToken);
-        performReserveRequest(request, getReserveURL(associationId, cartId), accessToken);
-
-        raffle.setAvailableTickets((long) tickets.size());
+        raffle.setAvailableTickets((long) 1);
         rafflesRepository.save(raffle);
 
-        performReleaseRequest(buildReleaseRequest(tickets.get(0).getId()), getReleaseURL(cartId), accessToken);
+        performReleaseRequest(buildReleaseRequest(ticketId), getReleaseURL(cartId), accessToken);
 
     }
 

@@ -65,7 +65,7 @@ public class EmailsServiceImpl implements IEmailsService {
         variables.put("paymentMethod", paymentData.getPaymentMethod());
         variables.put("paymentTotal", paymentData.getTotal());
         variables.put("orderReference", order.getOrderReference());
-        variables.put("orderDate", formattedOrderDate);
+        variables.put("createdAt", formattedOrderDate);
         variables.put("ticketList", ticketNumbers);
         variables.put("ticketCount", ticketNumbers.size());
 

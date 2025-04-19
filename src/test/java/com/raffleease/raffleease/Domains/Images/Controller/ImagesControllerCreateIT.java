@@ -28,7 +28,7 @@ public class ImagesControllerCreateIT extends BaseImagesIT {
     @BeforeEach
     void setUp() throws Exception {
         originalImages = parseImagesFromResponse(uploadImages(2).andReturn());
-        Long raffleId = createRaffle(originalImages, accessToken);
+        Long raffleId = createRaffle(originalImages, associationId, accessToken);
         raffle = rafflesRepository.findById(raffleId).orElseThrow();
     }
 
@@ -73,13 +73,11 @@ public class ImagesControllerCreateIT extends BaseImagesIT {
             ImageDTO image = allImages.get(i);
 
             assertThat(imagesRepository.findById(image.id())).isNotNull();
-
             assertThat(image.url()).contains("/api/v1/associations/" + associationId + "/raffles/" + raffle.getId() +  "/images/" + image.id());
 
             Path expectedPath = Paths.get(basePath + "/associations/" + association.getId() + "/images/raffles/temp/");
             assertThat(image.filePath()).contains(expectedPath.toString());
             assertThat(Files.exists(expectedPath)).isTrue();
-
             assertThat(image.imageOrder()).isEqualTo(originalImages.size() + i + 1);
         }
     }

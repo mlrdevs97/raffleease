@@ -1,69 +1,25 @@
 package com.raffleease.raffleease.Domains.Orders.Services.Impls;
 
-import com.raffleease.raffleease.Domains.Carts.Model.Cart;
-import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
-import com.raffleease.raffleease.Domains.Orders.DTOs.OrderEdit;
+import com.raffleease.raffleease.Domains.Orders.DTOs.OrderDTO;
+import com.raffleease.raffleease.Domains.Orders.Mappers.OrdersMapper;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
-import com.raffleease.raffleease.Domains.Orders.Repository.IOrdersRepository;
+import com.raffleease.raffleease.Domains.Orders.Repository.OrdersRepository;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
-import com.raffleease.raffleease.Domains.Payments.Model.Payment;
-import com.raffleease.raffleease.Domains.Payments.Services.IPaymentsService;
-import com.raffleease.raffleease.Domains.Payments.Services.IStripeService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Objects;
-
 @RequiredArgsConstructor
 @Service
 public class OrdersServiceImpl implements OrdersService {
-    private final IOrdersRepository repository;
-    private final CartsService cartsService;
-    private final IPaymentsService paymentsService;
-    private final IStripeService stripeService;
+    private final OrdersRepository repository;
+    private final OrdersMapper ordersMapper;
 
     @Override
-    public String create(Long cartId) {
-        Cart cart = cartsService.findById(cartId);
-        Payment payment = paymentsService.create();
-
-        // TODO: Check and fix order items
-        Order order = save(Order.builder()
-                .payment(payment)
-                .orderItems(new ArrayList<>())
-                .build()
-        );
-
-        return stripeService.createSession(order);
-    }
-
-    @Override
-    public Order edit(Order order, OrderEdit orderEdit) {
-        // TODO: CHeck and fix
-        /*
-        if (Objects.nonNull(orderEdit.cart())) {
-            order.setCart(orderEdit.cart());
-        }
-
-         */
-
-        if (Objects.nonNull(orderEdit.payment())) {
-            order.setPayment(orderEdit.payment());
-        }
-
-        if (Objects.nonNull(orderEdit.customer())) {
-            order.setCustomer(orderEdit.customer());
-        }
-
-        if (Objects.nonNull(orderEdit.orderDate())) {
-            order.setCreatedAt(orderEdit.orderDate());
-        }
-
-        return save(order);
+    public OrderDTO get(Long id) {
+        return ordersMapper.fromOrder(findById(id));
     }
 
     @Override
@@ -75,7 +31,8 @@ public class OrdersServiceImpl implements OrdersService {
         }
     }
 
-    private Order save(Order entity) {
+    @Override
+    public Order save(Order entity) {
         try {
             return repository.save(entity);
         } catch (DataAccessException ex) {

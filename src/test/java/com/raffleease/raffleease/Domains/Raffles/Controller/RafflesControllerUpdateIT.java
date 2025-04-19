@@ -2,14 +2,13 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
-import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
-import com.raffleease.raffleease.Helpers.TestUtils;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,7 +45,8 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
     @BeforeEach
     void setUp() throws Exception {
         originalImages = parseImagesFromResponse(uploadImages(2).andReturn());
-        raffleId = createRaffle(originalImages, accessToken);
+        RaffleCreate raffleCreate = new RaffleCreateBuilder().withImages(originalImages).build();
+        raffleId = parseRaffleId(performCreateRaffleRequest(raffleCreate, associationId, accessToken).andReturn());
     }
 
     @Test
@@ -254,10 +254,8 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
     @Test
     void shouldFailWhenImageBelongsToDifferentRaffle() throws Exception {
         List<ImageDTO> otherImages = parseImagesFromResponse(uploadImages(2).andReturn());
-        performCreateRaffleRequest(new RaffleCreateBuilder()
-                .withImages(otherImages)
-                .build()).andReturn();
-
+        RaffleCreate raffleCreate = new RaffleCreateBuilder().withImages(otherImages).build();
+        performCreateRaffleRequest(raffleCreate, associationId, accessToken);
         RaffleEdit editRequest = RaffleEdit.builder().images(otherImages).build();
         performEditRaffleRequest(raffleId, editRequest)
                 .andExpect(status().isBadRequest())

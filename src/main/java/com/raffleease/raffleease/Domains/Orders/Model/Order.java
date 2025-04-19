@@ -4,11 +4,14 @@ import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static jakarta.persistence.CascadeType.ALL;
+import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 @NoArgsConstructor
@@ -23,10 +26,18 @@ public class Order {
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
+    @Enumerated(STRING)
+    @Column(nullable = false, updatable = false)
+    private OrderSource orderSource;
+
+    @Enumerated(STRING)
+    @Column(nullable = false, updatable = false)
+    private OrderStatus status;
+
     @Column(nullable = false, unique = true)
     private String orderReference;
 
-    @OneToMany(mappedBy = "order", cascade = ALL)
+    @OneToMany(mappedBy = "order", cascade = ALL, orphanRemoval = true)
     private List<OrderItem> orderItems;
 
     @OneToOne(cascade = ALL, orphanRemoval = true)
@@ -37,6 +48,15 @@ public class Order {
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
-    @Column(nullable = false)
+    @Column(length = 500)
+    private String comment;
+
+    @Column(nullable = false, updatable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+    private LocalDateTime completedAt;
+    private LocalDateTime cancelledAt;
 }

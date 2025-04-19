@@ -6,8 +6,8 @@ public class ReservationsCleanupScheduler {
     @Scheduled(fixedRate = 1800000)
     @Transactional
     public void releaseScheduled() {
-        LocalDateTime lastModified = LocalDateTime.now().minusMinutes(30);
-        List<Cart> expiredCarts = customCartRepository.findExpiredCarts(lastModified);
+        LocalDateTime updatedAt = LocalDateTime.now().minusMinutes(30);
+        List<Cart> expiredCarts = customCartRepository.findExpiredCarts(updatedAt);
 
         Map<Raffle, List<Ticket>> ticketsByRaffle = expiredCarts.stream()
                 .flatMap(cart -> cart.getTickets().stream()
@@ -25,7 +25,7 @@ public class ReservationsCleanupScheduler {
             raffleTicketsAvailabilityService.increaseAvailableTickets(raffle, tickets.size());
         }
 
-        customCartRepository.updateExpiredCart(lastModified);
+        customCartRepository.updateExpiredCart(updatedAt);
     }
      */
 }

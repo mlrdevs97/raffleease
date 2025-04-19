@@ -5,9 +5,9 @@ import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Carts.Model.CartStatus;
 
 public interface CartsService {
-    CartDTO createAdmin();
-    CartDTO createCustomer();
-    Cart edit(Cart cart, CartStatus status);
+    CartDTO createAdminCart();
+    CartDTO createCustomerCart();
+    Cart closeCart(Cart cart);
     Cart save(Cart entity);
     Cart findById(Long id);
 }

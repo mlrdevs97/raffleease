@@ -17,47 +17,29 @@ public class AdminCartsControllerCreateIT extends BaseAdminCartsIT {
     @Test
     @Transactional
     void shouldCreateCart() throws Exception {
-        MvcResult result = performCreateCartRequest(getCreateCartURL(), accessToken)
+        MvcResult result = performCreateCartRequest(associationId, accessToken)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.message").value("New cart created successfully"))
                 .andReturn();
 
-        // Check status 201 CREATED and URI
         assertThat(result.getResponse().getStatus()).isEqualTo(CREATED.value());
-
         String location = result.getResponse().getHeader(LOCATION);
         assertThat(location).isNotNull();
         assertThat(location).contains("/api/v1/associations/" + associationId + "/carts/");
-
-        // Extract cart id from URI
         long cartId = Long.parseLong(location.substring(location.lastIndexOf("/") + 1));
-
-        // Cart must exist in the database
         Cart cart = cartsRepository.findById(cartId).orElseThrow();
-
-        // Cart must have ACTIVE status
         assertThat(cart.getStatus()).isEqualTo(ACTIVE);
-
-        // Owner type must be ADMIN
         assertThat(cart.getOwnerType()).isEqualTo(ADMIN);
-
-        // Ticket list should be empty
         assertThat(cart.getTickets().isEmpty()).isTrue();
-
-        // Customer should be null
         assertThat(cart.getCustomer()).isNull();
-
-        // createdAt should not be null
         assertThat(cart.getCreatedAt()).isNotNull();
-
-        // updatedAt should be null
         assertThat(cart.getUpdatedAt()).isNotNull();
     }
 
     @Test
     void shouldFailCreateCartIfUserDoesNotBelongToAssociation() throws Exception {
         String otherToken = registerOtherUser().accessToken();
-        performCreateCartRequest(getCreateCartURL(), otherToken)
+        performCreateCartRequest(associationId, otherToken)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You are not a member of this association"));
     }

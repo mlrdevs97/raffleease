@@ -5,11 +5,11 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import lombok.Builder;
 
+@Builder
 public record CustomerCreate(
-        @NotBlank(message = "User name is required")
-        @Size(min = 5, max = 25, message = "Name must be between 5 and 25 characters")
+        @NotBlank(message = "Must provide a name for user")
         String fullName,
 
         @Nullable

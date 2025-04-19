@@ -20,8 +20,12 @@ public class Customer {
     private Long id;
     private String stripeId;
     private CustomerSourceType sourceType;
+
+    @Column(nullable = false)
     private String fullName;
+
     private String phoneNumber;
+
     private String email;
 
     @Column(nullable = false, updatable = false)

@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Domains.Raffles.Controller;
 
-import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import jakarta.transaction.Transactional;
@@ -8,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason.MANUALLY_COMPLETED;
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.*;
@@ -22,7 +20,7 @@ class RafflesControllerUpdateStatusIT extends BaseRafflesIT {
 
     @BeforeEach
     void setUp() throws Exception {
-        raffleId = createRaffle();
+        raffleId = createRaffle(associationId, accessToken);
     }
 
     @Test

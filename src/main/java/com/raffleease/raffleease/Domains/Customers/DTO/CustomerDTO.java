@@ -11,8 +11,6 @@ import java.time.LocalDateTime;
 // TODO: Check use cases and validations
 @Builder
 public record CustomerDTO(
-        Long id,
-
         @NotBlank(message = "Must provide an id")
         String stripeId,
 

@@ -2,7 +2,7 @@ package com.raffleease.raffleease.Domains.Payments.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Payments.Services.IStripeService;
+import com.raffleease.raffleease.Domains.Payments.Services.StripeService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.CustomStripeException;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 
 @RequiredArgsConstructor
 @Service
-public class StripeServiceImpl implements IStripeService {
+public class StripeServiceImpl implements StripeService {
     @Value("${spring.stripe.keys.public}")
     private String stripePublicKey;
 

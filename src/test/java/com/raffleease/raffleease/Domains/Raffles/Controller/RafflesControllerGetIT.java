@@ -22,7 +22,7 @@ class RafflesControllerGetIT extends BaseRafflesIT {
                 .withImages(parseImagesFromResponse(uploadImages(1).andReturn()))
                 .build();
 
-        MvcResult creationResult = performCreateRaffleRequest(raffleCreate).andReturn();
+        MvcResult creationResult = performCreateRaffleRequest(raffleCreate, associationId, accessToken).andReturn();
 
         Long raffleId = objectMapper.readTree(creationResult.getResponse().getContentAsString())
                 .path("data").path("id").asLong();
@@ -41,13 +41,13 @@ class RafflesControllerGetIT extends BaseRafflesIT {
                 .withTitle("Raffle One")
                 .withImages(parseImagesFromResponse(uploadImages(1).andReturn()))
                 .build();
-        performCreateRaffleRequest(raffle1).andExpect(status().isCreated());
+        performCreateRaffleRequest(raffle1, associationId, accessToken).andExpect(status().isCreated());
 
         RaffleCreate raffle2 = new RaffleCreateBuilder()
                 .withTitle("Raffle Two")
                 .withImages(parseImagesFromResponse(uploadImages(1).andReturn()))
                 .build();
-        performCreateRaffleRequest(raffle2).andExpect(status().isCreated());
+        performCreateRaffleRequest(raffle2, associationId, accessToken).andExpect(status().isCreated());
 
         mockMvc.perform(get("/api/v1/associations/" + associationId + "/raffles")
                         .header(AUTHORIZATION, "Bearer " + accessToken))

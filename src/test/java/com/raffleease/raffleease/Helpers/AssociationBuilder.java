@@ -4,7 +4,6 @@ import com.raffleease.raffleease.Domains.Associations.Model.Address;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 
 public class AssociationBuilder {
-
     private String name = "Test Association";
     private String email = "association@example.com";
     private String phoneNumber = "+34660009999";

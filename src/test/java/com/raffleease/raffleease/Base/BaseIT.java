@@ -3,6 +3,7 @@ package com.raffleease.raffleease.Base;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
+import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
@@ -100,39 +101,53 @@ public class BaseIT extends BaseSharedIT {
                 .header(AUTHORIZATION, "Bearer " + accessToken));
     }
 
-    protected Long createRaffle() throws Exception {
+    protected Long createRaffle(List<ImageDTO> images, Long associationId, String accessToken) throws Exception {
+        return createRaffleInternal(images, associationId, accessToken);
+    }
+
+    protected Long createRaffle(Long associationId, String accessToken) throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1).andReturn());
-        return createRaffle(images, accessToken);
+        return createRaffleInternal(images, associationId, accessToken);
     }
 
-    protected Long createRaffle(String token) throws Exception {
-        List<ImageDTO> images = parseImagesFromResponse(uploadImages(1, token).andReturn());
-        return createRaffle(images, token);
-    }
-
-    protected Long createRaffle(List<ImageDTO> images, String token) throws Exception {
-        RaffleCreate raffleCreate = new RaffleCreateBuilder()
-                .withImages(images)
-                .build();
-
-        MvcResult result = performCreateRaffleRequest(raffleCreate, token).andReturn();
-
+    protected Long parseRaffleId(MvcResult result) throws Exception {
         return objectMapper.readTree(result.getResponse().getContentAsString())
                 .path("data").path("id").asLong();
     }
 
-    protected ResultActions performCreateRaffleRequest(RaffleCreate raffleCreate) throws Exception {
-        return executeCreateRaffleRequest(raffleCreate, accessToken);
-    }
-
-    protected ResultActions performCreateRaffleRequest(RaffleCreate raffleCreate, String token) throws Exception {
-        return executeCreateRaffleRequest(raffleCreate, token);
-    }
-
-    private ResultActions executeCreateRaffleRequest(RaffleCreate raffleCreate, String token) throws Exception {
+    protected ResultActions performCreateRaffleRequest(RaffleCreate raffleCreate, Long associationId, String token) throws Exception {
         return mockMvc.perform(post("/api/v1/associations/" + associationId + "/raffles")
                 .header(AUTHORIZATION, "Bearer " + token)
                 .contentType(APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(raffleCreate)));
+    }
+
+    protected Long createCart(Long associationId, String token) throws Exception {
+        MvcResult result = performCreateCartRequest(associationId, token).andReturn();
+        return parseCartId(result);
+    }
+
+    protected Long parseCartId(MvcResult result) throws Exception {
+        return objectMapper.readTree(result.getResponse().getContentAsString())
+                .path("data").path("id").asLong();
+    }
+
+    protected ResultActions performCreateCartRequest(Long associationId, String token) throws Exception {
+        return mockMvc.perform(post("/admin/api/v1/associations/" + associationId + "/carts")
+                .header(AUTHORIZATION, "Bearer " + token));
+    }
+
+    protected ResultActions performReserveRequest(ReservationRequest request, Long associationId, Long cartId, String token) throws Exception {
+        String URL = "/admin/api/v1/associations/" + associationId + "/carts/" + cartId + "/reservations";
+        return mockMvc.perform(post(URL)
+                .header(AUTHORIZATION, "Bearer " + token)
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+    }
+
+    private Long createRaffleInternal(List<ImageDTO> images, Long associationId, String accessToken) throws Exception {
+        RaffleCreate raffleCreate = new RaffleCreateBuilder().withImages(images).build();
+        MvcResult result = performCreateRaffleRequest(raffleCreate, associationId, accessToken).andReturn();
+        return parseRaffleId(result);
     }
 }

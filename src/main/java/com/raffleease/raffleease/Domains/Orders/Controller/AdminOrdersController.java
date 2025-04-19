@@ -1,39 +1,89 @@
 package com.raffleease.raffleease.Domains.Orders.Controller;
 
 import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAccess;
+import com.raffleease.raffleease.Domains.Orders.DTOs.*;
+import com.raffleease.raffleease.Domains.Orders.Services.OrdersCreateService;
+import com.raffleease.raffleease.Domains.Orders.Services.OrdersEditService;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.CartHeaderMissingException;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.Objects;
+import java.net.URI;
 
 @ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/admin/api/v1/orders")
+@RequestMapping("/admin/api/v1/associations/{associationId}/orders")
 public class AdminOrdersController {
-    private final OrdersService ordersCreateService;
+    private final OrdersService ordersService;
+    private final OrdersCreateService ordersCreateService;
+    private final OrdersEditService ordersEditService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse> createOrder(
-            HttpServletRequest httpRequest
+    public ResponseEntity<ApiResponse> create(
+            @PathVariable Long associationId,
+            @Valid @RequestBody AdminOrderCreate adminOrderCreate
     ) {
-        String cartId = "";
-        if (Objects.isNull(cartId)) throw new CartHeaderMissingException("Cannot complete order because the cart ID is missing");
+        OrderDTO order = ordersCreateService.create(adminOrderCreate, associationId);
 
-        String sessionKey = ordersCreateService.create(Long.parseLong(cartId));
-        return ResponseEntity.ok(
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(order.id())
+                .toUri();
+
+        return ResponseEntity.created(location).body(
                 ResponseFactory.success(
-                        sessionKey,
-                        "Checkout session created successfully"
+                        order,
+                        "New order created successfully"
                 )
         );
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<ApiResponse> get(
+            @PathVariable Long orderId
+    ) {
+        return ResponseEntity.ok(ResponseFactory.success(
+                ordersService.get(orderId),
+                "Order retrieved successfully"
+        ));
+    }
+
+    @PutMapping("/{orderId}/complete")
+    public ResponseEntity<ApiResponse> completeOrder(
+            @PathVariable Long orderId,
+            @Valid @RequestBody OrderComplete orderComplete
+    ) {
+        return ResponseEntity.ok(ResponseFactory.success(
+                ordersEditService.completeOrder(orderId, orderComplete),
+                "Order completed successfully"
+        ));
+    }
+
+    @PutMapping("/{orderId}/cancel")
+    public ResponseEntity<ApiResponse> updateStatus(
+            @PathVariable Long orderId
+    ) {
+        return ResponseEntity.ok(ResponseFactory.success(
+                ordersEditService.cancelOrder(orderId),
+                "Order cancelled successfully"
+        ));
+    }
+
+    @PatchMapping("/{orderId}/comment")
+    public ResponseEntity<ApiResponse> addComment(
+            @PathVariable Long orderId,
+            @Valid @RequestBody AddCommentRequest request
+    ) {
+        return ResponseEntity.ok(ResponseFactory.success(
+                ordersEditService.addComment(orderId, request),
+                "Order comment added successfully"
+        ));
     }
 }

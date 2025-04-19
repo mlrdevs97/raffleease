@@ -15,7 +15,7 @@ public class ResponseFactory {
         return new ErrorResponse(message, status, statusText);
     }
 
-    public static ApiResponse validationError(String message, int errorCode, String reason, Map<String, String> errors) {
-        return new ValidationErrorResponse(message, errorCode, reason, errors);
+    public static ApiResponse validationError(String message, int status, String statusText, Map<String, String> errors) {
+        return new ValidationErrorResponse(message, status, statusText, errors);
     }
 }

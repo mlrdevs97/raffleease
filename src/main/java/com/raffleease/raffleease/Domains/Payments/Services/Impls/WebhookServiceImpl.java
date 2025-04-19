@@ -7,11 +7,12 @@ import com.raffleease.raffleease.Domains.Customers.Services.CustomersService;
 import com.raffleease.raffleease.Domains.Notifications.Services.INotificationsService;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderEdit;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
+import com.raffleease.raffleease.Domains.Orders.Services.OrdersEditService;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
 import com.raffleease.raffleease.Domains.Payments.DTOs.PaymentEdit;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
-import com.raffleease.raffleease.Domains.Payments.Services.IPaymentsService;
+import com.raffleease.raffleease.Domains.Payments.Services.PaymentsService;
 import com.raffleease.raffleease.Domains.Payments.Services.IWebhookService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesEditService;
 import com.raffleease.raffleease.Domains.Carts.Services.ReservationsService;
@@ -41,9 +42,10 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 @RequiredArgsConstructor
 @Service
 public class WebhookServiceImpl implements IWebhookService {
-    private final IPaymentsService paymentsEditService;
+    private final PaymentsService paymentsEditService;
     private final CustomersService customersService;
     private final TicketsService ticketsService;
+    private final OrdersEditService ordersEditService;
     private final OrdersService ordersService;
     private final RafflesEditService rafflesEditService;
     private final CartsService cartsService;
@@ -114,7 +116,7 @@ public class WebhookServiceImpl implements IWebhookService {
 
         // TODO: Get tickets and mark as sold
         List<Ticket> tickets = new ArrayList<>();
-        List<Ticket> purchasedTickets = ticketsService.edit(tickets, SOLD);
+        List<Ticket> purchasedTickets = ticketsService.updateStatus(tickets, SOLD);
 
         // TODO: Update statistics
         /*
@@ -194,7 +196,7 @@ public class WebhookServiceImpl implements IWebhookService {
     }
 
     private void updateOrder(Order order, Payment payment, Customer customer, Cart cart) {
-        ordersService.edit(order, OrderEdit.builder()
+        ordersEditService.edit(order, OrderEdit.builder()
                 .customer(customer)
                 .payment(payment)
                 .cart(cart)

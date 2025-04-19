@@ -2,28 +2,38 @@ package com.raffleease.raffleease.Domains.Payments.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Payments.DTOs.PaymentEdit;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
+import com.raffleease.raffleease.Domains.Payments.Model.PaymentMethod;
 import com.raffleease.raffleease.Domains.Payments.Repository.IPaymentsRepository;
-import com.raffleease.raffleease.Domains.Payments.Services.IPaymentsService;
+import com.raffleease.raffleease.Domains.Payments.Services.PaymentsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.Objects;
 
 import static com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus.PENDING;
 
 @RequiredArgsConstructor
 @Service
-public class PaymentsServiceImpl implements IPaymentsService {
+public class PaymentsServiceImpl implements PaymentsService {
     private final IPaymentsRepository repository;
 
     @Override
     public Payment create() {
         Payment payment = Payment.builder()
                 .status(PENDING)
+                .build();
+        return save(payment);
+    }
+
+    @Override
+    public Payment create(BigDecimal total) {
+        Payment payment = Payment.builder()
+                .status(PENDING)
+                .total(total)
                 .build();
         return save(payment);
     }
@@ -44,16 +54,19 @@ public class PaymentsServiceImpl implements IPaymentsService {
             payment.setPaymentIntentId(paymentEdit.paymentIntentId());
         }
 
+        /*
         if (Objects.nonNull(paymentEdit.paymentMethod())) {
             payment.setPaymentMethod(paymentEdit.paymentMethod());
         }
+
+         */
 
         if (Objects.nonNull(paymentEdit.paymentStatus())) {
             payment.setStatus(paymentEdit.paymentStatus());
         }
 
         if (Objects.nonNull(paymentEdit.completedAt())) {
-            payment.setCompletedAt(paymentEdit.completedAt());
+            payment.setUpdatedAt(paymentEdit.completedAt());
         }
 
         if (Objects.nonNull(paymentEdit.total())) {

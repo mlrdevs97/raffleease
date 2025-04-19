@@ -3,7 +3,6 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
-import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
@@ -11,7 +10,6 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
-import com.raffleease.raffleease.Helpers.TestUtils;
 import com.raffleease.raffleease.Helpers.TicketsCreateBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,7 +51,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .build();
 
         // 3. Perform raffle creation request
-        MvcResult result = performCreateRaffleRequest(raffleCreate)
+        MvcResult result = performCreateRaffleRequest(raffleCreate, associationId, accessToken)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.message").value("New raffle created successfully"))
                 .andExpect(jsonPath("$.data.title").value(raffleCreate.title()))
@@ -122,7 +120,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(parseImagesFromResponse(uploadImages(2).andReturn()))
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.title").value("Raffle title is required"));
     }
@@ -136,7 +134,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(parseImagesFromResponse(uploadImages(2).andReturn()))
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.title").value("Tile cannot exceed 100 characters"));
     }
@@ -148,7 +146,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(parseImagesFromResponse(uploadImages(2).andReturn()))
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.description").value("Raffle's description is required"));
     }
@@ -162,7 +160,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(parseImagesFromResponse(uploadImages(2).andReturn()))
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.description").value("Description cannot exceed 5000 characters"));
     }
@@ -174,7 +172,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(parseImagesFromResponse(uploadImages(2).andReturn()))
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.endDate").value("Raffle's end date is required"));
     }
@@ -186,7 +184,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(parseImagesFromResponse(uploadImages(2).andReturn()))
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.endDate").value("Raffle's end date must be in the future"));
     }
@@ -197,7 +195,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(null)
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.images").value("Must provide at least one picture for raffle"));
     }
@@ -208,7 +206,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(List.of())
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.images").value("A minimum of 1 and a maximum of 10 images are allowed"));
     }
@@ -230,7 +228,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(List.of(fakeImage))
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("One or more images were not found"));
     }
@@ -252,7 +250,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(images)
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You are not authorized to use the specified image(s)"));
     }
@@ -264,7 +262,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(2).andReturn());
         RaffleCreate raffleCreate = new RaffleCreateBuilder().withImages(images).build();
 
-        performCreateRaffleRequest(raffleCreate, otherToken)
+        performCreateRaffleRequest(raffleCreate, associationId, otherToken)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You are not a member of this association"));
     }
@@ -278,7 +276,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(List.of(img, img))
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Duplicate image IDs found in request"));
     }
@@ -294,7 +292,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(List.of(image1, image2))
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Duplicate image orders detected"));
     }
@@ -310,7 +308,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(List.of(image1, image2))
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Image orders must be consecutive starting from 1"));
     }
@@ -347,7 +345,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(reordered)
                 .build();
 
-        MvcResult result = performCreateRaffleRequest(raffle)
+        MvcResult result = performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -375,7 +373,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withTicketsInfo(null)
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.ticketsInfo").value("Raffle ticket's info is required"));
     }
@@ -389,7 +387,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withTicketsInfo(invalid)
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors['ticketsInfo.amount']").value("Tickets amount must be greater than zero"));
     }
@@ -403,7 +401,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withTicketsInfo(invalid)
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors['ticketsInfo.price']").value("Price must be greater than zero"));
     }
@@ -417,7 +415,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withTicketsInfo(invalid)
                 .build();
 
-        performCreateRaffleRequest(raffle)
+        performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors['ticketsInfo.lowerLimit']").value("Lower limit must be greater than or equal to zero"));
     }

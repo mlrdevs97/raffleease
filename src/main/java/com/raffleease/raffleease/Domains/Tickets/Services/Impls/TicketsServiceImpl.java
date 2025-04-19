@@ -39,9 +39,9 @@ public class TicketsServiceImpl implements TicketsService {
     }
 
     @Override
-    public List<Ticket> edit(List<Ticket> tickets, TicketStatus status) {
+    public List<Ticket> updateStatus(List<Ticket> tickets, TicketStatus status) {
         try {
-            return customRepository.edit(tickets, status);
+            return customRepository.updateStatus(tickets, status);
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while updating tickets status: " + ex.getMessage());
         }
