@@ -1,9 +1,9 @@
 package com.raffleease.raffleease.Domains.Payments.Services.Impls;
 
+import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Payments.DTOs.PaymentEdit;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
-import com.raffleease.raffleease.Domains.Payments.Model.PaymentMethod;
-import com.raffleease.raffleease.Domains.Payments.Repository.IPaymentsRepository;
+import com.raffleease.raffleease.Domains.Payments.Repository.PaymentsRepository;
 import com.raffleease.raffleease.Domains.Payments.Services.PaymentsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
@@ -19,7 +19,7 @@ import static com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus.PEN
 @RequiredArgsConstructor
 @Service
 public class PaymentsServiceImpl implements PaymentsService {
-    private final IPaymentsRepository repository;
+    private final PaymentsRepository repository;
 
     @Override
     public Payment create() {
@@ -30,8 +30,9 @@ public class PaymentsServiceImpl implements PaymentsService {
     }
 
     @Override
-    public Payment create(BigDecimal total) {
+    public Payment create(Order order, BigDecimal total) {
         Payment payment = Payment.builder()
+                .order(order)
                 .status(PENDING)
                 .total(total)
                 .build();

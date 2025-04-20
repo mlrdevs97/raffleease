@@ -53,10 +53,11 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         List<Ticket> tickets = ticketsQueryService.findAllById(adminOrder.ticketIds());
         validateRequest(tickets, cart, adminOrder.ticketIds(), association);
         cartsService.closeCart(cart);
-        Payment payment = createPayment(tickets);
         Customer customer = customersService.create(adminOrder.customer());
-        Order order = createOrder(payment, customer);
+        Order order = createOrder(customer);
+        Payment payment = createPayment(order, tickets);
         List<OrderItem> orderItems = createOrderItems(order, tickets);
+        order.setPayment(payment);
         order.getOrderItems().addAll(orderItems);
         order = ordersService.save(order);
         return mapper.fromOrder(order);
@@ -84,17 +85,16 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         validateAllCartTicketsIncludedInRequest(cartTicketIds, requestedTicketIds);
     }
 
-    private Payment createPayment(List<Ticket> tickets) {
+    private Payment createPayment(Order order, List<Ticket> tickets) {
         BigDecimal total = calculateOrderTotal(tickets);
-        return paymentsService.create(total);
+        return paymentsService.create(order, total);
     }
 
-    private Order createOrder(Payment payment, Customer customer) {
+    private Order createOrder(Customer customer) {
         return ordersService.save(Order.builder()
                 .status(PENDING)
                 .orderSource(ADMIN)
                 .orderReference(generateOrderReference())
-                .payment(payment)
                 .customer(customer)
                 .orderItems(new ArrayList<>())
                 .build());

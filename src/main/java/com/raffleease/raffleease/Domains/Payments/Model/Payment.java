@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Payments.Model;
 
+import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -21,6 +22,10 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    private Order order;
 
     @Enumerated(STRING)
     private PaymentMethod paymentMethod;

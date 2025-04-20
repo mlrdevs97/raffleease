@@ -31,7 +31,7 @@ public class Order {
     private OrderSource orderSource;
 
     @Enumerated(STRING)
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     private OrderStatus status;
 
     @Column(nullable = false, unique = true)
@@ -40,8 +40,7 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = ALL, orphanRemoval = true)
     private List<OrderItem> orderItems;
 
-    @OneToOne(cascade = ALL, orphanRemoval = true)
-    @JoinColumn(name = "payment_id")
+    @OneToOne(mappedBy = "order", cascade = ALL, orphanRemoval = true)
     private Payment payment;
 
     @OneToOne(cascade = ALL, orphanRemoval = true)
