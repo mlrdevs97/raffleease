@@ -22,7 +22,6 @@ public class BaseAdminCartsIT extends BaseIT {
         raffleId = createRaffle(associationId, accessToken);
         raffle = rafflesRepository.findById(raffleId).orElseThrow();
         tickets = ticketsRepository.findAllByRaffle(raffle);
-        log.info("AMOUNT OF TICKETS: " + tickets.size());
         ticketId = tickets.get(0).getId();
     }
 }

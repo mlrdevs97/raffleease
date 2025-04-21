@@ -19,12 +19,14 @@ spring:
       cron:
         raffles_completion: ${RAFFLES_COMPLETION_CRON}
         images_cleanup: ${IMAGES_CLEANUP_CRON}
+        carts_cleanup: ${CARTS_CLEANUP_CRON}
+      cleanup:
+        carts_cleanup_cutoff_seconds: ${CARTS_CLEANUP_CUTOFF_SECONDS}
+        images_cleanup_cutoff_seconds: ${IMAGES_CLEANUP_CUTOFF_SECONDS}
 
   storage:
     images:
       base_path: ${IMAGES_BASE_PATH}
-      cleanup:
-        cutoff_seconds: ${IMAGES_CLEANUP_CUTOFF_SECONDS}
 
   job:
     scheduling:

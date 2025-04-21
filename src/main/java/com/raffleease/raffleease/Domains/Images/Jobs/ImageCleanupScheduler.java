@@ -18,7 +18,7 @@ public class ImageCleanupScheduler {
     private final ImagesDeleteService imagesDeleteService;
     private final ImagesRepository imagesRepository;
 
-    @Value("${spring.storage.images.cleanup.cutoff_seconds}")
+    @Value("${spring.application.configs.cleanup.images_cleanup_cutoff_seconds}")
     private Long cutoffSeconds;
 
     @Scheduled(cron = "${spring.application.configs.cron.images_cleanup}")

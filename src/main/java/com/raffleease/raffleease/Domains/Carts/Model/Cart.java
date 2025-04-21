@@ -32,8 +32,7 @@ public class Cart {
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
-    @OneToMany(cascade = ALL)
-    @JoinColumn(name = "cart_id")
+    @OneToMany(mappedBy = "cart", cascade = ALL)
     private List<Ticket> tickets;
 
     private CartOwnerType ownerType;
