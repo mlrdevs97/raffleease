@@ -1,32 +1,29 @@
 package com.raffleease.raffleease.Domains.Orders.Controller;
 
-import com.raffleease.raffleease.Base.BaseIT;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
-import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Customers.DTO.CustomerCreate;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
-import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Orders.DTOs.AddCommentRequest;
 import com.raffleease.raffleease.Domains.Orders.DTOs.AdminOrderCreate;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderComplete;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderStatus;
-import com.raffleease.raffleease.Domains.Orders.Repository.OrdersRepository;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
-import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
+import com.raffleease.raffleease.Helpers.AdminOrderCreateBuilder;
 import com.raffleease.raffleease.Helpers.CustomerCreateBuilder;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderSource.ADMIN;
@@ -43,34 +40,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class AdminOrdersControllerIT extends BaseIT {
-    @Autowired
-    protected OrdersRepository ordersRepository;
-    protected Raffle raffle;
-    protected Long raffleId;
-    protected Long reservedTicket;
-    protected Cart cart;
-
+class AdminOrdersControllerIT extends BaseAminOrdersIT {
     @BeforeEach
-    @Transactional
     void setUp() throws Exception {
-        List<ImageDTO> images = parseImagesFromResponse(uploadImages(2).andReturn());
-        Long raffleId = createRaffle(images, associationId, accessToken);
-        raffle = rafflesRepository.findById(raffleId).orElseThrow();
-        Long cartId = createCart(associationId, accessToken);
-        cart = cartsRepository.findById(cartId).orElseThrow();
-        List<Ticket> tickets = ticketsRepository.findAllByRaffle(raffle);
-        reservedTicket = tickets.get(0).getId();
-        ReservationRequest request = ReservationRequest.builder().ticketsIds(List.of(reservedTicket)).build();
-        performReserveRequest(request, associationId, cartId, accessToken).andReturn();
-        cart = cartsRepository.findById(cartId).orElseThrow();
+        super.setUp();
+        createAndReserveTicketsForCart(associationId, accessToken);
     }
 
     @Test
     @Transactional
     void shouldCreateOrder() throws Exception {
-        CustomerCreate customerRequest = new CustomerCreateBuilder().build();
-        AdminOrderCreate request = createAdminOrder(cart.getId(), List.of(reservedTicket), customerRequest, null);
+        AdminOrderCreate request = new AdminOrderCreateBuilder()
+                .withCartId(cart.getId())
+                .withTicketIds(List.of(reservedTicket))
+                .build();
 
         MvcResult result = performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isCreated())
@@ -78,7 +61,7 @@ class AdminOrdersControllerIT extends BaseIT {
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.status").value("PENDING"))
                 .andExpect(jsonPath("$.data.orderSource").value("ADMIN"))
-                .andExpect(jsonPath("$.data.customer.fullName").value(customerRequest.fullName()))
+                .andExpect(jsonPath("$.data.customer.fullName").value(request.customer().fullName()))
                 .andReturn();
 
         Long orderId = parseOrderId(result);
@@ -96,17 +79,20 @@ class AdminOrdersControllerIT extends BaseIT {
         assertThat(payment.getTotal()).isEqualByComparingTo(raffle.getTicketPrice());
 
         Customer customer = order.getCustomer();
-        String requestPhoneNumber = customerRequest.phoneNumber().prefix() + customerRequest.phoneNumber().nationalNumber();
+        String requestPhoneNumber = request.customer().phoneNumber().prefix() + request.customer().phoneNumber().nationalNumber();
         assertThat(customer).isNotNull();
-        assertThat(customer.getFullName()).isEqualTo(customerRequest.fullName());
-        assertThat(customer.getEmail()).isEqualTo(customerRequest.email());
+        assertThat(customer.getFullName()).isEqualTo(request.customer().fullName());
+        assertThat(customer.getEmail()).isEqualTo(request.customer().email());
         assertThat(customer.getPhoneNumber()).isEqualTo(requestPhoneNumber);
     }
 
     @Test
     void shouldFailIfUserNotBelongToAssociation() throws Exception{
         String otherToken = registerOtherUser().accessToken();
-        AdminOrderCreate request = createAdminOrder(cart.getId(), List.of(reservedTicket), new CustomerCreateBuilder().build(), null);
+        AdminOrderCreate request = new AdminOrderCreateBuilder()
+                .withCartId(cart.getId())
+                .withTicketIds(List.of(reservedTicket))
+                .build();
         performCreateOrderRequest(request, associationId, otherToken)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You are not a member of this association"));
@@ -114,7 +100,10 @@ class AdminOrdersControllerIT extends BaseIT {
 
     @Test
     void shouldFailIfCartIdIsMissing() throws Exception {
-        AdminOrderCreate request = createAdminOrder(null, List.of(reservedTicket), new CustomerCreateBuilder().build(), null);
+        AdminOrderCreate request = new AdminOrderCreateBuilder()
+                .withCartId(null)
+                .withTicketIds(List.of(reservedTicket))
+                .build();
 
         performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isBadRequest())
@@ -124,7 +113,10 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     void shouldFailIfCartNotExist() throws Exception {
         Long nonExistentCartId = 999999L;
-        AdminOrderCreate request = createAdminOrder(nonExistentCartId, List.of(reservedTicket), new CustomerCreateBuilder().build(), null);
+        AdminOrderCreate request = new AdminOrderCreateBuilder()
+                .withCartId(nonExistentCartId)
+                .withTicketIds(List.of(nonExistentCartId))
+                .build();
 
         performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isNotFound())
@@ -133,7 +125,10 @@ class AdminOrdersControllerIT extends BaseIT {
 
     @Test
     void shouldFailIfNoTicketsAreProvided() throws Exception {
-        AdminOrderCreate request = createAdminOrder(cart.getId(), List.of(), new CustomerCreateBuilder().build(), null);
+        AdminOrderCreate request = new AdminOrderCreateBuilder()
+                .withCartId(cart.getId())
+                .withTicketIds(List.of())
+                .build();
 
         performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isBadRequest())
@@ -143,17 +138,25 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     void shouldFailIfCommentExceedMaxLength() throws Exception {
         String longComment = "A".repeat(501);
-        AdminOrderCreate request = createAdminOrder(null, List.of(reservedTicket), new CustomerCreateBuilder().build(), longComment);
+        AdminOrderCreate request = new AdminOrderCreateBuilder()
+                .withCartId(cart.getId())
+                .withTicketIds(List.of(reservedTicket))
+                .withComment(longComment)
+                .build();
 
         performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.cartId").value("Must provide cart id"));
+                .andExpect(jsonPath("$.errors.comment").value("Comment must not exceed 500 characters"));
     }
 
     @Test
     void shouldFailIfCustomerNameIsMissing() throws Exception {
         CustomerCreate customer = new CustomerCreateBuilder().withFullName(null).build();
-        AdminOrderCreate request = createAdminOrder(cart.getId(), List.of(reservedTicket), customer, null);
+        AdminOrderCreate request = new AdminOrderCreateBuilder()
+                .withCartId(cart.getId())
+                .withTicketIds(List.of(reservedTicket))
+                .withCustomer(customer)
+                .build();
 
         performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isBadRequest())
@@ -163,7 +166,11 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     void shouldNotFailIfCustomerEmailIsMissing() throws Exception {
         CustomerCreate customer = new CustomerCreateBuilder().withEmail(null).build();
-        AdminOrderCreate request = createAdminOrder(cart.getId(), List.of(reservedTicket), customer, null);
+        AdminOrderCreate request = new AdminOrderCreateBuilder()
+                .withCartId(cart.getId())
+                .withTicketIds(List.of(reservedTicket))
+                .withCustomer(customer)
+                .build();
 
         performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isCreated())
@@ -174,7 +181,11 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     void shouldNotFailIfCustomerPhoneIsMissing() throws Exception {
         CustomerCreate customer = new CustomerCreateBuilder().withPhoneNumber(null, null).build();
-        AdminOrderCreate request = createAdminOrder(cart.getId(), List.of(reservedTicket), customer, null);
+        AdminOrderCreate request = new AdminOrderCreateBuilder()
+                .withCartId(cart.getId())
+                .withTicketIds(List.of(reservedTicket))
+                .withCustomer(customer)
+                .build();
 
         performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isCreated())
@@ -186,10 +197,12 @@ class AdminOrdersControllerIT extends BaseIT {
     @Transactional
     void shouldFailIfSomeTicketsDoesNotBelongToCart() throws Exception {
         Long otherCartId = createCart(associationId, accessToken);
-        List<Long> ticketIds = List.of(reservedTicket);
+        AdminOrderCreate request = new AdminOrderCreateBuilder()
+                .withCartId(otherCartId)
+                .withTicketIds(List.of(reservedTicket))
+                .build();
 
-        AdminOrderCreate orderRequest = createAdminOrder(otherCartId, ticketIds, new CustomerCreateBuilder().build(), null);
-        performCreateOrderRequest(orderRequest, associationId, accessToken)
+        performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Some tickets do not belong to current cart"));
     }
@@ -197,22 +210,32 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     void shouldFailIfSomeTicketsDoesNotBelongToAssociation() throws Exception {
         AuthResponse authResponse = registerOtherUser();
+        AdminOrderCreate request = new AdminOrderCreateBuilder()
+                .withCartId(cart.getId())
+                .withTicketIds(List.of(reservedTicket))
+                .build();
 
-        AdminOrderCreate orderRequest = createAdminOrder(cart.getId(), List.of(reservedTicket), new CustomerCreateBuilder().build(), null);
-        performCreateOrderRequest(orderRequest, authResponse.association().id(), authResponse.accessToken())
+        performCreateOrderRequest(request, authResponse.association().id(), authResponse.accessToken())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Some tickets do not belong to an association raffle"));
     }
 
     @Test
+    @Transactional
     void shouldFailIfAllTicketsAreNotIncludedInRequest() throws Exception {
         Long cartId = createCart(associationId, accessToken);
         List<Ticket> tickets = ticketsRepository.findAllByRaffle(raffle);
-        List<Long> reserved = tickets.stream().map(Ticket::getId).toList();
+        List<Long> originalCartTickets = cart.getTickets().stream().map(Ticket::getId).toList();
+        Set<Long> originalCartTicketIds = new HashSet<>(originalCartTickets);
+        List<Long> reserved = tickets.stream()
+                .map(Ticket::getId)
+                .filter(ticketId -> !originalCartTicketIds.contains(ticketId)).toList();
         ReservationRequest request = ReservationRequest.builder().ticketsIds(reserved).build();
         performReserveRequest(request, associationId, cartId, accessToken).andReturn();
-
-        AdminOrderCreate orderRequest = createAdminOrder(cartId, List.of(reservedTicket), new CustomerCreateBuilder().build(), null);
+        AdminOrderCreate orderRequest = new AdminOrderCreateBuilder()
+                .withCartId(cart.getId())
+                .withTicketIds(reserved)
+                .build();
         performCreateOrderRequest(orderRequest, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Some tickets do not belong to current cart"));
@@ -221,7 +244,7 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     @Transactional
     void shouldCompleteOrder() throws Exception {
-        Long orderId = createOrder();
+        Long orderId = createOrder(associationId, accessToken);
         OrderComplete completeRequest = new OrderComplete(CARD);
         performCompleteOrderRequest(orderId, completeRequest, associationId, accessToken)
                 .andExpect(status().isOk())
@@ -244,7 +267,7 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     @Transactional
     void shouldFailToCompleteIfOrderIsAlreadyCompleted() throws Exception {
-        Long orderId = createOrder();
+        Long orderId = createOrder(associationId, accessToken);
         updateOrderStatus(orderId, COMPLETED);
         OrderComplete completeRequest = new OrderComplete(CASH);
         performCompleteOrderRequest(orderId, completeRequest, associationId, accessToken)
@@ -255,7 +278,7 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     @Transactional
     void shouldFailToCompleteIfOrderIsCancelled() throws Exception {
-        Long orderId = createOrder();
+        Long orderId = createOrder(associationId, accessToken);
         updateOrderStatus(orderId, CANCELLED);
         OrderComplete completeRequest = new OrderComplete(CASH);
         performCompleteOrderRequest(orderId, completeRequest, associationId, accessToken)
@@ -266,7 +289,7 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     @Transactional
     void shouldCancelOrder() throws Exception {
-        Long orderId = createOrder();
+        Long orderId = createOrder(associationId, accessToken);
         performCancelOrderRequest(orderId, accessToken)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Order cancelled successfully"))
@@ -282,7 +305,7 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     @Transactional
     void shouldFailToCancelIfOrderIsAlreadyCancelled() throws Exception {
-        Long orderId = createOrder();
+        Long orderId = createOrder(associationId, accessToken);
         updateOrderStatus(orderId, CANCELLED);
         performCancelOrderRequest(orderId, accessToken)
                 .andExpect(status().isBadRequest())
@@ -292,7 +315,7 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     @Transactional
     void shouldFailToCancelIfOrderIsAlreadyCompleted() throws Exception {
-        Long orderId = createOrder();
+        Long orderId = createOrder(associationId, accessToken);
         updateOrderStatus(orderId, COMPLETED);
         performCancelOrderRequest(orderId, accessToken)
                 .andExpect(status().isBadRequest())
@@ -302,8 +325,7 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     @Transactional
     void shouldAddCommentToPendingOrder() throws Exception {
-        Long orderId = createOrder();
-
+        Long orderId = createOrder(associationId, accessToken);
         AddCommentRequest commentRequest = AddCommentRequest.builder().comment("Delivered successfully.").build();
         performAddCommentRequest(orderId, commentRequest, accessToken)
                 .andExpect(status().isOk())
@@ -317,7 +339,7 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     @Transactional
     void shouldAddCommentToCompletedOrder() throws Exception {
-        Long orderId = createOrder();
+        Long orderId = createOrder(associationId, accessToken);
         updateOrderStatus(orderId, COMPLETED);
 
         AddCommentRequest commentRequest = AddCommentRequest.builder().comment("Delivered successfully.").build();
@@ -332,7 +354,7 @@ class AdminOrdersControllerIT extends BaseIT {
 
     @Test
     void shouldFailToAddCommentIfTooLong() throws Exception {
-        Long orderId = createOrder();
+        Long orderId = createOrder(associationId, accessToken);
         String longComment = "a".repeat(501);
 
         AddCommentRequest commentRequest = AddCommentRequest.builder().comment(longComment).build();
@@ -343,7 +365,7 @@ class AdminOrdersControllerIT extends BaseIT {
 
     @Test
     void shouldFailToAddCommentIfNull() throws Exception {
-        Long orderId = createOrder();
+        Long orderId = createOrder(associationId, accessToken);
 
         AddCommentRequest commentRequest = AddCommentRequest.builder().comment(null).build();
         performAddCommentRequest(orderId, commentRequest, accessToken)
@@ -354,7 +376,7 @@ class AdminOrdersControllerIT extends BaseIT {
     @Test
     @Transactional
     void shouldReturnOrderById() throws Exception {
-        Long orderId = createOrder();
+        Long orderId = createOrder(associationId, accessToken);
 
         performGetOrderRequest(orderId, accessToken)
                 .andExpect(status().isOk())
@@ -369,18 +391,6 @@ class AdminOrdersControllerIT extends BaseIT {
         performGetOrderRequest(nonExistentOrderId, accessToken)
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Order not found for id <" + nonExistentOrderId + ">"));
-    }
-
-    private Long createOrder() throws Exception {
-        AdminOrderCreate request = createAdminOrder(cart.getId(), List.of(reservedTicket), new CustomerCreateBuilder().build(), null);
-        return parseOrderId(performCreateOrderRequest(request, associationId, accessToken).andReturn());
-    }
-
-    private ResultActions performCreateOrderRequest(AdminOrderCreate request, Long associationId, String token) throws Exception {
-        return mockMvc.perform(post("/admin/api/v1/associations/" + associationId + "/orders")
-                .header(AUTHORIZATION, "Bearer " + token)
-                .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)));
     }
 
     private ResultActions performCompleteOrderRequest(Long orderId, OrderComplete request, Long associationId, String token) throws Exception {
@@ -402,20 +412,6 @@ class AdminOrdersControllerIT extends BaseIT {
                 .header(AUTHORIZATION, "Bearer " + token)
                 .contentType(APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)));
-    }
-
-    private AdminOrderCreate createAdminOrder(Long cartId, List<Long> tickets, CustomerCreate customer, String comment) {
-        return AdminOrderCreate.builder()
-                .cartId(cartId)
-                .ticketIds(tickets)
-                .customer(customer)
-                .comment(comment)
-                .build();
-    }
-
-    private Long parseOrderId(MvcResult result) throws Exception {
-        return objectMapper.readTree(result.getResponse().getContentAsString())
-                .path("data").path("id").asLong();
     }
 
     private void updateOrderStatus(Long orderId, OrderStatus status) {

@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Domains.Orders.Model;
 
-import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,7 +25,7 @@ public class OrderItem {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal priceAtPurchase;
 
-    @Column(nullable = false, unique = true, updatable = false)
+    @Column(nullable = false, updatable = false)
     private Long ticketId;
 
     @Column(nullable = false, updatable = false)

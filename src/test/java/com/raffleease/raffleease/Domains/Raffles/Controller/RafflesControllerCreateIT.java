@@ -238,10 +238,9 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
         // Register second association
         AuthResponse authResponse = registerOtherUser();
         String otherToken = authResponse.accessToken();
-        Long associationId = authResponse.association().id();
 
         // Upload images for second association raffle
-        List<ImageDTO> images = parseImagesFromResponse(uploadImages(1, otherToken, associationId).andReturn());
+        List<ImageDTO> images = parseImagesFromResponse(uploadImages(1, accessToken, associationId).andReturn());
 
         assertThat(images).isNotNull();
 
@@ -250,7 +249,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(images)
                 .build();
 
-        performCreateRaffleRequest(raffle, associationId, accessToken)
+        performCreateRaffleRequest(raffle, authResponse.association().id(), otherToken)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You are not authorized to use the specified image(s)"));
     }

@@ -28,7 +28,3 @@ public record AdminOrderCreate(
         @Size(max = 500, message = "Comment must not exceed 500 characters")
         String comment
 ) {}
-
-
-
-

@@ -6,12 +6,14 @@ import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
+import com.raffleease.raffleease.Domains.Orders.Repository.OrdersRepository;
 import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
 import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
 import com.raffleease.raffleease.Domains.Tokens.Services.BlackListService;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,6 +28,12 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Comparator;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -67,12 +75,17 @@ public class BaseSharedIT {
     @Autowired
     protected CartsRepository cartsRepository;
 
+    @Autowired
+    protected OrdersRepository ordersRepository;
+
     protected String accessToken;
     protected String refreshToken;
     protected Long associationId;
 
     protected final String REGISTER_URL = "/api/v1/auth/register";
     protected final String LOGIN_URL = "/api/v1/auth/login";
+
+    private final Path TEST_FILES_DIR = Paths.get("test-files");
 
     @Container
     @ServiceConnection
@@ -83,14 +96,21 @@ public class BaseSharedIT {
     protected static GenericContainer<?> redisContainer =
             new GenericContainer<>(DockerImageName.parse("redis:7.2")).withExposedPorts(6379);
 
+    @BeforeEach
+    void setUp() throws Exception {
+        cleanTestImagesDirectory();
+    }
+
     @AfterEach
-    void cleanDatabase() {
+    void cleanDatabase() throws Exception {
         imagesRepository.deleteAll();
         ticketsRepository.deleteAll();
         cartsRepository.deleteAll();
         rafflesRepository.deleteAll();
+        ordersRepository.deleteAll();
         associationsRepository.deleteAll();
         usersRepository.deleteAll();
+        cleanTestImagesDirectory();
     }
 
     @Test
@@ -111,5 +131,18 @@ public class BaseSharedIT {
         return mockMvc.perform(post(LOGIN_URL)
                 .contentType(APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)));
+    }
+
+    private void cleanTestImagesDirectory() throws IOException {
+        if (Files.exists(TEST_FILES_DIR)) {
+            Files.walk(TEST_FILES_DIR)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(file -> {
+                        if (!file.delete()) {
+                            System.err.println("Failed to delete " + file);
+                        }
+                    });
+        }
     }
 }

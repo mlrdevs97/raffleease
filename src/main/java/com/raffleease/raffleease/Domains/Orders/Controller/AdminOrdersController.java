@@ -9,6 +9,7 @@ import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -42,6 +43,18 @@ public class AdminOrdersController {
                         order,
                         "New order created successfully"
                 )
+        );
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse> searchOrders(
+            @PathVariable Long associationId,
+            @Valid OrderSearchFilters filters,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(ResponseFactory.success(
+                ordersService.search(filters, associationId, pageable),
+                "Orders retrieved successfully")
         );
     }
 

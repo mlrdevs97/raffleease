@@ -138,7 +138,7 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
     void shouldFailWhenImageListIsEmpty() throws Exception {
         sendReorderRequest(new UpdateOrderRequest(List.of()), getReorderURL(), accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.images").value("Must provide images to reorder"));
+                .andExpect(jsonPath("$.errors.images").value("A minimum of 1 and a maximum of 10 images are allowed"));
     }
 
     private String getReorderURL() {

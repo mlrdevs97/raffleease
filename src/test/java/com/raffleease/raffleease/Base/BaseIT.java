@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 public class BaseIT extends BaseSharedIT {
     @BeforeEach
     void setUp() throws Exception {
+        super.setUp();
         AuthResponse authResponse = performAuthentication(new RegisterBuilder().build());
         accessToken = authResponse.accessToken();
         associationId = authResponse.association().id();

@@ -81,14 +81,14 @@ class PendingImagesControllerCreateIT extends BaseImagesIT {
     void shouldFailWhenNoFilesAreProvided() throws Exception {
         uploadImages(0)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(containsString("Must provide at least one image")));
+                .andExpect(jsonPath("$.errors.message").value(containsString("Must provide at least one image")));
     }
 
     @Test
     void shouldFailWhenMoreThanTenFilesAreProvided() throws Exception {
         uploadImages(11)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(containsString("Must provide between 1 and 10 images")));
+                .andExpect(jsonPath("$.errors.files").value(containsString("Must provide between 1 and 10 images")));
     }
 
     @Test
