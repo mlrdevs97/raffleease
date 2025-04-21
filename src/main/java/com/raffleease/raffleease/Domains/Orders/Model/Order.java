@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Orders.Model;
 
+import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import jakarta.persistence.*;
@@ -25,6 +26,10 @@ public class Order {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "association_id", nullable = false, updatable = false)
+    private Association association;
 
     @Enumerated(STRING)
     @Column(nullable = false, updatable = false)

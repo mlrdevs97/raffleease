@@ -54,7 +54,7 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         validateRequest(tickets, cart, adminOrder.ticketIds(), association);
         cartsService.closeCart(cart);
         Customer customer = customersService.create(adminOrder.customer());
-        Order order = createOrder(customer);
+        Order order = createOrder(association, customer);
         Payment payment = createPayment(order, tickets);
         List<OrderItem> orderItems = createOrderItems(order, tickets);
         order.setPayment(payment);
@@ -90,8 +90,9 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         return paymentsService.create(order, total);
     }
 
-    private Order createOrder(Customer customer) {
+    private Order createOrder(Association association, Customer customer) {
         return ordersService.save(Order.builder()
+                .association(association)
                 .status(PENDING)
                 .orderSource(ADMIN)
                 .orderReference(generateOrderReference())
