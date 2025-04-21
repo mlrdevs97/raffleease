@@ -1,5 +1,0 @@
-- Revisar estilos de página de gestión de sorteo (Estadísticas debajo de imagen y detalles)
-- Botón de ver landing abre nueva pestaña
-- Crear funcionalidad para buscar ganador
-- Mejorar manejo de errores
-- Mostrar mensaje 'no se encontraron sorteos' en panel de administración si no se encuentran.

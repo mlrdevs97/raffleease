@@ -1,8 +1,0 @@
-@if (display) {
-<ul
-    class="absolute left-0 z-10 w-full mt-1 overflow-y-auto bg-white border border-gray-300 list-none max-h-[150px] focus-within:block">
-    @for (ticket of tickets; track ticket) {
-    <li class="p-2 cursor-pointer hover:bg-gray-100" (click)="selectTicket(ticket)">{{ticket.ticketNumber}}</li>
-    }
-</ul>
-}
