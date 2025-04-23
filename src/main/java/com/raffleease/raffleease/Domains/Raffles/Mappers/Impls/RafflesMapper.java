@@ -46,7 +46,8 @@ public class RafflesMapper implements IRafflesMapper {
         AssociationDTO association = associationsMapper.fromAssociation(raffle.getAssociation());
 
         List<ImageDTO> images = imagesMapper.fromImagesList(raffle.getImages()).stream()
-                .sorted(Comparator.comparing(ImageDTO::imageOrder)).toList();
+                .sorted(Comparator.comparing(ImageDTO::imageOrder))
+                .toList();
 
         return PublicRaffleDTO.builder()
                 .id(raffle.getId())
@@ -55,15 +56,20 @@ public class RafflesMapper implements IRafflesMapper {
                 .url(raffle.getURL())
                 .startDate(raffle.getStartDate())
                 .endDate(raffle.getEndDate())
+                .createdAt(raffle.getCreatedAt())
+                .updatedAt(raffle.getUpdatedAt())
+                .completedAt(raffle.getCompletedAt())
                 .status(raffle.getStatus())
                 .images(images)
                 .ticketPrice(raffle.getTicketPrice())
                 .firstTicketNumber(raffle.getFirstTicketNumber())
-                .soldTickets(raffle.getSoldTickets())
-                .revenue(raffle.getRevenue())
                 .availableTickets(raffle.getAvailableTickets())
                 .totalTickets(raffle.getTotalTickets())
+                .soldTickets(raffle.getSoldTickets())
+                .revenue(raffle.getRevenue())
                 .association(association)
+                .completionReason(raffle.getCompletionReason())
+                .winningTicketId(raffle.getWinningTicket() != null ? raffle.getWinningTicket().getId() : null)
                 .build();
     }
 

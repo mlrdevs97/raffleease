@@ -19,6 +19,10 @@ public class TicketsMapperImpl implements TicketsMapper {
                 .id(ticket.getId())
                 .ticketNumber(ticket.getTicketNumber())
                 .status(ticket.getStatus())
+                .raffleId(ticket.getRaffle() != null ? ticket.getRaffle().getId() : null)
+                .customerId(ticket.getCustomer() != null ? ticket.getCustomer().getId() : null)
+                .createdAt(ticket.getCreatedAt())
+                .updatedAt(ticket.getUpdatedAt())
                 .build();
     }
 
