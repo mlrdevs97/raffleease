@@ -76,7 +76,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
     @Test void shouldFailWhenUserNameIsNull() throws Exception {
         performRegisterRequest(validBuilder.withUserName(null).build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['userData.userName']").value("Association's name is required"));
+                .andExpect(jsonPath("$.errors['userData.userName']").value("User name is required"));
     }
 
     @Test void shouldFailWhenUserNameDoesNotMatchLengthConstraint() throws Exception {
@@ -88,7 +88,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
     @Test void shouldFailWhenUserEmailIsNull() throws Exception {
         performRegisterRequest(validBuilder.withUserEmail(null).build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['userData.email']").value("Association's email is required"));
+                .andExpect(jsonPath("$.errors['userData.email']").value("User email is required"));
     }
 
     @Test void shouldFailWhenUserEmailIsInvalid() throws Exception {

@@ -9,11 +9,11 @@ import lombok.Builder;
 @Builder
 @PasswordMatches
 public record RegisterUserData(
-        @NotBlank(message = "Association's name is required")
+        @NotBlank(message = "User name is required")
         @Size(min = 2, max = 25, message = "Name must be between 2 and 25 characters")
         String userName,
 
-        @NotBlank(message = "Association's email is required")
+        @NotBlank(message = "User email is required")
         @Email(message = "Must provide a valid email")
         String email,
 
