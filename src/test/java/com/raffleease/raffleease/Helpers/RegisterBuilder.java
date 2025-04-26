@@ -4,6 +4,8 @@ import com.raffleease.raffleease.Domains.Auth.DTOs.Register.*;
 
 public class RegisterBuilder {
     // User data
+    private String firstName = "Firstname";
+    private String lastName = "Last Name";
     private String userName = "test_user";
     private String userEmail = "user@example.com";
     private String userPhonePrefix = "+34";
@@ -86,6 +88,8 @@ public class RegisterBuilder {
     public RegisterRequest build() {
         return RegisterRequest.builder()
                 .userData(RegisterUserData.builder()
+                                .firstName(firstName)
+                                .lastName(lastName)
                                 .userName(userName)
                                 .email(userEmail)
                                 .phoneNumber((userPhonePrefix != null || userPhoneNumber != null)

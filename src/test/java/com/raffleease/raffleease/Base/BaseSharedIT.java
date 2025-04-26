@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRepository;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
+import com.raffleease.raffleease.Domains.Auth.DTOs.RegisterEmailVerificationRequest;
 import com.raffleease.raffleease.Domains.Auth.Repository.VerificationTokenRepository;
 import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
@@ -141,8 +142,10 @@ public class BaseSharedIT {
     }
 
     protected ResultActions performVerificationRequest(String token) throws Exception {
+        RegisterEmailVerificationRequest request = RegisterEmailVerificationRequest.builder().verificationToken(token).build();
         return mockMvc.perform(post("/api/v1/auth/verify")
-                .param("token", token));
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
     }
 
     private void cleanTestImagesDirectory() throws IOException {

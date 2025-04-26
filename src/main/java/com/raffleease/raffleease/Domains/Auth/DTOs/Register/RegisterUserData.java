@@ -9,6 +9,14 @@ import lombok.Builder;
 @Builder
 @PasswordMatches
 public record RegisterUserData(
+        @NotBlank(message = "First name is required")
+        @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
+        String firstName,
+
+        @NotBlank(message = "Last name is required")
+        @Size(min = 2, max = 50, message = "Last name must be between 2 and 100 characters")
+        String lastName,
+
         @NotBlank(message = "User name is required")
         @Size(min = 2, max = 25, message = "Name must be between 2 and 25 characters")
         String userName,

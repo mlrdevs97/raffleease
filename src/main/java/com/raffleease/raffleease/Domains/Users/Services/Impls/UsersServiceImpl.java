@@ -62,6 +62,8 @@ public class UsersServiceImpl implements UsersService {
                 : null;
 
         return User.builder()
+                .firstName(data.firstName())
+                .lastName(data.lastName())
                 .userRole(ASSOCIATION_MEMBER)
                 .userName(data.userName())
                 .email(data.email())
