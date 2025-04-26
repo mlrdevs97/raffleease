@@ -57,9 +57,14 @@ public class ReservationsServiceImpl implements ReservationsService {
 
     @Override
     @Transactional
-    public void release(List<Long> ticketIds) {
-        List<Ticket> tickets = ticketsQueryService.findAllById(ticketIds);
+    public void release(List<Ticket> tickets) {
         releaseTickets(tickets);
+    }
+
+    @Override
+    @Transactional
+    public void release(Cart cart) {
+        releaseTicketsFromCart(cart, cart.getTickets());
     }
 
     @Override
@@ -82,15 +87,11 @@ public class ReservationsServiceImpl implements ReservationsService {
 
     private CartDTO reserveInternal(List<Ticket> tickets, Long cartId) {
         validateTicketsAvailability(tickets);
-        List<Ticket> updatedTickets = ticketsService.updateStatus(tickets, RESERVED);
-
-        Map<Raffle, Long> ticketsByRaffle = updatedTickets.stream().collect(
-                Collectors.groupingBy(Ticket::getRaffle, Collectors.counting())
-        );
-        ticketsByRaffle.forEach(raffleTicketsAvailabilityService::reduceAvailableTickets);
-
         Cart cart = cartsService.findById(cartId);
-        cart.getTickets().addAll(updatedTickets);
+        reserveTickets(tickets, cart);
+        reduceRaffleTicketsAvailability(tickets);
+        cart.getTickets().addAll(tickets);
+        cartsService.save(cart);
         return cartsMapper.fromCart(cartsService.save(cart));
     }
 
@@ -102,12 +103,8 @@ public class ReservationsServiceImpl implements ReservationsService {
     }
 
     private void releaseTickets(List<Ticket> tickets) {
-        ticketsService.updateStatus(tickets, AVAILABLE);
-
-        Map<Raffle, Long> ticketsByRaffle = tickets.stream().collect(
-                Collectors.groupingBy(Ticket::getRaffle, Collectors.counting())
-        );
-        ticketsByRaffle.forEach(raffleTicketsAvailabilityService::increaseAvailableTickets);
+        ticketsService.releaseFromCart(tickets);
+        increaseRafflesTicketsAvailability(tickets);
     }
 
     private void validateTicketsBelongToAssociationRaffle(List<Ticket> tickets, Association association) {
@@ -132,5 +129,25 @@ public class ReservationsServiceImpl implements ReservationsService {
         if (tickets.stream().anyMatch(ticket -> !cartTickets.contains(ticket))) {
             throw new BusinessException("Cannot release a ticket that does not belong to the cart");
         }
+    }
+
+    private void reserveTickets(List<Ticket> tickets, Cart cart) {
+        tickets.forEach(ticket -> {
+            ticket.setStatus(RESERVED);
+            ticket.setCart(cart);
+        });
+    }
+
+    private void reduceRaffleTicketsAvailability(List<Ticket> tickets) {
+        Map<Raffle, Long> ticketsByRaffle = tickets.stream().collect(
+                Collectors.groupingBy(Ticket::getRaffle, Collectors.counting())
+        );
+        ticketsByRaffle.forEach(raffleTicketsAvailabilityService::reduceAvailableTickets);
+    }
+
+    private void increaseRafflesTicketsAvailability(List<Ticket> tickets) {
+        Map<Raffle, Long> ticketsByRaffle = tickets.stream()
+                .collect(Collectors.groupingBy(Ticket::getRaffle, Collectors.counting()));
+        ticketsByRaffle.forEach(raffleTicketsAvailabilityService::increaseAvailableTickets);
     }
 }

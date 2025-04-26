@@ -7,8 +7,8 @@ import lombok.Builder;
 
 import java.util.List;
 
-import static com.raffleease.raffleease.Constants.ImagesConstraints.MAX_IMAGES;
-import static com.raffleease.raffleease.Constants.ImagesConstraints.MIN_IMAGES;
+import static com.raffleease.raffleease.Constants.Constants.MAX_IMAGES;
+import static com.raffleease.raffleease.Constants.Constants.MIN_IMAGES;
 
 @Builder
 public record UpdateOrderRequest(

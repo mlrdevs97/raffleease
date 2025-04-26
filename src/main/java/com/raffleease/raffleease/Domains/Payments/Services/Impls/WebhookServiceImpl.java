@@ -4,7 +4,7 @@ import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Customers.Services.CustomersService;
-import com.raffleease.raffleease.Domains.Notifications.Services.INotificationsService;
+import com.raffleease.raffleease.Domains.Notifications.Services.EmailsService;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderEdit;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersEditService;
@@ -50,7 +50,7 @@ public class WebhookServiceImpl implements IWebhookService {
     private final RafflesEditService rafflesEditService;
     private final CartsService cartsService;
     private final ReservationsService reservationsService;
-    private final INotificationsService notificationsCreateService;
+    private final EmailsService emailsService;
 
     @Value("${STRIPE_WEBHOOK_KEY}")
     private String webhookKey;
@@ -127,7 +127,7 @@ public class WebhookServiceImpl implements IWebhookService {
         );
 
          */
-        notificationsCreateService.create(order);
+        emailsService.sendOrderSuccessEmail(order);
     }
 
     private void handlePaymentFailure(Order order) {

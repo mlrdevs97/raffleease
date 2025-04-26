@@ -5,6 +5,7 @@ import com.raffleease.raffleease.Domains.Users.Model.User;
 
 public interface UsersService {
     User create(RegisterUserData userData, String encodedPassword);
+    User enableUser(User user);
     User findByIdentifier(String identifier);
     User findById(Long id);
     boolean existsById(Long id);

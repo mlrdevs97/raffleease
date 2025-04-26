@@ -7,6 +7,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+import static jakarta.persistence.GenerationType.IDENTITY;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -16,7 +18,7 @@ import java.time.LocalDateTime;
 @Table(name = "Customers")
 public class Customer {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = IDENTITY)
     private Long id;
     private String stripeId;
     private CustomerSourceType sourceType;

@@ -2,10 +2,8 @@ package com.raffleease.raffleease.Domains.Images.Controller;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
-import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Helpers.TestUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -54,7 +52,7 @@ class PendingImagesControllerDeleteIT extends BaseImagesIT {
 
         AuthResponse authResponse = registerOtherUser();
         String otherToken = authResponse.accessToken();
-        Long associationId = authResponse.association().id();
+        Long associationId = authResponse.associationId();
 
         performImageDelete(images.get(0).id(), otherToken, associationId)
                 .andExpect(status().isForbidden())

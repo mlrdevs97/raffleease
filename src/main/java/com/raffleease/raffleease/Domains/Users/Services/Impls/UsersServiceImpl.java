@@ -27,6 +27,12 @@ public class UsersServiceImpl implements UsersService {
     }
 
     @Override
+    public User enableUser(User user) {
+        user.setEnabled(true);
+        return save(user);
+    }
+
+    @Override
     public User findByIdentifier(String identifier) {
         return repository.findByIdentifier(identifier).orElseThrow(
                 () -> new NotFoundException("User not found with identifier: " + identifier)

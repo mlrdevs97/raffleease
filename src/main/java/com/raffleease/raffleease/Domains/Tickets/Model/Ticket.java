@@ -32,7 +32,7 @@ public class Ticket {
     @JoinColumn(name = "raffle_id", nullable = false)
     private Raffle raffle;
 
-    @ManyToOne()
+    @ManyToOne
     @JoinColumn(name = "cart_id")
     private Cart cart;
 

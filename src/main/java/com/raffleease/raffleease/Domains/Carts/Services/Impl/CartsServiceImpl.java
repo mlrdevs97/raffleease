@@ -6,6 +6,7 @@ import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Carts.Model.CartOwnerType;
 import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
+import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
 @RequiredArgsConstructor
 @Service
 public class CartsServiceImpl implements CartsService {
+    private final TicketsService ticketsService;
     private final CartsRepository repository;
     private final CartsMapper mapper;
     
@@ -37,6 +39,7 @@ public class CartsServiceImpl implements CartsService {
 
     @Override
     public Cart closeCart(Cart cart) {
+        ticketsService.releaseFromCart(cart.getTickets());
         cart.setStatus(CLOSED);
         cart.setTickets(null);
         return save(cart);

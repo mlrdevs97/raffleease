@@ -39,9 +39,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         if (order.getStatus() != PENDING) {
             throw new BusinessException(String.format("Unsupported status transition from %s to %s", order.getStatus(), COMPLETED));
         }
-        List<Long> ticketIds = order.getOrderItems().stream().map(OrderItem::getTicketId).toList();
-        List<Ticket> tickets = ticketsQueryService.findAllById(ticketIds);
-        ticketsService.updateStatus(tickets, SOLD);
+        updateTicketsStatus(order);
         LocalDateTime now = LocalDateTime.now();
         Payment payment = order.getPayment();
         payment.setStatus(SUCCEEDED);
@@ -58,8 +56,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         if (order.getStatus() != PENDING) {
             throw new BusinessException(String.format("Unsupported status transition from %s to %s", order.getStatus(), CANCELLED));
         }
-        List<Long> ticketIds = order.getOrderItems().stream().map(OrderItem::getTicketId).toList();
-        reservationsService.release(ticketIds);
+        releaseOrderTickets(order);
         LocalDateTime now = LocalDateTime.now();
         Payment payment = order.getPayment();
         payment.setStatus(PaymentStatus.CANCELLED);
@@ -99,5 +96,20 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         }
 
         return ordersService.save(order);
+    }
+
+    private void releaseOrderTickets(Order order) {
+        List<Ticket> tickets = getTicketsFromOrder(order);
+        reservationsService.release(tickets);
+    }
+
+    private void updateTicketsStatus(Order order) {
+        List<Ticket> tickets = getTicketsFromOrder(order);
+        ticketsService.updateStatus(tickets, SOLD);
+    }
+
+    private List<Ticket> getTicketsFromOrder(Order order) {
+        List<Long> ticketIds = order.getOrderItems().stream().map(OrderItem::getTicketId).toList();
+        return ticketsQueryService.findAllById(ticketIds);
     }
 }

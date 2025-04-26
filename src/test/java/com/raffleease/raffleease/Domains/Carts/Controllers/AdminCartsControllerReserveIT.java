@@ -26,7 +26,6 @@ class AdminCartsControllerReserveIT extends BaseAdminCartsIT {
     }
 
     @Test
-    @Transactional
     void shouldReserveTickets() throws Exception {
         ReservationRequest request = ReservationRequest.builder()
                 .ticketsIds(List.of(ticketId))
@@ -37,20 +36,20 @@ class AdminCartsControllerReserveIT extends BaseAdminCartsIT {
                 .andExpect(jsonPath("$.message").value("New reservation generated successfully"));
 
         Cart cart = cartsRepository.findById(cartId).orElseThrow();
-        Ticket ticket = cart.getTickets().get(0);
+        List<Ticket> tickets = ticketsRepository.findAllByCart(cart);
+        Ticket ticket = tickets.get(0);
 
-        assertThat(cart.getTickets().size()).isEqualTo(1);
+        assertThat(tickets.size()).isEqualTo(1);
         assertThat(ticket.getId()).isEqualTo(ticketId);
         assertThat(ticket.getStatus()).isEqualTo(RESERVED);
-        assertThat(ticket.getRaffle().getAvailableTickets()).isEqualTo(tickets.size() - 1);
+        assertThat(ticket.getRaffle().getAvailableTickets()).isEqualTo(raffle.getAvailableTickets() - 1);
     }
 
     @Test
-    @Transactional
     void shouldFailReserveIfTicketsDoNotBelongToAssociationRaffle() throws Exception {
         AuthResponse authResponse = registerOtherUser();
         String otherToken = authResponse.accessToken();
-        Long associationId = authResponse.association().id();
+        Long associationId = authResponse.associationId();
         Long cartId = createCart(associationId, otherToken);
 
         ReservationRequest request = ReservationRequest.builder()
@@ -63,7 +62,6 @@ class AdminCartsControllerReserveIT extends BaseAdminCartsIT {
     }
 
     @Test
-    @Transactional
     void shouldFailReserveIfUserDoesNotBelongToAssociation() throws Exception {
         ReservationRequest request = ReservationRequest.builder()
                 .ticketsIds(List.of(tickets.get(0).getId()))
@@ -77,7 +75,6 @@ class AdminCartsControllerReserveIT extends BaseAdminCartsIT {
     }
 
     @Test
-    @Transactional
     void shouldFailToReduceIfNotEnoughTicketsAvailable() throws Exception {
         raffle.setAvailableTickets(0L);
         raffle = rafflesRepository.save(raffle);
@@ -133,7 +130,6 @@ class AdminCartsControllerReserveIT extends BaseAdminCartsIT {
     }
 
     @Test
-    @Transactional
     void shouldFailReserveIfTicketsAreNotAvailable() throws Exception {
         Ticket ticket = tickets.get(0);
         ticket.setStatus(SOLD);
@@ -149,7 +145,6 @@ class AdminCartsControllerReserveIT extends BaseAdminCartsIT {
     }
 
     @Test
-    @Transactional
     void shouldFailIfNotEnoughTicketsAvailable() throws Exception {
         raffle.setAvailableTickets(0L);
         rafflesRepository.save(raffle);

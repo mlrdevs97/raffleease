@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Domains.Raffles.DTOs;
 
-import com.raffleease.raffleease.Constants.ImagesConstraints;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
@@ -9,8 +8,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.raffleease.raffleease.Constants.ImagesConstraints.MAX_IMAGES;
-import static com.raffleease.raffleease.Constants.ImagesConstraints.MIN_IMAGES;
+import static com.raffleease.raffleease.Constants.Constants.MAX_IMAGES;
+import static com.raffleease.raffleease.Constants.Constants.MIN_IMAGES;
 
 @Builder
 public record RaffleEdit(

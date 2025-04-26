@@ -19,7 +19,7 @@ public class RafflesCompleteScheduler {
     private final RafflesPersistenceService persistenceService;
     private final RafflesRepository repository;
 
-    @Scheduled(cron = "${spring.storage.images.cleanup.cron}")
+    @Scheduled(cron = "${spring.application.configs.cron.images_cleanup}")
     public void completeRaffles() {
         List<Raffle> raffles = repository.findAllEligibleForCompletion(COMPLETED);
 

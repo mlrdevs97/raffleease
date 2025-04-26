@@ -58,6 +58,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(BAD_REQUEST).body(apiError);
     }
 
+    @ExceptionHandler(EmailVerificationException.class)
+    public ResponseEntity<ApiResponse> handleEmailVerificationException(EmailVerificationException ex) {
+        ApiResponse apiError = ResponseFactory.error(
+                ex.getMessage(),
+                BAD_REQUEST.value(),
+                BAD_REQUEST.getReasonPhrase()
+        );
+        return ResponseEntity.status(BAD_REQUEST).body(apiError);
+    }
+
     @ExceptionHandler(FileStorageException.class)
     public ResponseEntity<ApiResponse> handleFileStorageException(FileStorageException ex) {
         ApiResponse apiError = ResponseFactory.error(

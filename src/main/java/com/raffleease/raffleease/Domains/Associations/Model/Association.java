@@ -3,7 +3,10 @@ package com.raffleease.raffleease.Domains.Associations.Model;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @NoArgsConstructor
@@ -35,4 +38,11 @@ public class Association {
 
     @OneToMany(mappedBy = "association", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AssociationMembership> memberships;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }

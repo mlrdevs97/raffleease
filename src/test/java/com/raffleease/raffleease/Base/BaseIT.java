@@ -2,10 +2,13 @@ package com.raffleease.raffleease.Base;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
+import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
+import com.raffleease.raffleease.Domains.Auth.Model.VerificationToken;
 import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
+import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
 import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import com.raffleease.raffleease.Helpers.TestUtils;
@@ -28,11 +31,19 @@ public class BaseIT extends BaseSharedIT {
         super.setUp();
         AuthResponse authResponse = performAuthentication(new RegisterBuilder().build());
         accessToken = authResponse.accessToken();
-        associationId = authResponse.association().id();
+        associationId = authResponse.associationId();
     }
 
     protected AuthResponse performAuthentication(RegisterRequest registerRequest) throws Exception {
-        MvcResult result = performRegisterRequest(registerRequest).andReturn();
+        performRegisterRequest(registerRequest).andReturn();
+        User user = usersRepository.findByIdentifier(registerRequest.userData().email()).orElseThrow();
+        VerificationToken verificationToken = verificationTokenRepository.findByUser(user).orElseThrow();
+        performVerificationRequest(verificationToken.getToken());
+        LoginRequest loginRequest = LoginRequest.builder()
+                .identifier(registerRequest.userData().email())
+                .password(registerRequest.userData().password())
+                .build();
+        MvcResult result = performLoginRequest(loginRequest).andReturn();
         JsonNode jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
         refreshToken = result.getResponse().getCookie("refresh_token").getValue();
         return objectMapper.treeToValue(jsonNode.path("data"), AuthResponse.class);

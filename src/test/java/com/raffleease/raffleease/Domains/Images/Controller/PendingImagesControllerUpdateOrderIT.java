@@ -114,7 +114,7 @@ class PendingImagesControllerUpdateOrderIT extends BaseImagesIT {
 
         AuthResponse authResponse = registerOtherUser();
         String otherToken = authResponse.accessToken();
-        Long associationId = authResponse.association().id();
+        Long associationId = authResponse.associationId();
 
         UpdateOrderRequest reorderRequest = new UpdateOrderRequest(List.of(copyWithNewOrder(images.get(0), 1)));
         sendReorderRequest(reorderRequest, getReorderURL(associationId), otherToken)

@@ -194,7 +194,6 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFailIfSomeTicketsDoesNotBelongToCart() throws Exception {
         Long otherCartId = createCart(associationId, accessToken);
         AdminOrderCreate request = new AdminOrderCreateBuilder()
@@ -215,17 +214,16 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
                 .withTicketIds(List.of(reservedTicket))
                 .build();
 
-        performCreateOrderRequest(request, authResponse.association().id(), authResponse.accessToken())
+        performCreateOrderRequest(request, authResponse.associationId(), authResponse.accessToken())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Some tickets do not belong to an association raffle"));
     }
 
     @Test
-    @Transactional
     void shouldFailIfAllTicketsAreNotIncludedInRequest() throws Exception {
         Long cartId = createCart(associationId, accessToken);
         List<Ticket> tickets = ticketsRepository.findAllByRaffle(raffle);
-        List<Long> originalCartTickets = cart.getTickets().stream().map(Ticket::getId).toList();
+        List<Long> originalCartTickets = ticketsRepository.findAllByCart(cart).stream().map(Ticket::getId).toList();
         Set<Long> originalCartTicketIds = new HashSet<>(originalCartTickets);
         List<Long> reserved = tickets.stream()
                 .map(Ticket::getId)

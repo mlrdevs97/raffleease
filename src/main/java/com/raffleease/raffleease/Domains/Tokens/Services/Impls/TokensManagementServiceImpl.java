@@ -1,8 +1,11 @@
 package com.raffleease.raffleease.Domains.Tokens.Services.Impls;
 
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
+import com.raffleease.raffleease.Domains.Associations.Services.AssociationsMembershipService;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Auth.Services.CookiesService;
 import com.raffleease.raffleease.Domains.Tokens.Services.*;
+import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +26,7 @@ public class TokensManagementServiceImpl implements TokensManagementService {
     private final UsersService usersService;
     private final BlackListService blackListService;
     private final CookiesService cookiesService;
+    private final AssociationsMembershipService membershipService;
 
     @Value("${spring.application.security.jwt.refresh_token_expiration}")
     private Long refreshTokenExpiration;
@@ -38,11 +42,14 @@ public class TokensManagementServiceImpl implements TokensManagementService {
         if (!usersService.existsById(userId)) {
             throw new AuthorizationException("User not found for provided subject in token");
         }
+        User user = usersService.findById(userId);
+        AssociationMembership membership = membershipService.findByUser(user);
         String newAccessToken = tokensCreateService.generateAccessToken(userId);
         String newRefreshToken = tokensCreateService.generateRefreshToken(userId);
         cookiesService.addCookie(response, "refresh_token", newRefreshToken, refreshTokenExpiration);
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
+                .associationId(membership.getAssociation().getId())
                 .build();
     }
 

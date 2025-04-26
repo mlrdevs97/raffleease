@@ -239,7 +239,7 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
         // Create image with different user
         AuthResponse authResponse = registerOtherUser();
         String otherToken = authResponse.accessToken();
-        Long associationId = authResponse.association().id();
+        Long associationId = authResponse.associationId();
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(1, otherToken, associationId).andReturn());
 
         RaffleEdit edit = RaffleEdit.builder()

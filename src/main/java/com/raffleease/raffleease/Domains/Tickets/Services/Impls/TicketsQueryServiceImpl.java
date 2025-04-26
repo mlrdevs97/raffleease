@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Tickets.Services.Impls;
 
+import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Customers.Services.CustomersService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
@@ -54,7 +55,9 @@ public class TicketsQueryServiceImpl implements TicketsQueryService {
         try {
             List<Ticket> searchResults = customRepository.search(raffle, ticketNumber, status, customer);
 
-            if (searchResults.isEmpty()) throw new NotFoundException("No ticket was found for search");
+            if (searchResults.isEmpty()) {
+                throw new NotFoundException("No ticket was found for search");
+            }
 
             return mapper.fromTicketList(searchResults);
         } catch (DataAccessException exp) {
@@ -78,6 +81,15 @@ public class TicketsQueryServiceImpl implements TicketsQueryService {
         validateTicketAvailability(availableTickets, quantity);
         List<Ticket> selectedTickets = selectRandomTickets(availableTickets, quantity);
         return mapper.fromTicketList(selectedTickets);
+    }
+
+    @Override
+    public List<Ticket> findAllByCart(Cart cart) {
+        try {
+            return repository.findAllByCart(cart);
+        } catch (DataAccessException ex) {
+            throw new DatabaseException("Database error occurred while retrieving tickets: " + ex.getMessage());
+        }
     }
 
     private void validateTicketAvailability(List<Ticket> availableTickets, Long requestedQuantity) {

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación de Correo Electrónico</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f7;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid #ececec;
+        }
+
+        .header {
+            background-color: #3b82f6;
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .content h2 {
+            font-size: 18px;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+
+        .content p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .footer {
+            background-color: #f8f8fa;
+            color: #555;
+            text-align: center;
+            padding: 15px;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="header">
+        <h1>Hola, <span th:text="${customerName}">[Nombre del Usuario]</span>!</h1>
+    </div>
+    <div class="content">
+        <h2>¡Bienvenido a Raffle Ease!</h2>
+        <p>Gracias por registrarte con nosotros el <strong><span th:text="${registrationDate}">[Fecha de Registro]</span></strong>.</p>
+        <p>Para completar tu registro, por favor verifica tu correo electrónico.</p>
+        <a th:href="@{${verificationUrl}}" title="Verifica tu correo">Click here to verify your email address and activate your account</a>
+        <p style="margin-top: 20px; font-size: 12px; color: #777;">
+            Si el botón anterior no funciona, copia y pega el enlace en tu navegador.
+        </p>
+    </div>
+    <div class="footer">
+        <p>Si tienes alguna duda, por favor contáctanos en
+            <a href="mailto:soporte@tuaplicacion.com">soporte@tuaplicacion.com</a>.
+        </p>
+        <p>© 2024 [Tu Aplicación].</p>
+    </div>
+</div>
+</body>
+</html>

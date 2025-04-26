@@ -11,8 +11,8 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.raffleease.raffleease.Constants.ImagesConstraints.MAX_IMAGES;
-import static com.raffleease.raffleease.Constants.ImagesConstraints.MIN_IMAGES;
+import static com.raffleease.raffleease.Constants.Constants.MAX_IMAGES;
+import static com.raffleease.raffleease.Constants.Constants.MIN_IMAGES;
 
 public record RaffleCreate(
         @NotBlank(message = "Raffle title is required")

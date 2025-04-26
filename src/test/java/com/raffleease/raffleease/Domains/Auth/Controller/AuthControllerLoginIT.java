@@ -3,7 +3,10 @@ package com.raffleease.raffleease.Domains.Auth.Controller;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterUserData;
+import com.raffleease.raffleease.Domains.Auth.Model.VerificationToken;
+import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Helpers.RegisterBuilder;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,10 +26,14 @@ public class AuthControllerLoginIT extends BaseAuthIT {
     private RegisterUserData userData;
 
     @BeforeEach
+    @Transactional
     void setUp() throws Exception {
         RegisterRequest registerRequest = new RegisterBuilder().build();
-        userData = registerRequest.userData();
         performRegisterRequest(registerRequest);
+        userData = registerRequest.userData();
+        User user = usersRepository.findByIdentifier(userData.email()).orElseThrow();
+        VerificationToken verificationToken = verificationTokenRepository.findByUser(user).orElseThrow();
+        performVerificationRequest(verificationToken.getToken());
     }
 
     @Test

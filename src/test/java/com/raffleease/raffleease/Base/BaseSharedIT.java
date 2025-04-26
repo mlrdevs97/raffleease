@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRepository;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
+import com.raffleease.raffleease.Domains.Auth.Repository.VerificationTokenRepository;
 import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Orders.Repository.OrdersRepository;
@@ -12,6 +13,7 @@ import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
 import com.raffleease.raffleease.Domains.Tokens.Services.BlackListService;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
+@Slf4j
 @ActiveProfiles("test")
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -50,6 +53,9 @@ public class BaseSharedIT {
 
     @Autowired
     protected ObjectMapper objectMapper;
+
+    @Autowired
+    protected VerificationTokenRepository verificationTokenRepository;
 
     @Autowired
     protected UsersRepository usersRepository;
@@ -103,6 +109,7 @@ public class BaseSharedIT {
 
     @AfterEach
     void cleanDatabase() throws Exception {
+        verificationTokenRepository.deleteAll();
         imagesRepository.deleteAll();
         ticketsRepository.deleteAll();
         cartsRepository.deleteAll();
@@ -131,6 +138,11 @@ public class BaseSharedIT {
         return mockMvc.perform(post(LOGIN_URL)
                 .contentType(APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)));
+    }
+
+    protected ResultActions performVerificationRequest(String token) throws Exception {
+        return mockMvc.perform(post("/api/v1/auth/verify")
+                .param("token", token));
     }
 
     private void cleanTestImagesDirectory() throws IOException {

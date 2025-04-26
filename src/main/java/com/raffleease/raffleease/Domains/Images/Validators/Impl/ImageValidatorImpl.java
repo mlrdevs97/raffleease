@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Images.Validators.Impl;
 
-import com.raffleease.raffleease.Constants.ImagesConstraints;
+import com.raffleease.raffleease.Constants.Constants;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
@@ -39,7 +39,7 @@ public class ImageValidatorImpl implements ImageValidator {
 
     @Override
     public void validateTotalImagesNumber(long uploadingImagesCount, long currentImagesCount) {
-        if (currentImagesCount + uploadingImagesCount > ImagesConstraints.MAX_IMAGES) {
+        if (currentImagesCount + uploadingImagesCount > Constants.MAX_IMAGES) {
             throw new BusinessException("You cannot upload more than 10 images in total");
         }
     }

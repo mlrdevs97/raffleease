@@ -30,16 +30,16 @@ public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT {
     }
 
     @Test
-    @Transactional
     void shouldReleaseTickets() throws Exception {
         performReleaseRequest(buildReleaseRequest(ticketId), getReleaseURL(cartId), accessToken)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Tickets released successfully"));
 
         Cart cart = cartsRepository.findById(cartId).orElseThrow();
+        List<Ticket> cartTickets = ticketsRepository.findAllByCart(cart);
         Ticket ticket = ticketsRepository.findById(ticketId).orElseThrow();
 
-        assertThat(cart.getTickets()).doesNotContain(ticket);
+        assertThat(cartTickets).doesNotContain(ticket);
         assertThat(ticket.getStatus()).isEqualTo(AVAILABLE);
         assertThat(ticket.getRaffle().getAvailableTickets()).isEqualTo(tickets.size());
     }
@@ -63,19 +63,16 @@ public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT {
     @Test
     void shouldFailReleaseIfTicketsListIsEmpty() throws Exception {
         Long cartId = createCart(associationId, accessToken);
-
         ReservationRequest request = ReservationRequest.builder().ticketsIds(List.of()).build();
-
         performReleaseRequest(request, getReleaseURL(cartId), accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.ticketsIds").value("Must select at least one ticket"));
     }
 
     @Test
-    @Transactional
     void shouldFailReleaseIfTicketsDoNotBelongToAssociationRaffle() throws Exception {
         AuthResponse authResponse = registerOtherUser();
-        Long associationId = authResponse.association().id();
+        Long associationId = authResponse.associationId();
         String otherToken = authResponse.accessToken();
 
         performReleaseRequest(buildReleaseRequest(ticketId), getReleaseURL(associationId, cartId), otherToken)
@@ -84,7 +81,6 @@ public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT {
     }
 
     @Test
-    @Transactional
     void shouldFailReleaseIfTicketsDoNotBelongToCart() throws Exception {
         Long cartId = createCart(associationId, accessToken);
 
@@ -100,10 +96,8 @@ public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT {
     }
 
     @Test
-    @Transactional
     void shouldFailReleaseIfUserDoesNotBelongToAssociation() throws Exception {
         String otherToken = registerOtherUser().accessToken();
-
         performReleaseRequest(buildReleaseRequest(ticketId), getReleaseURL(cartId), otherToken)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You are not a member of this association"));

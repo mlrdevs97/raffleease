@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Tickets.Services;
 
+import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketDTO;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
@@ -12,4 +13,6 @@ public interface TicketsQueryService {
     List<TicketDTO> get(Long raffleId, String ticketNumber, TicketStatus status, Long customerId);
     List<Ticket> findByRaffleAndStatus(Raffle raffle, TicketStatus status);
     List<TicketDTO> getRandom(Long raffleId, Long quantity);
+
+    List<Ticket> findAllByCart(Cart cart);
 }

@@ -5,8 +5,9 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum EmailTemplates {
-    ORDER_SUCCESS("order-success.html", "Order successfully completed");
+public enum EmailTemplate {
+    ORDER_SUCCESS("order-success.html", "Order successfully completed"),
+    EMAIL_VERIFICATION("email-verification.html", "Verify your email");
 
     private final String template;
     private final String subject;

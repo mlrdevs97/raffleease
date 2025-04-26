@@ -10,4 +10,5 @@ import java.util.List;
 public interface TicketsService {
     List<Ticket> create(Raffle raffle, TicketsCreate request);
     List<Ticket> updateStatus(List<Ticket> tickets, TicketStatus status);
+    void releaseFromCart(List<Ticket> tickets);
 }

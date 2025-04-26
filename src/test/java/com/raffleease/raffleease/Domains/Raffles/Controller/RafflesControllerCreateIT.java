@@ -249,7 +249,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
                 .withImages(images)
                 .build();
 
-        performCreateRaffleRequest(raffle, authResponse.association().id(), otherToken)
+        performCreateRaffleRequest(raffle, authResponse.associationId(), otherToken)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You are not authorized to use the specified image(s)"));
     }

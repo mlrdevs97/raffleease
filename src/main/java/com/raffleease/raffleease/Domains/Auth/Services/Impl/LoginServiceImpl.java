@@ -1,5 +1,10 @@
 package com.raffleease.raffleease.Domains.Auth.Services.Impl;
 
+import com.raffleease.raffleease.Domains.Associations.Model.Association;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
+import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsMembershipsRepository;
+import com.raffleease.raffleease.Domains.Associations.Services.AssociationsMembershipService;
+import com.raffleease.raffleease.Domains.Associations.Services.Impl.AssociationsMembershipServiceImpl;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Auth.Services.CookiesService;
@@ -24,6 +29,7 @@ public class LoginServiceImpl implements LoginService {
     private final TokensCreateService tokensCreateService;
     private final CookiesService cookiesService;
     private final UsersService usersService;
+    private final AssociationsMembershipService membershipService;
 
     @Value("${spring.application.security.jwt.refresh_token_expiration}")
     private Long refreshTokenExpiration;
@@ -31,10 +37,14 @@ public class LoginServiceImpl implements LoginService {
     public AuthResponse login(LoginRequest request, HttpServletResponse response) {
         authenticateCredentials(request.identifier(), request.password());
         User user = usersService.findByIdentifier(request.identifier());
+        AssociationMembership membership = membershipService.findByUser(user);
         String accessToken = tokensCreateService.generateAccessToken(user.getId());
         String refreshToken = tokensCreateService.generateRefreshToken(user.getId());
         cookiesService.addCookie(response, "refresh_token", refreshToken, refreshTokenExpiration);
-        return AuthResponse.builder().accessToken(accessToken).build();
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .associationId(membership.getAssociation().getId())
+                .build();
     }
 
     private void authenticateCredentials(String identifier, String password) {

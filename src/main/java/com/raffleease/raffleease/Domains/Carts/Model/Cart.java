@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static jakarta.persistence.CascadeType.ALL;
+import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 @NoArgsConstructor
@@ -32,7 +33,7 @@ public class Cart {
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
-    @OneToMany(mappedBy = "cart", cascade = ALL)
+    @OneToMany(mappedBy = "cart", fetch = LAZY, cascade = ALL)
     private List<Ticket> tickets;
 
     private CartOwnerType ownerType;

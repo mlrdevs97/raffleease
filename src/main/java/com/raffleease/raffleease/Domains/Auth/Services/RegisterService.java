@@ -5,5 +5,5 @@ import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import jakarta.servlet.http.HttpServletResponse;
 
 public interface RegisterService {
-    AuthResponse register(RegisterRequest request, HttpServletResponse response);
+    void register(RegisterRequest request, HttpServletResponse response);
 }

@@ -50,13 +50,13 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
     public OrderDTO create(AdminOrderCreate adminOrder, Long associationId) {
         Association association = associationsService.findById(associationId);
         Cart cart = cartsService.findById(adminOrder.cartId());
-        List<Ticket> tickets = ticketsQueryService.findAllById(adminOrder.ticketIds());
-        validateRequest(tickets, cart, adminOrder.ticketIds(), association);
+        List<Ticket> requestedTickets = ticketsQueryService.findAllById(adminOrder.ticketIds());
+        validateRequest(requestedTickets, cart, association);
         cartsService.closeCart(cart);
         Customer customer = customersService.create(adminOrder.customer());
         Order order = createOrder(association, customer);
-        Payment payment = createPayment(order, tickets);
-        List<OrderItem> orderItems = createOrderItems(order, tickets);
+        Payment payment = createPayment(order, requestedTickets);
+        List<OrderItem> orderItems = createOrderItems(order, requestedTickets);
         order.setPayment(payment);
         order.getOrderItems().addAll(orderItems);
         order = ordersService.save(order);
@@ -78,11 +78,11 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         return stripeService.createSession(order);
     }
 
-    private void validateRequest(List<Ticket> tickets, Cart cart, List<Long> requestedTicketIds, Association association) {
-        List<Long> cartTicketIds = cart.getTickets().stream().map(Ticket::getId).toList();
-        validateAllTicketsBelongToAssociationRaffle(tickets, association);
-        validateAllTicketsBelongToCart(cartTicketIds, requestedTicketIds);
-        validateAllCartTicketsIncludedInRequest(cartTicketIds, requestedTicketIds);
+    private void validateRequest(List<Ticket> requestedTickets, Cart cart, Association association) {
+        List<Ticket> cartTickets = ticketsQueryService.findAllByCart(cart);
+        validateAllTicketsBelongToAssociationRaffle(requestedTickets, association);
+        validateAllTicketsBelongToCart(cartTickets, requestedTickets);
+        validateAllCartTicketsIncludedInRequest(cartTickets, requestedTickets);
     }
 
     private Payment createPayment(Order order, List<Ticket> tickets) {
@@ -111,15 +111,29 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
                 .build()).toList();
     }
 
-    private void validateAllTicketsBelongToCart(List<Long> cartTicketsIds, List<Long> ticketsIds) {
-        boolean anyNotBelong = ticketsIds.stream().anyMatch(ticketId -> !cartTicketsIds.contains(ticketId));
+    private void validateAllTicketsBelongToCart(List<Ticket> cartTickets, List<Ticket> requestedTickets) {
+        Set<Long> cartTicketIds = cartTickets.stream()
+                .map(Ticket::getId)
+                .collect(Collectors.toSet());
+
+        boolean anyNotBelong = requestedTickets.stream()
+                .map(Ticket::getId)
+                .anyMatch(id -> !cartTicketIds.contains(id));
+
         if (anyNotBelong) {
             throw new BusinessException("Some tickets do not belong to current cart");
         }
     }
 
-    private void validateAllCartTicketsIncludedInRequest(List<Long> cartTicketsIds, List<Long> ticketsIds) {
-        boolean anyNotIncluded = cartTicketsIds.stream().anyMatch(ticketId -> !ticketsIds.contains(ticketId));
+    private void validateAllCartTicketsIncludedInRequest(List<Ticket> cartTickets, List<Ticket> requestedTickets) {
+        Set<Long> requestedTicketIds = requestedTickets.stream()
+                .map(Ticket::getId)
+                .collect(Collectors.toSet());
+
+        boolean anyNotIncluded = cartTickets.stream()
+                .map(Ticket::getId)
+                .anyMatch(id -> !requestedTicketIds.contains(id));
+
         if (anyNotIncluded) {
             throw new BusinessException("Some tickets in cart are not included in order request");
         }

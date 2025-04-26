@@ -1,12 +1,14 @@
 package com.raffleease.raffleease.Domains.Notifications.Model;
 
-import com.raffleease.raffleease.Domains.Customers.Model.Customer;
-import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+
+import static jakarta.persistence.EnumType.STRING;
+import static jakarta.persistence.GenerationType.IDENTITY;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,17 +18,18 @@ import java.time.LocalDateTime;
 @Entity
 public class Notification {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
+    @Enumerated(STRING)
     @Column(nullable = false, updatable = false)
     private NotificationType notificationType;
+
+    @Enumerated(STRING)
+    @Column(nullable = false, updatable = false)
+    private NotificationChannel channel;
 
     @CreationTimestamp
     @Column(updatable = false, nullable = false)
     private LocalDateTime notificationDate;
-
-    @ManyToOne
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
 }

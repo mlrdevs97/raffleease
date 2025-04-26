@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Domains.Carts.Jobs;
 
-import com.raffleease.raffleease.Base.BaseSharedIT;
 import com.raffleease.raffleease.Domains.Carts.Controllers.BaseAdminCartsIT;
 import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
@@ -8,9 +7,7 @@ import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -20,12 +17,11 @@ import java.util.List;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-@Slf4j
 public class CartsCleanupSchedulerIT extends BaseAdminCartsIT {
     @Autowired
     private CartsCleanupScheduler cleanupScheduler;
 
-    @PersistenceContext
+    @Autowired
     private EntityManager entityManager;
 
     @Test
@@ -36,6 +32,7 @@ public class CartsCleanupSchedulerIT extends BaseAdminCartsIT {
         Long raffleId = createRaffle(images, associationId, accessToken);
         Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
         Ticket ticket = ticketsRepository.findAllByRaffle(raffle).get(0);
+        long originalTotalTickets = raffle.getTotalTickets();
 
         // 2. Create cart and reserve ticket
         Long cartId = createCart(associationId, accessToken);
@@ -54,13 +51,14 @@ public class CartsCleanupSchedulerIT extends BaseAdminCartsIT {
 
         // 4. Refresh and assert
         Cart refreshedCart = cartsRepository.findById(cartId).orElseThrow();
-        assertThat(refreshedCart.getTickets()).isEmpty();
-
+        List<Ticket> cartTickets = ticketsRepository.findAllByCart(refreshedCart);
         Ticket refreshedTicket = ticketsRepository.findById(ticket.getId()).orElseThrow();
+
+        assertThat(cartTickets).isEmpty();
         assertThat(refreshedTicket.getStatus()).isEqualTo(AVAILABLE);
 
         // 5. check tickets availability in raffle
         assertThat(rafflesRepository.findById(raffleId).orElseThrow().getAvailableTickets())
-                .isEqualTo(raffle.getAvailableTickets() + 1);
+                .isEqualTo(originalTotalTickets);
     }
 }

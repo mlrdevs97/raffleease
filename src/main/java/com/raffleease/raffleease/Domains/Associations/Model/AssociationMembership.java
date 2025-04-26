@@ -20,10 +20,12 @@ public class AssociationMembership {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
+    @OneToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "association_id", nullable = false)
     private Association association;
 
     @Enumerated(EnumType.STRING)

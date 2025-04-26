@@ -3,12 +3,11 @@ package com.raffleease.raffleease.Domains.Orders.Controller;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
+import com.raffleease.raffleease.Domains.Orders.Repository.OrderItemsRepository;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
 import com.raffleease.raffleease.Domains.Payments.Repository.PaymentsRepository;
 import com.raffleease.raffleease.Helpers.CustomerBuilder;
-import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.ResultActions;
@@ -31,13 +30,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Slf4j
 public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     @Autowired
     private PaymentsRepository paymentsRepository;
 
+    @Autowired
+    private OrderItemsRepository orderItemsRepository;
+
     @Test
-    @Transactional
     void shouldReturnAllOrdersWhenNoFiltersProvided() throws Exception {
         final int numOrders = 3;
         List<Long> ids = new ArrayList<>();
@@ -53,7 +53,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFilterByOrderStatus() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         createOrder(associationId, accessToken);
@@ -70,7 +69,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFilterByPaymentStatus() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         createOrder(associationId, accessToken);
@@ -88,7 +86,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFilterByPaymentMethod() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         Long orderId1 = createOrder(associationId, accessToken);
@@ -113,7 +110,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     // TODO: Enhance order source testing when customer order source is implemented
     @Test
-    @Transactional
     void shouldFilterByOrderSource() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         createOrder(associationId, accessToken);
@@ -154,7 +150,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFilterByOrderReferenceContainingIgnoreCase() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         createOrder(associationId, accessToken);
@@ -169,7 +164,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFilterByCustomerNameContainingIgnoreCase() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         createOrder(associationId, accessToken);
@@ -187,7 +181,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFilterByCustomerEmailContainingIgnoreCase() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         createOrder(associationId, accessToken);
@@ -205,7 +198,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFilterByCustomerPhoneContaining() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         createOrder(associationId, accessToken);
@@ -223,7 +215,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFilterByRaffleId() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         createOrder(associationId, accessToken);
@@ -237,8 +228,9 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
                 .raffleId(1234L)
                 .order(order)
                 .build();
-
-        order.getOrderItems().add(item);
+        List<OrderItem> orderItems = orderItemsRepository.findByOrder(order);
+        orderItems.add(item);
+        order.setOrderItems(orderItems);
         ordersRepository.save(order);
         Map<String, String> filters = Map.of("raffleId", item.getRaffleId().toString());
         performSearchRequest(associationId, accessToken, filters)
@@ -248,7 +240,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFilterByMinAndMaxTotal() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         long orderId1 = createOrder(associationId, accessToken);
@@ -271,7 +262,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFilterByCreatedAtRange() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         long orderId = createOrder(associationId, accessToken);
@@ -290,7 +280,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFilterByCompletedAtRange() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         long orderId = createOrder(associationId, accessToken);
@@ -310,7 +299,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFilterByCancelledAtRange() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         long orderId = createOrder(associationId, accessToken);
@@ -330,7 +318,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldReturnOrdersMatchingMultipleFilters() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         long orderId = createOrder(associationId, accessToken);
@@ -483,8 +470,9 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
         performSearchRequest(associationId, accessToken, Map.of("page", "0", "size", "4"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content.length()").value(4))
-                .andExpect(jsonPath("$.data.totalElements").value(5))
-                .andExpect(jsonPath("$.data.totalPages").value(2));
+                .andExpect(jsonPath("$.data.page.size").value(4))
+                .andExpect(jsonPath("$.data.page.totalElements").value(5))
+                .andExpect(jsonPath("$.data.page.totalPages").value(2));
     }
 
     @Test
@@ -536,14 +524,13 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldNotReturnOrdersFromOtherAssociations() throws Exception {
         createAndReserveTicketsForCart(associationId, accessToken);
         Long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         AuthResponse otherAuth = registerOtherUser();
         Map<String, String> filters = Map.of("orderReference", order.getOrderReference());
-        performSearchRequest(otherAuth.association().id(), otherAuth.accessToken(), filters)
+        performSearchRequest(otherAuth.associationId(), otherAuth.accessToken(), filters)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content.length()").value(0));
     }
