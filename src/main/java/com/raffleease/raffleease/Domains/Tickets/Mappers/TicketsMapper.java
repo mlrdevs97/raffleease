@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface TicketsMapper {
     List<TicketDTO> fromTicketList(List<Ticket> tickets);
+    TicketDTO fromTicket(Ticket ticket);
 }

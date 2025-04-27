@@ -40,71 +40,120 @@ class TicketsControllerSearchIT extends BaseIT {
     }
 
     @Test
-    void shouldReturnAllAvailableTicketsForRaffle() throws Exception {
-        perGetRequest(null)
+    void shouldReturnAllTicketsWithPagination() throws Exception {
+        perGetRequest(Map.of("page", "0", "size", "5"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(ticketsCreate.amount()))
-                .andExpect(jsonPath("$.data[0].status").value("AVAILABLE"))
+                .andExpect(jsonPath("$.data.content.length()").value(5))
+                .andExpect(jsonPath("$.data.page.size").value(5))
+                .andExpect(jsonPath("$.data.page.number").value(0))
+                .andExpect(jsonPath("$.data.page.totalElements").value(ticketsCreate.amount()))
+                .andExpect(jsonPath("$.data.page.totalPages").value(1))
                 .andExpect(jsonPath("$.message").value("Ticket retrieved successfully"));
     }
 
     @Test
-    void shouldReturnTicketByNumber() throws Exception {
+    void shouldReturnTicketByNumberCaseInsensitive() throws Exception {
         perGetRequest(Map.of("ticketNumber", "102"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].ticketNumber").value("102"));
+                .andExpect(jsonPath("$.data.content[0].ticketNumber").value("102"));
+
+        perGetRequest(Map.of("ticketNumber", "102".toLowerCase()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].ticketNumber").value("102"));
     }
 
     @Test
-    void shouldReturnTicketsByCustomer() throws Exception {
+    void shouldReturnTicketsAssignedToCustomer() throws Exception {
         Customer customer = createCustomer();
-        assignTicketToCustomer(raffleId, "102", customer);
+        assignTicketToCustomer(raffleId, "104", customer);
 
         perGetRequest(Map.of("customerId", customer.getId().toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].ticketNumber").value("102"));
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].ticketNumber").value("104"));
     }
 
     @Test
-    void shouldReturnSpecificTicketByNumberAndCustomer() throws Exception {
+    void shouldReturnTicketByCustomerAndTicketNumberTogether() throws Exception {
         Customer customer = createCustomer();
-        assignTicketToCustomer(raffleId, "103", customer);
+        assignTicketToCustomer(raffleId, "102", customer);
 
         perGetRequest(Map.of(
-                "ticketNumber", "103",
+                "ticketNumber", "102",
                 "customerId", customer.getId().toString()
         ))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].ticketNumber").value("103"));
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].ticketNumber").value("102"));
     }
 
     @Test
-    void shouldReturnNotFoundIfRaffleDoesNotExist() throws Exception {
-        long invalidRaffleId = 999L;
-
-        mockMvc.perform(get("/api/v1/associations/" + associationId + "/raffles/" + invalidRaffleId + "/tickets")
-                        .header(AUTHORIZATION, "Bearer " + accessToken))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Raffle not found for id <" + invalidRaffleId + ">"));
+    void shouldReturnEmptyPageWhenNoTicketsMatchSearch() throws Exception {
+        perGetRequest(Map.of("ticketNumber", "99999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content.length()").value(0))
+                .andExpect(jsonPath("$.data.page.totalElements").value(0))
+                .andExpect(jsonPath("$.data.page.totalPages").value(0))
+                .andExpect(jsonPath("$.message").value("Ticket retrieved successfully"));
     }
 
     @Test
-    void shouldReturnNotFoundIfCustomerDoesNotExist() throws Exception {
+    void shouldReturnEmptyPageWhenCustomerDoesNotExist() throws Exception {
         long nonExistentCustomerId = 999L;
 
         perGetRequest(Map.of("customerId", String.valueOf(nonExistentCustomerId)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Customer not found for id <" + nonExistentCustomerId + ">"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content.length()").value(0))
+                .andExpect(jsonPath("$.data.page.totalElements").value(0))
+                .andExpect(jsonPath("$.data.page.totalPages").value(0))
+                .andExpect(jsonPath("$.message").value("Ticket retrieved successfully"));
     }
 
     @Test
-    void shouldReturnNotFoundWhenNoTicketsMatchSearch() throws Exception {
-        perGetRequest(Map.of("ticketNumber", "999"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("No ticket was found for search"));
+    void shouldReturnEmptyPageIfRaffleDoesNotExist() throws Exception {
+        long invalidRaffleId = 999L;
+        String invalidPath = "/api/v1/associations/" + associationId + "/raffles/" + invalidRaffleId + "/tickets";
+
+        mockMvc.perform(get(invalidPath)
+                        .header(AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content.length()").value(0))
+                .andExpect(jsonPath("$.data.page.totalElements").value(0))
+                .andExpect(jsonPath("$.data.page.totalPages").value(0))
+                .andExpect(jsonPath("$.message").value("Ticket retrieved successfully"));
+    }
+
+    @Test
+    void shouldRespectPaginationWhenSearchingWithFilters() throws Exception {
+        Customer customer = createCustomer();
+        assignTicketToCustomer(raffleId, "103", customer);
+        assignTicketToCustomer(raffleId, "104", customer);
+
+        perGetRequest(Map.of(
+                "customerId", customer.getId().toString(),
+                "page", "0",
+                "size", "1"
+        ))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.page.size").value(1))
+                .andExpect(jsonPath("$.data.page.totalElements").value(2))
+                .andExpect(jsonPath("$.data.page.totalPages").value(2))
+                .andExpect(jsonPath("$.data.page.number").value(0))
+                .andExpect(jsonPath("$.message").value("Ticket retrieved successfully"));
+
+        perGetRequest(Map.of(
+                "customerId", customer.getId().toString(),
+                "page", "1",
+                "size", "1"
+        ))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.page.size").value(1))
+                .andExpect(jsonPath("$.data.page.totalElements").value(2))
+                .andExpect(jsonPath("$.data.page.totalPages").value(2))
+                .andExpect(jsonPath("$.data.page.number").value(1))
+                .andExpect(jsonPath("$.message").value("Ticket retrieved successfully"));
     }
 
     @Test

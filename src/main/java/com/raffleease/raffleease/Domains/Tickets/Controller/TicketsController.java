@@ -7,6 +7,7 @@ import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,15 +22,14 @@ public class TicketsController {
 
     @GetMapping
     public ResponseEntity<ApiResponse> get(
+            @PathVariable Long associationId,
             @PathVariable Long raffleId,
-            @RequestParam(name = "ticketNumber", required = false) String ticketNumber,
-            @RequestParam(name = "status", required = false) TicketStatus status,
-            @RequestParam(name = "customerId", required = false) Long customerId
+            TicketsSearchFilters searchFilters,
+            Pageable pageable
     ) {
-        List<TicketDTO> tickets = queryService.get(raffleId, ticketNumber, status, customerId);
         return ResponseEntity.ok(
                 ResponseFactory.success(
-                        tickets,
+                        queryService.search(associationId, raffleId, searchFilters, pageable),
                         "Ticket retrieved successfully"
                 )
         );

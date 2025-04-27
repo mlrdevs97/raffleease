@@ -1,11 +1,10 @@
 package com.raffleease.raffleease.Domains.Tickets.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
-import com.raffleease.raffleease.Domains.Customers.Model.Customer;
-import com.raffleease.raffleease.Domains.Customers.Services.CustomersService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketDTO;
+import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsSearchFilters;
 import com.raffleease.raffleease.Domains.Tickets.Mappers.TicketsMapper;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
@@ -17,11 +16,12 @@ import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
 
@@ -32,7 +32,6 @@ public class TicketsQueryServiceImpl implements TicketsQueryService {
     private final TicketsRepository repository;
     private final CustomTicketsRepository customRepository;
     private final TicketsMapper mapper;
-    private final CustomersService customersService;
 
     @Override
     public List<Ticket> findAllById(List<Long> ticketIds) {
@@ -44,25 +43,13 @@ public class TicketsQueryServiceImpl implements TicketsQueryService {
     }
 
     @Override
-    public List<TicketDTO> get(Long raffleId, String ticketNumber, TicketStatus status, Long customerId) {
-        Raffle raffle = rafflePersistence.findById(raffleId);
+    public Page<TicketDTO> search(Long associationId, Long raffleId, TicketsSearchFilters searchFilters, Pageable pageable) {
+        // TODO: Update test. Raffle presence is no longer checked
+        // TODO: Update test. Customer presence is no longer checked
+        // TODO: Update test. No error will be thrown if no tickets are found
 
-        Customer customer = null;
-        if (Objects.nonNull(customerId)) {
-            customer = customersService.findById(customerId);
-        }
-
-        try {
-            List<Ticket> searchResults = customRepository.search(raffle, ticketNumber, status, customer);
-
-            if (searchResults.isEmpty()) {
-                throw new NotFoundException("No ticket was found for search");
-            }
-
-            return mapper.fromTicketList(searchResults);
-        } catch (DataAccessException exp) {
-            throw new DatabaseException("Database error occurred while retrieving tickets: " + exp.getMessage());
-        }
+        Page<Ticket> ticketsPage = customRepository.search(searchFilters, associationId, raffleId, pageable);
+        return ticketsPage.map(mapper::fromTicket);
     }
 
     @Override

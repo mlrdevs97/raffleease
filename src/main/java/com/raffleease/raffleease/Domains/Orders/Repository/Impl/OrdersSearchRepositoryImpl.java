@@ -32,7 +32,6 @@ public class OrdersSearchRepositoryImpl implements OrdersSearchRepository {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Order> query = cb.createQuery(Order.class);
         Root<Order> root = query.from(Order.class);
-
         Join<Order, Customer> customerJoin = root.join("customer", LEFT);
         Join<Order, Payment> paymentJoin = root.join("payment");
         Join<Order, OrderItem> itemJoin = root.join("orderItems", LEFT);
