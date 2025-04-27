@@ -42,7 +42,7 @@ public class RafflesServiceImpl implements RafflesService {
         Raffle mappedRaffle = rafflesMapper.toRaffle(raffleData, association);
         Raffle raffle = rafflesPersistence.save(mappedRaffle);
         raffle.setURL(host + "/client/raffle/" + raffle.getId());
-        List<Image> images = imagesAssociateService.associateImagesToRaffleOnCreate(raffle, associationId, raffleData.images());
+        List<Image> images = imagesAssociateService.associateImagesToRaffleOnCreate(raffle, raffleData.images());
         raffle.setImages(images);
         List<Ticket> tickets = ticketsCreateService.create(raffle, raffleData.ticketsInfo());
         raffle.setTickets(tickets);

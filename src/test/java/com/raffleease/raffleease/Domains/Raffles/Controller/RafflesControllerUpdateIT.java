@@ -104,6 +104,47 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
     }
 
     @Test
+    void shouldUpdateImagesOrderOnRaffleEdit() throws Exception {
+        ImageDTO image1 = copyWithNewOrder(originalImages.get(0), 2);
+        ImageDTO image2 = copyWithNewOrder(originalImages.get(1), 1);
+        List<ImageDTO> requestImages = List.of(image1, image2);
+
+        RaffleEdit request = RaffleEdit.builder()
+                .images(requestImages)
+                .build();
+        performEditRaffleRequest(raffleId, request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        for (ImageDTO requestImage : requestImages) {
+            Image savedImage = imagesRepository.findById(requestImage.id()).orElseThrow();
+            assertThat(savedImage.getImageOrder()).isEqualTo(requestImage.imageOrder());
+        }
+    }
+
+    @Test
+    void shouldAddNewImageAndUpdateOrder() throws Exception {
+        ImageDTO newImage = parseImagesFromResponse(uploadImages(1).andReturn()).get(0);
+        ImageDTO image1 = copyWithNewOrder(originalImages.get(0), 3);
+        ImageDTO image2 = copyWithNewOrder(originalImages.get(1), 2);
+        ImageDTO image3 = copyWithNewOrder(newImage, 1);
+
+        List<ImageDTO> requestImages = List.of(image1, image2, image3);
+
+        RaffleEdit request = RaffleEdit.builder()
+                .images(requestImages)
+                .build();
+        performEditRaffleRequest(raffleId, request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        for (ImageDTO requestImage : requestImages) {
+            Image savedImage = imagesRepository.findById(requestImage.id()).orElseThrow();
+            assertThat(savedImage.getImageOrder()).isEqualTo(requestImage.imageOrder());
+        }
+    }
+
+    @Test
     void shouldFailWhenTitleExceedsMaxLength() throws Exception {
         RaffleEdit edit = RaffleEdit.builder()
                 .title("A".repeat(101))
@@ -188,19 +229,6 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
     }
 
     @Test
-    void shouldFailWhenImageOrdersAreNotConsecutive() throws Exception {
-        List<ImageDTO> images = parseImagesFromResponse(uploadImages(2).andReturn());
-        ImageDTO image1 = copyWithNewOrder(images.get(0), 1);
-        ImageDTO image2 = copyWithNewOrder(images.get(1), 3);
-
-        RaffleEdit edit = RaffleEdit.builder().images(List.of(image1, image2)).build();
-
-        performEditRaffleRequest(raffleId, edit)
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Image orders must be consecutive starting from 1"));
-    }
-
-    @Test
     void shouldFailWhenImageIdsDoNotExist() throws Exception {
         long nonExistentImageId = 99999L;
 
@@ -266,9 +294,6 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
     @Transactional
     void shouldDeleteImageReorderAndUpdateRaffleImages() throws Exception {
         // 1. Delete first image
-        Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
-        Image toDeleteImage = raffle.getImages().get(0);
-
         ImageDTO toDelete = originalImages.get(0);
         Long imageIdToDelete = toDelete.id();
         performImageDelete("/api/v1/associations/" + associationId + "/raffles/" + raffleId + "/images/" + imageIdToDelete);

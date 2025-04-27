@@ -65,7 +65,7 @@ public class RafflesController {
     public ResponseEntity<ApiResponse> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody StatusUpdate request
-            ) {
+    ) {
         return ResponseEntity.ok(ResponseFactory.success(
                 rafflesStatusService.updateStatus(id, request),
                 "Raffle status updated successfully"

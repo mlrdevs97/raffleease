@@ -7,6 +7,6 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import java.util.List;
 
 public interface ImagesAssociateService {
-    List<Image> associateImagesToRaffleOnCreate(Raffle raffle, Long associationId, List<ImageDTO> imageDTOs);
+    List<Image> associateImagesToRaffleOnCreate(Raffle raffle, List<ImageDTO> imageDTOs);
     List<Image> associateImagesToRaffleOnEdit(Raffle raffle, List<ImageDTO> imageDTOs);
 }
