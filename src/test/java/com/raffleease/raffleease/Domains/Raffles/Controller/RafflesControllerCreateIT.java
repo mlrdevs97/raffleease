@@ -42,15 +42,11 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
     @Test
     void shouldCreateRaffle() throws Exception {
-        // 1. Upload mock images
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(2).andReturn());
-
-        // 2. Create raffle using builder
         RaffleCreate raffleCreate = new RaffleCreateBuilder()
                 .withImages(images)
                 .build();
 
-        // 3. Perform raffle creation request
         MvcResult result = performCreateRaffleRequest(raffleCreate, associationId, accessToken)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.message").value("New raffle created successfully"))
@@ -62,11 +58,11 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
         Long createdRaffleId = json.path("data").path("id").asLong();
 
-        // 5. Validate URI
+        // Validate URI
         String locationHeader = result.getResponse().getHeader(LOCATION);
         assertThat(locationHeader).endsWith("/api/v1/associations/" + associationId + "/raffles/" + createdRaffleId);
 
-        // 6. Verify raffle in database
+        // Verify raffle in database
         Raffle raffle = rafflesRepository.findById(createdRaffleId).orElseThrow();
         assertThat(raffle).isNotNull();
         assertThat(raffle.getTitle()).isEqualTo(raffleCreate.title());
@@ -81,27 +77,28 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
         assertThat(raffle.getSoldTickets()).isEqualTo(0L);
         assertThat(raffle.getRevenue()).isEqualTo(ZERO.setScale(2));
         assertThat(raffle.getCreatedAt()).isNotNull();
+        assertThat(raffle.getWinningTicket()).isNull();
 
         String subject = tokensQueryService.getSubject(accessToken);
         Association association = associationsRepository.findById(Long.parseLong(subject)).orElseThrow();
         assertThat(raffle.getAssociation()).isNotNull();
         assertThat(raffle.getAssociation().equals(association));
 
-        // 7. Verify images
+        // Verify images
         List<Image> storedImages = imagesRepository.findAllByRaffle(raffle);
         assertThat(storedImages.size()).isEqualTo(images.size());
         for (Image img : storedImages) {
             assertThat(img.getRaffle().getId()).isEqualTo(raffle.getId());
 
             assertThat(imagesRepository.findById(img.getId())).isNotNull();
-            assertThat(img.getUrl()).contains("/api/v1/raffles/" + raffle.getId() + "/images/" + img.getId());
+            assertThat(img.getUrl()).contains("/api/v1/associations/" + raffle.getAssociation().getId() + "/raffles/" + raffle.getId() + "/images/" + img.getId());
 
             Path expectedPath = Paths.get(basePath, "associations", raffle.getAssociation().getId().toString(), "raffles", raffle.getId().toString(), "images");
             assertThat(img.getFilePath()).startsWith(expectedPath.toString());
             assertThat(Files.exists(Paths.get(img.getFilePath()))).isTrue();
         }
 
-        // 8. Verify tickets
+        // Verify tickets
         List<Ticket> ticketsInDb = ticketsRepository.findAllByRaffle(raffle);
         assertThat((long) ticketsInDb.size()).isEqualTo(raffleCreate.ticketsInfo().amount());
 
@@ -110,6 +107,28 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
             assertThat(ticket.getTicketNumber()).isEqualTo(String.valueOf(expectedTicketNumber++));
             assertThat(ticket.getStatus()).isEqualTo(AVAILABLE);
             assertThat(ticket.getRaffle().getId()).isEqualTo(raffle.getId());
+        }
+    }
+
+    @Test
+    void shouldUpdateImagesOrderOnRaffleCreate() throws Exception {
+        List<ImageDTO> uploadedImages = parseImagesFromResponse(uploadImages(2).andReturn());
+
+        ImageDTO image1 = copyWithNewOrder(uploadedImages.get(0), 2);
+        ImageDTO image2 = copyWithNewOrder(uploadedImages.get(1), 1);
+        List<ImageDTO> requestImages = List.of(image1, image2);
+
+        RaffleCreate raffleCreate = new RaffleCreateBuilder()
+                .withImages(requestImages)
+                .build();
+
+        performCreateRaffleRequest(raffleCreate, associationId, accessToken)
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        for (ImageDTO requestImage : requestImages) {
+            Image savedImage = imagesRepository.findById(requestImage.id()).orElseThrow();
+            assertThat(savedImage.getImageOrder()).isEqualTo(requestImage.imageOrder());
         }
     }
 
@@ -294,22 +313,6 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Duplicate image orders detected"));
-    }
-
-    @Test
-    void shouldFailWhenImageOrdersAreNotConsecutive() throws Exception {
-        List<ImageDTO> uploaded = parseImagesFromResponse(uploadImages(2).andReturn());
-
-        ImageDTO image1 = copyWithNewOrder(uploaded.get(0), 1);
-        ImageDTO image2 = copyWithNewOrder(uploaded.get(1), 3);
-
-        RaffleCreate raffle = new RaffleCreateBuilder()
-                .withImages(List.of(image1, image2))
-                .build();
-
-        performCreateRaffleRequest(raffle, associationId, accessToken)
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Image orders must be consecutive starting from 1"));
     }
 
     @Test

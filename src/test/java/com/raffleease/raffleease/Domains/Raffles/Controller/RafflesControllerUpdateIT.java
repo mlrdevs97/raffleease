@@ -85,7 +85,7 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
             assertThat(img.getRaffle().getId()).isEqualTo(raffle.getId());
 
             assertThat(imagesRepository.findById(img.getId())).isNotNull();
-            assertThat(img.getUrl()).contains("/api/v1/raffles/" + raffle.getId() + "/images/" + img.getId());
+            assertThat(img.getUrl()).contains("/api/v1/associations/" + associationId + "/raffles/" + raffle.getId() + "/images/" + img.getId());
 
             Path expectedPath = Paths.get(basePath, "associations", raffle.getAssociation().getId().toString(), "raffles", raffle.getId().toString(), "images");
             assertThat(img.getFilePath()).startsWith(expectedPath.toString());

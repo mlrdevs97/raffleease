@@ -48,6 +48,7 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
     }
 
     @Override
+    @Transactional
     public ImageResponse create(Long associationId, Long raffleId, ImageUpload uploadRequest) {
         Raffle raffle = rafflesPersistenceService.findById(raffleId);
         int currentImagesCount = raffle.getImages().size();

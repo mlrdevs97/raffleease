@@ -31,16 +31,6 @@ public class ImagesUpdateOrderServiceImpl implements ImagesUpdateOrderService {
     private final ImageValidator imageValidator;
 
     @Override
-    public ImageResponse updateImageOrderOnCreate(Long associationId, UpdateOrderRequest updateOrderRequest) {
-        return updateImageOrder(
-                associationId,
-                updateOrderRequest.images(),
-                null,
-                images -> imageValidator.validateAllArePending(images)
-        );
-    }
-
-    @Override
     public ImageResponse updateImageOrderOnEdit(Long associationId, Long raffleId, UpdateOrderRequest updateOrderRequest) {
         Raffle raffle = rafflesPersistenceService.findById(raffleId);
         return updateImageOrder(

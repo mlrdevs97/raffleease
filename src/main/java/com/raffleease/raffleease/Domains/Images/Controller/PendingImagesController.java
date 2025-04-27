@@ -40,19 +40,6 @@ public class PendingImagesController {
         );
     }
 
-    @PutMapping
-    public ResponseEntity<ApiResponse> updateImageOrder(
-            @PathVariable Long associationId,
-            @RequestBody @Valid UpdateOrderRequest updateOrderRequest
-    ) {
-        return ResponseEntity.ok(
-                ResponseFactory.success(
-                        imagesUpdateOrderService.updateImageOrderOnCreate(associationId, updateOrderRequest),
-                        "Image order updated successfully"
-                )
-        );
-    }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @PathVariable Long associationId,

@@ -12,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
@@ -26,16 +28,13 @@ public class TicketsServiceImpl implements TicketsService {
     @Override
     public List<Ticket> create(Raffle raffle, TicketsCreate request) {
         long upperLimit = request.lowerLimit() + request.amount() - 1;
-
-        List<Ticket> tickets = LongStream.rangeClosed(request.lowerLimit(), upperLimit)
+        return LongStream.rangeClosed(request.lowerLimit(), upperLimit)
                 .mapToObj(i -> Ticket.builder()
                         .status(AVAILABLE)
                         .ticketNumber(Long.toString(i))
                         .raffle(raffle)
                         .build()
-                ).toList();
-
-        return saveAll(tickets);
+                ).collect(Collectors.toCollection(ArrayList::new));
     }
 
     @Override

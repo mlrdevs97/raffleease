@@ -16,11 +16,13 @@ import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class RafflesServiceImpl implements RafflesService {
@@ -33,13 +35,14 @@ public class RafflesServiceImpl implements RafflesService {
     @Value("${spring.application.host.client}")
     private String host;
 
+    @Override
     @Transactional
     public PublicRaffleDTO create(Long associationId, RaffleCreate raffleData) {
         Association association = associationsService.findById(associationId);
         Raffle mappedRaffle = rafflesMapper.toRaffle(raffleData, association);
         Raffle raffle = rafflesPersistence.save(mappedRaffle);
         raffle.setURL(host + "/client/raffle/" + raffle.getId());
-        List<Image> images = imagesAssociateService.associateImagesToRaffleOnCreate(raffle, raffleData.images());
+        List<Image> images = imagesAssociateService.associateImagesToRaffleOnCreate(raffle, associationId, raffleData.images());
         raffle.setImages(images);
         List<Ticket> tickets = ticketsCreateService.create(raffle, raffleData.ticketsInfo());
         raffle.setTickets(tickets);

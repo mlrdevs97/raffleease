@@ -6,10 +6,7 @@ import java.util.List;
 
 public interface RafflesPersistenceService {
     Raffle save(Raffle raffle);
-
     void delete(Raffle entity);
-
     Raffle findById(Long id);
-
     void saveAll(List<Raffle> raffles);
 }

@@ -25,5 +25,3 @@ public record ImageDTO(
         @Max(value = 10, message = "Image order cannot be greater than 10")
         Integer imageOrder
 ) { }
-
-

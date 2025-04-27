@@ -198,7 +198,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse> handleGeneralException(Exception ex) {
         ApiResponse response = ResponseFactory.error(
-                "An unexpected error occurred: " + ex.getMessage(),
+                "An unexpected error occurred: " + ex.toString(),
                 INTERNAL_SERVER_ERROR.value(),
                 INTERNAL_SERVER_ERROR.getReasonPhrase()
 
