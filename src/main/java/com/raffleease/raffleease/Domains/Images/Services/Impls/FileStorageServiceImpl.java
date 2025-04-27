@@ -4,10 +4,13 @@ import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.FileStorageException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,11 +51,22 @@ public class FileStorageServiceImpl implements FileStorageService {
     }
 
     @Override
-    public byte[] load(String filePath) {
+    public Resource load(String filePath) {
         try {
-            return Files.readAllBytes(Paths.get(filePath));
-        } catch (IOException ex) {
-            throw new FileStorageException("Failed to read file: " + ex.getMessage());
+            Path path = Paths.get(filePath).normalize();
+
+            if (!Files.exists(path)) {
+                throw new FileStorageException("File not found: " + filePath);
+            }
+
+            Resource resource = new UrlResource(path.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new FileStorageException("Could not read file: " + filePath);
+            }
+
+            return resource;
+        } catch (MalformedURLException e) {
+            throw new FileStorageException("Malformed URL for file: " + filePath);
         }
     }
 

@@ -1,40 +1,23 @@
 package com.raffleease.raffleease.Domains.Images.Services.Impls;
 
-import com.raffleease.raffleease.Domains.Associations.Model.Association;
-import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
-import com.raffleease.raffleease.Domains.Images.DTOs.*;
-import com.raffleease.raffleease.Domains.Images.Mappers.ImagesMapper;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
-import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
-import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.*;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.util.List;
 
-@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ImageServiceImpl implements ImagesService {
     private final FileStorageService fileStorageService;
     private final ImagesRepository repository;
-    private final ImagesMapper mapper;
-    private final AssociationsService associationsService;
-    private final RafflesPersistenceService rafflesPersistenceService;
-    private final ImageValidator imageValidator;
 
     @Value("${spring.application.host.server}")
     private String host;
@@ -69,12 +52,8 @@ public class ImageServiceImpl implements ImagesService {
     }
 
     @Override
-    public ImageFile getFile(Long id) {
+    public Resource getFile(Long id) {
         Image image = findById(id);
-        byte[] data = fileStorageService.load(image.getFilePath());
-        return ImageFile.builder()
-                .data(data)
-                .contentType(image.getContentType())
-                .build();
+        return fileStorageService.load(image.getFilePath());
     }
 }

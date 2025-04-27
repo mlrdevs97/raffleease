@@ -16,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 
+import static org.springframework.http.HttpMethod.OPTIONS;
 import static org.springframework.security.config.Customizer.withDefaults;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
@@ -37,11 +38,13 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req ->
-                        req.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        req.requestMatchers(OPTIONS, "/**").permitAll()
                                 .requestMatchers(
                                         "/api/v1/auth/login",
                                         "/api/v1/auth/register",
-                                        "/api/v1/auth/verify"
+                                        "/api/v1/auth/verify",
+                                        "/api/v1/associations/*/images/*",
+                                        "/api/v1/associations/*/raffles/*/images/*"
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )

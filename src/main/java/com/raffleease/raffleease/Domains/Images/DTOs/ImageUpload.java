@@ -13,5 +13,4 @@ public record ImageUpload(
         @NotEmpty(message = "Must provide at least one image")
         @Size(min = MIN_IMAGES, max = MAX_IMAGES, message = "Must provide between 1 and 10 images")
         List<MultipartFile> files
-) {
-}
+) {}

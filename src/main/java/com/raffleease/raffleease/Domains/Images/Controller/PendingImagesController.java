@@ -11,6 +11,7 @@ import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 @RestController
 @RequestMapping("/api/v1/associations/{associationId}/images")
 public class PendingImagesController {
+    private final ImagesService imagesService;
     private final ImagesCreateService imagesCreateService;
     private final ImagesUpdateOrderService imagesUpdateOrderService;
     private final ImagesDeleteService imagesDeleteService;
