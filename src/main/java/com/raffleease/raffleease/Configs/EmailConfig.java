@@ -9,10 +9,10 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 @RequiredArgsConstructor
 @Configuration
 public class EmailConfig {
-    private final JavaMailSenderImpl mailSender;
-
     @Value("${spring.mail.password}")
     private String mailPassword;
+
+    private final JavaMailSenderImpl mailSender;
 
     @PostConstruct
     public void init() {
