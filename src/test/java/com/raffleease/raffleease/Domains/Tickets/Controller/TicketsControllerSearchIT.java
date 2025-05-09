@@ -124,6 +124,14 @@ class TicketsControllerSearchIT extends BaseIT {
     }
 
     @Test
+    void shouldTrimTicketNumberFilter() throws Exception {
+        perGetRequest(Map.of("ticketNumber", "  102  "))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].ticketNumber").value("102"));
+    }
+
+    @Test
     void shouldRespectPaginationWhenSearchingWithFilters() throws Exception {
         Customer customer = createCustomer();
         assignTicketToCustomer(raffleId, "103", customer);
