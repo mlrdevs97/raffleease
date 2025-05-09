@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Slf4j
 @RequiredArgsConstructor
 @Service
 public class CartsCleanupScheduler {
@@ -28,11 +27,6 @@ public class CartsCleanupScheduler {
         List<Cart> expiredCarts = cartsRepository.findAllByUpdatedAtBefore(updatedAt);
         for (Cart cart : expiredCarts) {
             reservationsService.release(cart);
-            log.info("RELEASED CART: " + cart.getId());
-            log.info("RELEASED CART TICKETS: " + cart.getTickets());
-            if (cart.getTickets() != null && !cart.getTickets().isEmpty()) {
-                log.info("RELEASED TICKET CART: " + cart.getTickets().get(0).getId());
-            }
         }
     }
 }
