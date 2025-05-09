@@ -47,14 +47,6 @@ public class TicketsServiceImpl implements TicketsService {
     }
 
     @Override
-    public void releaseFromCart(List<Ticket> tickets) {
-        saveAll(tickets.stream().peek(ticket -> {
-            ticket.setStatus(AVAILABLE);
-            ticket.setCart(null);
-        }).toList());
-    }
-
-    @Override
     public List<Ticket> saveAll(List<Ticket> entities) {
         try {
             return repository.saveAll(entities);

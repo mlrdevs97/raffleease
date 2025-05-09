@@ -103,7 +103,10 @@ public class ReservationsServiceImpl implements ReservationsService {
     }
 
     private void releaseTickets(List<Ticket> tickets) {
-        ticketsService.releaseFromCart(tickets);
+        ticketsService.saveAll(tickets.stream().peek(ticket -> {
+            ticket.setStatus(AVAILABLE);
+            ticket.setCart(null);
+        }).toList());
         increaseRafflesTicketsAvailability(tickets);
     }
 
