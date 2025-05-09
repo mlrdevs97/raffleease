@@ -38,14 +38,6 @@ public class CartsServiceImpl implements CartsService {
     }
 
     @Override
-    public Cart closeCart(Cart cart) {
-        ticketsService.releaseFromCart(cart.getTickets());
-        cart.setStatus(CLOSED);
-        cart.setTickets(null);
-        return save(cart);
-    }
-
-    @Override
     public Cart findById(Long id) {
         try {
             return repository.findById(id).orElseThrow(() -> new NotFoundException("Cart not found for id <" + id + ">"));

@@ -22,6 +22,7 @@ import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,8 +31,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderSource.ADMIN;
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.PENDING;
+import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
 import static java.time.format.DateTimeFormatter.BASIC_ISO_DATE;
 
 @RequiredArgsConstructor
@@ -49,12 +52,13 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
     private final OrdersMapper mapper;
 
     @Override
+    @Transactional
     public OrderDTO create(AdminOrderCreate adminOrder, Long associationId) {
         Association association = associationsService.findById(associationId);
         Cart cart = cartsService.findById(adminOrder.cartId());
         List<Ticket> requestedTickets = ticketsQueryService.findAllById(adminOrder.ticketIds());
         validateRequest(requestedTickets, cart, association);
-        cartsService.closeCart(cart);
+        closeCart(cart);
         Customer customer = customersService.create(adminOrder.customer());
         finalizeTickets(requestedTickets, customer);
         Order order = createOrder(association, customer);
@@ -86,6 +90,12 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         validateAllTicketsBelongToAssociationRaffle(requestedTickets, association);
         validateAllTicketsBelongToCart(cartTickets, requestedTickets);
         validateAllCartTicketsIncludedInRequest(cartTickets, requestedTickets);
+    }
+
+    private void closeCart(Cart cart) {
+        cart.setStatus(CLOSED);
+        cart.setTickets(null);
+        cartsService.save(cart);
     }
 
     private void finalizeTickets(List<Ticket> tickets, Customer customer) {
