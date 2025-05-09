@@ -37,8 +37,8 @@ class AuthControllerRegisterIT extends BaseAuthIT {
     @MockitoBean
     private EmailsService emailsService;
 
-    @Value("${spring.application.host.server}")
-    private String host;
+    @Value("${spring.application.host.client}")
+    private String clientHost;
 
     @Test
     @Transactional
@@ -76,8 +76,8 @@ class AuthControllerRegisterIT extends BaseAuthIT {
         assertThat(token.getExpiryDate()).isAfter(LocalDateTime.now());
 
         // Assert verification email was sent
-        String expectedLink = UriComponentsBuilder.fromHttpUrl(host)
-                .path("/api/v1/auth/verify")
+        String expectedLink = UriComponentsBuilder.fromHttpUrl(clientHost)
+                .path("/admin/auth/verify-email")
                 .queryParam("token", token.getToken())
                 .build()
                 .toUriString();
