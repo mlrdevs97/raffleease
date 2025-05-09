@@ -7,6 +7,7 @@ import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.Model.VerificationToken;
 import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
+import com.raffleease.raffleease.Domains.Orders.DTOs.AdminOrderCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
@@ -161,5 +162,12 @@ public class BaseIT extends BaseSharedIT {
         RaffleCreate raffleCreate = new RaffleCreateBuilder().withImages(images).build();
         MvcResult result = performCreateRaffleRequest(raffleCreate, associationId, accessToken).andReturn();
         return parseRaffleId(result);
+    }
+
+    protected ResultActions performCreateOrderRequest(AdminOrderCreate request, Long associationId, String token) throws Exception {
+        return mockMvc.perform(post("/admin/api/v1/associations/" + associationId + "/orders")
+                .header(AUTHORIZATION, "Bearer " + token)
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
     }
 }

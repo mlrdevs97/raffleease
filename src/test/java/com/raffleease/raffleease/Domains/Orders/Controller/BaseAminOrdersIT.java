@@ -54,13 +54,6 @@ public class BaseAminOrdersIT extends BaseIT {
         return parseOrderId(performCreateOrderRequest(request, associationId, accessToken).andReturn());
     }
 
-    protected ResultActions performCreateOrderRequest(AdminOrderCreate request, Long associationId, String token) throws Exception {
-        return mockMvc.perform(post("/admin/api/v1/associations/" + associationId + "/orders")
-                .header(AUTHORIZATION, "Bearer " + token)
-                .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)));
-    }
-
     protected Long parseOrderId(MvcResult result) throws Exception {
         return objectMapper.readTree(result.getResponse().getContentAsString())
                 .path("data").path("id").asLong();
