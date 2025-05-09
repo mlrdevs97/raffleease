@@ -5,32 +5,30 @@ import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Orders.DTOs.AdminOrderCreate;
+import com.raffleease.raffleease.Domains.Orders.Repository.OrderItemsRepository;
 import com.raffleease.raffleease.Domains.Orders.Repository.OrdersRepository;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Helpers.AdminOrderCreateBuilder;
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.List;
-
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 public class BaseAminOrdersIT extends BaseIT {
     @Autowired
     protected OrdersRepository ordersRepository;
+
+    @Autowired
+    protected OrderItemsRepository itemsRepository;
+
     protected Raffle raffle;
     protected Long raffleId;
     protected Long reservedTicket;
     protected Cart cart;
 
     @BeforeEach
-    @Transactional
     void setUp() throws Exception {
         List<ImageDTO> images = parseImagesFromResponse(uploadImages(2).andReturn());
         raffleId = createRaffle(images, associationId, accessToken);

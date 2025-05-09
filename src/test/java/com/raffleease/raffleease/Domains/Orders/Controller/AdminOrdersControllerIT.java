@@ -15,7 +15,6 @@ import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Helpers.AdminOrderCreateBuilder;
 import com.raffleease.raffleease.Helpers.CustomerCreateBuilder;
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
@@ -32,6 +31,7 @@ import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.COMPLET
 import static com.raffleease.raffleease.Domains.Payments.Model.PaymentMethod.CARD;
 import static com.raffleease.raffleease.Domains.Payments.Model.PaymentMethod.CASH;
 import static com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus.SUCCEEDED;
+import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.RESERVED;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -48,7 +48,6 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldCreateOrder() throws Exception {
         AdminOrderCreate request = new AdminOrderCreateBuilder()
                 .withCartId(cart.getId())
@@ -70,8 +69,19 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
         assertThat(order.getOrderSource()).isEqualTo(ADMIN);
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
 
+        cart = cartsRepository.findById(cart.getId()).orElseThrow();
         assertThat(cart.getStatus()).isEqualTo(CLOSED);
-        assertThat(cart.getTickets()).isNull();
+        assertThat(ticketsRepository.findAllByCart(cart).isEmpty()).isTrue();
+        assertThat(ticketsRepository.findAllByCart(cart).isEmpty()).isTrue();
+
+        Ticket ticket = ticketsRepository.findById(reservedTicket).orElseThrow();
+        assertThat(ticket).isNotNull();
+        assertThat(ticket.getCart()).isNull();
+        assertThat(ticket.getStatus()).isEqualTo(RESERVED);
+
+        List<OrderItem> items = itemsRepository.findByOrder(order);
+        assertThat(items.size()).isEqualTo(1);
+        assertThat(items.get(0).getTicketId()).isEqualTo(reservedTicket);
 
         Payment payment = order.getPayment();
         assertThat(payment).isNotNull();
@@ -240,7 +250,6 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldCompleteOrder() throws Exception {
         Long orderId = createOrder(associationId, accessToken);
         OrderComplete completeRequest = new OrderComplete(CARD);
@@ -257,13 +266,13 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
         assertThat(order.getPayment().getStatus()).isEqualTo(SUCCEEDED);
         assertThat(order.getPayment().getCompletedAt()).isNotNull();
 
-        List<Long> ticketIds = order.getOrderItems().stream().map(OrderItem::getTicketId).toList();
+        List<OrderItem> orderItems = itemsRepository.findByOrder(order);
+        List<Long> ticketIds = orderItems.stream().map(OrderItem::getTicketId).toList();
         List<Ticket> tickets = ticketsRepository.findAllById(ticketIds);
         tickets.forEach(ticket -> assertThat(ticket.getStatus()).isEqualTo(SOLD));
     }
 
     @Test
-    @Transactional
     void shouldFailToCompleteIfOrderIsAlreadyCompleted() throws Exception {
         Long orderId = createOrder(associationId, accessToken);
         updateOrderStatus(orderId, COMPLETED);
@@ -274,7 +283,6 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFailToCompleteIfOrderIsCancelled() throws Exception {
         Long orderId = createOrder(associationId, accessToken);
         updateOrderStatus(orderId, CANCELLED);
@@ -285,7 +293,6 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldCancelOrder() throws Exception {
         Long orderId = createOrder(associationId, accessToken);
         performCancelOrderRequest(orderId, accessToken)
@@ -301,7 +308,6 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFailToCancelIfOrderIsAlreadyCancelled() throws Exception {
         Long orderId = createOrder(associationId, accessToken);
         updateOrderStatus(orderId, CANCELLED);
@@ -311,7 +317,6 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldFailToCancelIfOrderIsAlreadyCompleted() throws Exception {
         Long orderId = createOrder(associationId, accessToken);
         updateOrderStatus(orderId, COMPLETED);
@@ -321,7 +326,6 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldAddCommentToPendingOrder() throws Exception {
         Long orderId = createOrder(associationId, accessToken);
         AddCommentRequest commentRequest = AddCommentRequest.builder().comment("Delivered successfully.").build();
@@ -335,7 +339,6 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldAddCommentToCompletedOrder() throws Exception {
         Long orderId = createOrder(associationId, accessToken);
         updateOrderStatus(orderId, COMPLETED);
@@ -372,7 +375,6 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
     }
 
     @Test
-    @Transactional
     void shouldReturnOrderById() throws Exception {
         Long orderId = createOrder(associationId, accessToken);
 
