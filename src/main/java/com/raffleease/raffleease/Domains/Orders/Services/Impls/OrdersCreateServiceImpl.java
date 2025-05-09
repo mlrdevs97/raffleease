@@ -20,6 +20,7 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
+import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
     private final RafflesQueryService rafflesQueryService;
     private final CustomersService customersService;
     private final TicketsQueryService ticketsQueryService;
+    private final TicketsService ticketsService;
     private final PaymentsService paymentsService;
     private final StripeService stripeService;
     private final AssociationsService associationsService;
@@ -54,6 +56,7 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         validateRequest(requestedTickets, cart, association);
         cartsService.closeCart(cart);
         Customer customer = customersService.create(adminOrder.customer());
+        finalizeTickets(requestedTickets, customer);
         Order order = createOrder(association, customer);
         Payment payment = createPayment(order, requestedTickets);
         List<OrderItem> orderItems = createOrderItems(order, requestedTickets);
@@ -83,6 +86,13 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         validateAllTicketsBelongToAssociationRaffle(requestedTickets, association);
         validateAllTicketsBelongToCart(cartTickets, requestedTickets);
         validateAllCartTicketsIncludedInRequest(cartTickets, requestedTickets);
+    }
+
+    private void finalizeTickets(List<Ticket> tickets, Customer customer) {
+        ticketsService.saveAll(tickets.stream().peek(ticket -> {
+            ticket.setCustomer(customer);
+            ticket.setCart(null);
+        }).toList());
     }
 
     private Payment createPayment(Order order, List<Ticket> tickets) {

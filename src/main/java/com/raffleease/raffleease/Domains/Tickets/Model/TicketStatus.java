@@ -5,4 +5,3 @@ public enum TicketStatus {
     RESERVED,
     SOLD
 }
-

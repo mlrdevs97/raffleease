@@ -54,7 +54,8 @@ public class TicketsServiceImpl implements TicketsService {
         }).toList());
     }
 
-    private List<Ticket> saveAll(List<Ticket> entities) {
+    @Override
+    public List<Ticket> saveAll(List<Ticket> entities) {
         try {
             return repository.saveAll(entities);
         } catch (DataAccessException ex) {

@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Tickets.Services;
 
+import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
@@ -11,4 +12,5 @@ public interface TicketsService {
     List<Ticket> create(Raffle raffle, TicketsCreate request);
     List<Ticket> updateStatus(List<Ticket> tickets, TicketStatus status);
     void releaseFromCart(List<Ticket> tickets);
+    List<Ticket> saveAll(List<Ticket> tickets);
 }
