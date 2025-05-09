@@ -535,6 +535,31 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
                 .andExpect(jsonPath("$.data.content.length()").value(0));
     }
 
+    @Test
+    void shouldTrimOrderSearchFilters() throws Exception {
+        createAndReserveTicketsForCart(associationId, accessToken);
+        long orderId = createOrder(associationId, accessToken);
+        Order order = ordersRepository.findById(orderId).orElseThrow();
+        order.setOrderReference("TRIM-REF-001");
+        order.getCustomer().setFullName("Trimmed Customer");
+        order.getCustomer().setEmail("trim@example.com");
+        order.getCustomer().setPhoneNumber("+34123123123");
+        ordersRepository.save(order);
+
+        Map<String, String> filters = Map.of(
+                "orderReference", "  TRIM-REF-001  ",
+                "customerName", "  Trimmed  ",
+                "customerEmail", "  trim@example.com ",
+                "customerPhone", "  +34123123123 "
+        );
+
+        performSearchRequest(associationId, accessToken, filters)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].orderReference").value("TRIM-REF-001"))
+                .andExpect(jsonPath("$.data.content[0].customer.fullName").value("Trimmed Customer"));
+    }
+
     private ResultActions performSearchRequest(Long associationId, String accessToken, Map<String, String> params) throws Exception {
         MockHttpServletRequestBuilder requestBuilder = get("/admin/api/v1/associations/" + associationId + "/orders")
                 .header(AUTHORIZATION, "Bearer " + accessToken);
@@ -544,5 +569,4 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
         }
         return mockMvc.perform(requestBuilder);
     }
-
 }

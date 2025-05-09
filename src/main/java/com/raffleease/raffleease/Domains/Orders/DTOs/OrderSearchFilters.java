@@ -45,4 +45,11 @@ public record OrderSearchFilters(
         LocalDateTime completedTo,
         LocalDateTime cancelledFrom,
         LocalDateTime cancelledTo
-) {}
+) {
+        public OrderSearchFilters {
+                orderReference = orderReference != null ? orderReference.trim() : null;
+                customerName = customerName != null ? customerName.trim() : null;
+                customerEmail = customerEmail != null ? customerEmail.trim() : null;
+                customerPhone = customerPhone != null ? customerPhone.trim() : null;
+        }
+}
