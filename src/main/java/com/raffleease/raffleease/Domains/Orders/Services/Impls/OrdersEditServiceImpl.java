@@ -13,6 +13,7 @@ import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +35,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
     private final OrdersMapper mapper;
 
     @Override
+    @Transactional
     public Object completeOrder(Long orderId, OrderComplete orderComplete) {
         Order order = ordersService.findById(orderId);
         if (order.getStatus() != PENDING) {
@@ -51,6 +53,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
     }
 
     @Override
+    @Transactional
     public OrderDTO cancelOrder(Long orderId) {
         Order order = ordersService.findById(orderId);
         if (order.getStatus() != PENDING) {
