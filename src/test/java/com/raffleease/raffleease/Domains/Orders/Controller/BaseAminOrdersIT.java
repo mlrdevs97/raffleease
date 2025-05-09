@@ -39,7 +39,6 @@ public class BaseAminOrdersIT extends BaseIT {
 
     protected void createAndReserveTicketsForCart(Long associationId, String accessToken) throws Exception {
         Long cartId = createCart(associationId, accessToken);
-        cart = cartsRepository.findById(cartId).orElseThrow();
         List<Ticket> tickets = ticketsRepository.findAllByRaffle(raffle);
         reservedTicket = tickets.get(0).getId();
         ReservationRequest request = ReservationRequest.builder().ticketsIds(List.of(reservedTicket)).build();
@@ -52,9 +51,6 @@ public class BaseAminOrdersIT extends BaseIT {
                 .withCartId(cart.getId())
                 .withTicketIds(List.of(reservedTicket))
                 .build();
-        return createOrderInternal(request, associationId, accessToken);
-    }
-    private Long createOrderInternal(AdminOrderCreate request, Long associationId, String accessToken) throws Exception {
         return parseOrderId(performCreateOrderRequest(request, associationId, accessToken).andReturn());
     }
 

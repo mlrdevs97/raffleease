@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Orders.Mappers.Impls;
 
-import com.raffleease.raffleease.Domains.Customers.Mappers.ICustomersMapper;
+import com.raffleease.raffleease.Domains.Customers.Mappers.CustomersMapper;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderDTO;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderItemDTO;
 import com.raffleease.raffleease.Domains.Orders.Mappers.OrdersMapper;
@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class OrdersMapperImpl implements OrdersMapper {
-    private final ICustomersMapper customersMapper;
+    private final CustomersMapper customersMapper;
     private final IPaymentsMapper paymentsMapper;
 
     public OrderDTO fromOrder(Order order) {

@@ -19,5 +19,5 @@ public record CustomerCreate(
         @Nullable
         @Valid
         PhoneNumberData phoneNumber
-) {
-}
+) {}
+

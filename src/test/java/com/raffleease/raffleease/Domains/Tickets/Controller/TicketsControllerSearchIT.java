@@ -28,15 +28,15 @@ class TicketsControllerSearchIT extends BaseIT {
     @Autowired
     protected CustomersRepository customersRepository;
     private TicketsCreate ticketsCreate = new TicketsCreateBuilder().build();
-    private String getTicketsPath;
-    private String getRandomTicketsPath;
+    private String ticketsPath;
+    private String randomTicketsPath;
     private Long raffleId;
 
     @BeforeEach
     void setUp() throws Exception {
         raffleId = createRaffle(associationId, accessToken);
-        getTicketsPath = "/api/v1/associations/" + associationId + "/raffles/" + raffleId + "/tickets";
-        getRandomTicketsPath = getTicketsPath + "/random";
+        ticketsPath = "/api/v1/associations/" + associationId + "/raffles/" + raffleId + "/tickets";
+        randomTicketsPath = ticketsPath + "/random";
     }
 
     @Test
@@ -158,7 +158,7 @@ class TicketsControllerSearchIT extends BaseIT {
 
     @Test
     void shouldReturnRandomTicketsSuccessfully() throws Exception {
-        mockMvc.perform(get(getRandomTicketsPath)
+        mockMvc.perform(get(randomTicketsPath)
                         .param("quantity", "3")
                         .header(AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isOk())
@@ -169,7 +169,7 @@ class TicketsControllerSearchIT extends BaseIT {
 
     @Test
     void shouldReturnBadRequestWhenQuantityIsMissing() throws Exception {
-        mockMvc.perform(get(getRandomTicketsPath)
+        mockMvc.perform(get(randomTicketsPath)
                         .header(AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Missing required request parameter: 'quantity'"));
@@ -195,7 +195,7 @@ class TicketsControllerSearchIT extends BaseIT {
                 .toList();
         ticketsRepository.saveAll(tickets);
 
-        mockMvc.perform(get(getRandomTicketsPath)
+        mockMvc.perform(get(randomTicketsPath)
                         .param("quantity", "2")
                         .header(AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
@@ -204,7 +204,7 @@ class TicketsControllerSearchIT extends BaseIT {
 
     @Test
     void shouldReturnBusinessExceptionIfQuantityExceedsAvailableTickets() throws Exception {
-        mockMvc.perform(get(getRandomTicketsPath)
+        mockMvc.perform(get(randomTicketsPath)
                         .param("quantity", String.valueOf(ticketsCreate.amount() + 1))
                         .header(AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
@@ -212,7 +212,7 @@ class TicketsControllerSearchIT extends BaseIT {
     }
 
     private ResultActions perGetRequest(Map<String, String> params) throws Exception {
-        MockHttpServletRequestBuilder request = get(getTicketsPath)
+        MockHttpServletRequestBuilder request = get(ticketsPath)
                 .header(AUTHORIZATION, "Bearer " + accessToken);
 
         if (Objects.nonNull(params)) {
@@ -230,7 +230,6 @@ class TicketsControllerSearchIT extends BaseIT {
     private void assignTicketToCustomer(Long raffleId, String ticketNumber, Customer customer) {
         Raffle raffle = rafflesRepository.findById(raffleId).orElseThrow();
         Ticket ticket = ticketsRepository.findByRaffleAndTicketNumber(raffle, ticketNumber).orElseThrow();
-
         ticket.setCustomer(customer);
         ticket.setStatus(SOLD);
         ticketsRepository.save(ticket);

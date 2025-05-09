@@ -44,10 +44,6 @@ public class TicketsQueryServiceImpl implements TicketsQueryService {
 
     @Override
     public Page<TicketDTO> search(Long associationId, Long raffleId, TicketsSearchFilters searchFilters, Pageable pageable) {
-        // TODO: Update test. Raffle presence is no longer checked
-        // TODO: Update test. Customer presence is no longer checked
-        // TODO: Update test. No error will be thrown if no tickets are found
-
         Page<Ticket> ticketsPage = customRepository.search(searchFilters, associationId, raffleId, pageable);
         return ticketsPage.map(mapper::fromTicket);
     }

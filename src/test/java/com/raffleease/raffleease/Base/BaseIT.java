@@ -99,15 +99,6 @@ public class BaseIT extends BaseSharedIT {
                 .build();
     }
 
-    private ResultActions performImageUpload(int numImages, String token, String url) throws Exception {
-        MockMultipartHttpServletRequestBuilder requestBuilder = multipart(url);
-        requestBuilder.header(AUTHORIZATION, "Bearer " + token);
-        for (int i = 0; i < numImages; i++) {
-            requestBuilder.file(new MockMultipartFile("files", "image" + i + ".jpg", "image/jpeg", "testdata".getBytes()));
-        }
-        return mockMvc.perform(requestBuilder);
-    }
-
     protected ResultActions performImageDelete(String url) throws Exception {
         return mockMvc.perform(delete(url)
                 .header(AUTHORIZATION, "Bearer " + accessToken));
@@ -155,6 +146,15 @@ public class BaseIT extends BaseSharedIT {
                 .header(AUTHORIZATION, "Bearer " + token)
                 .contentType(APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)));
+    }
+
+    private ResultActions performImageUpload(int numImages, String token, String url) throws Exception {
+        MockMultipartHttpServletRequestBuilder requestBuilder = multipart(url);
+        requestBuilder.header(AUTHORIZATION, "Bearer " + token);
+        for (int i = 0; i < numImages; i++) {
+            requestBuilder.file(new MockMultipartFile("files", "image" + i + ".jpg", "image/jpeg", "testdata".getBytes()));
+        }
+        return mockMvc.perform(requestBuilder);
     }
 
     private Long createRaffleInternal(List<ImageDTO> images, Long associationId, String accessToken) throws Exception {
