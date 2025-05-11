@@ -4,6 +4,7 @@ import com.raffleease.raffleease.Domains.Orders.Model.OrderSource;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderStatus;
 import com.raffleease.raffleease.Domains.Payments.Model.PaymentMethod;
 import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
+import com.raffleease.raffleease.Helpers.SanitizeUtils;
 import com.raffleease.raffleease.Validations.ValidOrderSearchFilters;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Positive;
@@ -12,6 +13,9 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import static com.raffleease.raffleease.Helpers.SanitizeUtils.trim;
+import static com.raffleease.raffleease.Helpers.SanitizeUtils.trimAndLower;
 
 @ValidOrderSearchFilters
 public record OrderSearchFilters(
@@ -47,9 +51,9 @@ public record OrderSearchFilters(
         LocalDateTime cancelledTo
 ) {
         public OrderSearchFilters {
-                orderReference = orderReference != null ? orderReference.trim() : null;
-                customerName = customerName != null ? customerName.trim() : null;
-                customerEmail = customerEmail != null ? customerEmail.trim() : null;
-                customerPhone = customerPhone != null ? customerPhone.trim() : null;
+                orderReference = trim(orderReference);
+                customerName = trim(customerName);
+                customerEmail = trimAndLower(customerEmail);
+                customerPhone = trim(customerPhone);
         }
 }
