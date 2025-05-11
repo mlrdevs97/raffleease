@@ -6,6 +6,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 
+import static com.raffleease.raffleease.Helpers.SanitizeUtils.trim;
+import static com.raffleease.raffleease.Helpers.SanitizeUtils.trimAndLower;
+
 @Builder
 @PasswordMatches
 public record RegisterUserData(
@@ -38,4 +41,17 @@ public record RegisterUserData(
 
         @NotBlank(message = "Confirm password is required")
         String confirmPassword
-) { }
+) {
+        public RegisterUserData {
+                firstName = trim(firstName);
+                lastName = trim(lastName);
+                userName = trimAndLower(userName);
+                email = trim(email);
+                password = trim(password);
+                confirmPassword = trim(confirmPassword);
+                phoneNumber = phoneNumber == null ? null : new PhoneNumberData(
+                        trim(phoneNumber.prefix()),
+                        trim(phoneNumber.nationalNumber())
+                );
+        }
+}

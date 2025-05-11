@@ -5,6 +5,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 
+import static com.raffleease.raffleease.Helpers.SanitizeUtils.trim;
+import static com.raffleease.raffleease.Helpers.SanitizeUtils.trimAndLower;
+
 @Builder
 public record RegisterAssociationData(
         @NotBlank(message = "Association's name is required")
@@ -24,4 +27,14 @@ public record RegisterAssociationData(
         @NotNull(message = "Must provide address data")
         @Valid
         RegisterAddressData addressData
-) { }
+) {
+        public RegisterAssociationData {
+                associationName = trim(associationName);
+                description = trim(description);
+                email = trimAndLower(email);
+                phoneNumber = phoneNumber == null ? null : new PhoneNumberData(
+                        trim(phoneNumber.prefix()),
+                        trim(phoneNumber.nationalNumber())
+                );
+        }
+}

@@ -1,7 +1,9 @@
 package com.raffleease.raffleease.Helpers;
 
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.*;
+import lombok.Getter;
 
+@Getter
 public class RegisterBuilder {
     // User data
     private String firstName = "Firstname";
@@ -26,6 +28,16 @@ public class RegisterBuilder {
     private String city = "Madrid";
     private String province = "Madrid";
     private String zipCode = "28001";
+
+    public RegisterBuilder withUserFirstName(String firstName) {
+        this.firstName = firstName;
+        return this;
+    }
+
+    public RegisterBuilder withUserLastName(String lastName) {
+        this.firstName = lastName;
+        return this;
+    }
 
     public RegisterBuilder withUserName(String userName) {
         this.userName = userName;

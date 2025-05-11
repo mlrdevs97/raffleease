@@ -434,4 +434,46 @@ class AuthControllerRegisterIT extends BaseAuthIT {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value(containsString("Failed to save association")));
     }
+
+
+    @Test
+    void shouldTrimAndNormalizeUserAndAssociationFieldsOnRegister() throws Exception {
+        RegisterBuilder builder = new RegisterBuilder()
+                .withUserFirstName("  Firstname  ")
+                .withUserLastName("  Last Name  ")
+                .withUserName("  Test_User  ")
+                .withUserEmail("  user@example.com  ")
+                .withUserPhone(" +34 ", " 600001111 ")
+                .withAssociationName("  Test Association ")
+                .withAssociationEmail("  association@example.com ")
+                .withAssociationPhone(" +34 ", " 600009999 ")
+                .withDescription("  Helping the world!  ");
+
+        RegisterRequest request = builder.build();
+
+        performRegisterRequest(request)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("New association account created successfully"));
+
+        String expectedUserName = builder.getUserName().trim().toLowerCase();
+        Optional<User> optionalUser = usersRepository.findByIdentifier(expectedUserName);
+        assertThat(optionalUser).isPresent();
+        User user = optionalUser.get();
+
+        assertThat(user.getFirstName()).isEqualTo(builder.getFirstName().trim());
+        assertThat(user.getLastName()).isEqualTo(builder.getLastName().trim());
+        assertThat(user.getUserName()).isEqualTo(expectedUserName);
+        assertThat(user.getEmail()).isEqualTo(builder.getUserEmail().trim());
+        assertThat(user.getPhoneNumber()).isEqualTo(builder.getUserPhonePrefix().trim() + builder.getUserPhoneNumber().trim());
+
+        List<Association> associations = associationsRepository.findAll();
+        assertThat(associations.size()).isEqualTo(1);
+        Association association = associations.get(0);
+
+        assertThat(association.getName()).isEqualTo(builder.getAssociationName().trim());
+        assertThat(association.getEmail()).isEqualTo(builder.getAssociationEmail().trim());
+        assertThat(association.getPhoneNumber())
+                .isEqualTo(builder.getAssociationPhonePrefix().trim() + builder.getAssociationPhoneNumber().trim());
+        assertThat(association.getDescription()).isEqualTo(builder.getDescription().trim());
+    }
 }
