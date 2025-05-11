@@ -37,7 +37,7 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
     private final RafflesPersistenceService rafflesPersistenceService;
     private final ImageValidator imageValidator;
 
-    @Value("${spring.application.host.server}")
+    @Value("${spring.application.hosts.server}")
     private String host;
 
     @Override

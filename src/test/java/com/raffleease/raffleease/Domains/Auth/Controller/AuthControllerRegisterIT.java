@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Auth.Controller;
 
+import com.raffleease.raffleease.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsMembershipsRepository;
@@ -9,7 +10,6 @@ import com.raffleease.raffleease.Domains.Auth.Model.VerificationToken;
 import com.raffleease.raffleease.Domains.Notifications.Services.EmailsService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Helpers.RegisterBuilder;
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +33,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthControllerRegisterIT extends BaseAuthIT {
     @Autowired
     private AssociationsMembershipsRepository membershipsRepository;
+
+    @Autowired
+    private CorsProperties corsProperties;
+
     private RegisterBuilder validBuilder;
 
     @BeforeEach
@@ -42,9 +46,6 @@ class AuthControllerRegisterIT extends BaseAuthIT {
 
     @MockitoBean
     private EmailsService emailsService;
-
-    @Value("${spring.application.host.client}")
-    private String clientHost;
 
     @Test
     void shouldRegisterAndCreateUnverifiedUserAndSendVerificationEmail() throws Exception {
@@ -102,7 +103,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
         assertThat(token.getExpiryDate()).isAfter(LocalDateTime.now());
 
         // -- EMAIL SENT --
-        String expectedLink = UriComponentsBuilder.fromHttpUrl(clientHost)
+        String expectedLink = UriComponentsBuilder.fromHttpUrl(corsProperties.getClientAsList().get(0))
                 .path("/admin/auth/verify-email")
                 .queryParam("token", token.getToken())
                 .build()

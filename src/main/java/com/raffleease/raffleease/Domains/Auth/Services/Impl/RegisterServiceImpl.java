@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Auth.Services.Impl;
 
+import com.raffleease.raffleease.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
@@ -33,12 +34,10 @@ public class RegisterServiceImpl implements RegisterService {
     private final PasswordEncoder passwordEncoder;
     private final VerificationTokenRepository verificationTokenRepository;
     private final EmailsService emailsService;
+    private final CorsProperties corsProperties;
 
     @Value("${spring.application.security.jwt.refresh_token_expiration}")
     private Long refreshTokenExpiration;
-
-    @Value("${spring.application.host.client}")
-    private String clientHost;
 
     @Transactional
     @Override
@@ -52,7 +51,7 @@ public class RegisterServiceImpl implements RegisterService {
 
     private void handleUserVerification(User user) {
         VerificationToken verificationToken = createVerificationToken(user);
-        String verificationLink = UriComponentsBuilder.fromHttpUrl(clientHost)
+        String verificationLink = UriComponentsBuilder.fromHttpUrl(corsProperties.getClientAsList().get(0))
                 .path("/admin/auth/verify-email")
                 .queryParam("token", verificationToken.getToken())
                 .build()

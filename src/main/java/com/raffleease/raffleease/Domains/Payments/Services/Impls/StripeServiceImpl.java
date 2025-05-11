@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Payments.Services.Impls;
 
+import com.raffleease.raffleease.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Payments.Services.StripeService;
@@ -17,14 +18,13 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 @Service
 public class StripeServiceImpl implements StripeService {
+    private final CorsProperties corsProperties;
+
     @Value("${spring.stripe.keys.public}")
     private String stripePublicKey;
 
     @Value("${spring.stripe.keys.secret}")
     private String stripeSecretKey;
-
-    @Value("${spring.application.host.client}")
-    private String clientHost;
 
     @Value("${spring.application.paths.client.payment_success}")
     private String paymentSuccessPath;
@@ -83,7 +83,7 @@ public class StripeServiceImpl implements StripeService {
                                  */
                                 .build()
                 )
-                .setReturnUrl(clientHost + paymentSuccessPath + raffle.getId())
+                .setReturnUrl(corsProperties.getClientAsList().get(0) + paymentSuccessPath + raffle.getId())
                 .build();
     }
 

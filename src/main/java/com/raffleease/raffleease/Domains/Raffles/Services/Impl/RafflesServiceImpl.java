@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
+import com.raffleease.raffleease.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
@@ -31,9 +32,7 @@ public class RafflesServiceImpl implements RafflesService {
     private final IRafflesMapper rafflesMapper;
     private final AssociationsService associationsService;
     private final ImagesAssociateService imagesAssociateService;
-
-    @Value("${spring.application.host.client}")
-    private String host;
+    private final CorsProperties corsProperties;
 
     @Override
     @Transactional
@@ -41,7 +40,7 @@ public class RafflesServiceImpl implements RafflesService {
         Association association = associationsService.findById(associationId);
         Raffle mappedRaffle = rafflesMapper.toRaffle(raffleData, association);
         Raffle raffle = rafflesPersistence.save(mappedRaffle);
-        raffle.setURL(host + "/client/raffle/" + raffle.getId());
+        raffle.setURL(corsProperties.getClientAsList().get(0) + "/client/raffle/" + raffle.getId());
         List<Image> images = imagesAssociateService.associateImagesToRaffleOnCreate(raffle, raffleData.images());
         raffle.setImages(images);
         List<Ticket> tickets = ticketsCreateService.create(raffle, raffleData.ticketsInfo());

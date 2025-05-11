@@ -23,7 +23,7 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
     private final ImagesRepository repository;
     private final ImageValidator imageValidator;
 
-    @Value("${spring.application.host.server}")
+    @Value("${spring.application.hosts.server}")
     private String host;
 
     @Override

@@ -4,7 +4,7 @@ server:
 spring:
   application:
     name: RaffleEase
-    host:
+    hosts:
       client: ${HOST_CLIENT}
       server: ${HOST_SERVER}
     paths:

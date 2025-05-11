@@ -19,7 +19,7 @@ public class ImageServiceImpl implements ImagesService {
     private final FileStorageService fileStorageService;
     private final ImagesRepository repository;
 
-    @Value("${spring.application.host.server}")
+    @Value("${spring.application.hosts.server}")
     private String host;
 
     @Override

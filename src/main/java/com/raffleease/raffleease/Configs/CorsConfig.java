@@ -1,6 +1,8 @@
 package com.raffleease.raffleease.Configs;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -9,22 +11,21 @@ import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.springframework.http.HttpHeaders.*;
 
 @Configuration
+@RequiredArgsConstructor
 public class CorsConfig {
-    @Value("${spring.application.host.client}")
-    private String allowedOrigin;
+    private final CorsProperties corsProperties;
 
     @Bean
     public CorsFilter corsFilter() {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         final CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(
-                Collections.singletonList(allowedOrigin)
-        );
+        config.setAllowedOrigins(corsProperties.getClientAsList());
         config.setAllowedHeaders(
                 Arrays.asList(
                         ORIGIN,

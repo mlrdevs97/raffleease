@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.raffleease.raffleease.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
@@ -12,6 +13,7 @@ import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Helpers.RaffleCreateBuilder;
 import com.raffleease.raffleease.Helpers.TicketsCreateBuilder;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -37,8 +39,8 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
     @Value("${spring.storage.images.base_path}")
     private String basePath;
 
-    @Value("${spring.application.host.client}")
-    private String clientHost;
+    @Autowired
+    private CorsProperties corsProperties;
 
     @Test
     void shouldCreateRaffle() throws Exception {
@@ -68,7 +70,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
         assertThat(raffle.getTitle()).isEqualTo(raffleCreate.title());
         assertThat(raffle.getDescription()).isEqualTo(raffleCreate.description());
         assertThat(raffle.getStatus()).isEqualTo(PENDING);
-        assertThat(raffle.getURL()).isEqualTo(clientHost + "/client/raffle/" + raffle.getId());
+        assertThat(raffle.getURL()).isEqualTo(corsProperties.getClientAsList().get(0) + "/client/raffle/" + raffle.getId());
         assertThat(ChronoUnit.MILLIS.between(raffle.getEndDate(), raffleCreate.endDate())).isLessThanOrEqualTo(1);
         assertThat(raffle.getTicketPrice()).isEqualTo(raffleCreate.ticketsInfo().price());
         assertThat(raffle.getFirstTicketNumber()).isEqualTo(raffleCreate.ticketsInfo().lowerLimit());
