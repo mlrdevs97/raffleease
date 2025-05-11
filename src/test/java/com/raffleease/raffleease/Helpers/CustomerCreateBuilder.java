@@ -2,7 +2,9 @@ package com.raffleease.raffleease.Helpers;
 
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.PhoneNumberData;
 import com.raffleease.raffleease.Domains.Customers.DTO.CustomerCreate;
+import lombok.Getter;
 
+@Getter
 public class CustomerCreateBuilder {
     private String fullName = "Test User";
     private String userPhonePrefix = "+34";

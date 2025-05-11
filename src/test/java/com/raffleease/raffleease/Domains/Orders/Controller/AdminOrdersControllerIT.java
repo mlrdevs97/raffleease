@@ -97,6 +97,46 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
     }
 
     @Test
+    void shouldTrimAndNormalizeCustomerDataAndCommentOnOrderCreate() throws Exception {
+        CustomerCreateBuilder customerBuilder = new CustomerCreateBuilder();
+        String rawFullName = "  " + customerBuilder.getFullName() + "  ";
+        String rawEmail = "  " + customerBuilder.getEmail().toUpperCase() + "  ";
+        String rawPrefix = "  " + customerBuilder.getUserPhonePrefix() + " ";
+        String rawNumber = " " + customerBuilder.getUserPhoneNumber() + "  ";
+
+        String rawComment = "   Urgent delivery.  ";
+
+        CustomerCreate customer = new CustomerCreateBuilder()
+                .withFullName(rawFullName)
+                .withEmail(rawEmail)
+                .withPhoneNumber(rawPrefix, rawNumber)
+                .build();
+
+        AdminOrderCreate request = new AdminOrderCreateBuilder()
+                .withCartId(cart.getId())
+                .withTicketIds(List.of(reservedTicket))
+                .withCustomer(customer)
+                .withComment(rawComment)
+                .build();
+
+        MvcResult result = performCreateOrderRequest(request, associationId, accessToken)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("New order created successfully"))
+                .andReturn();
+
+        Long orderId = parseOrderId(result);
+        Order order = ordersRepository.findById(orderId).orElseThrow();
+        Customer savedCustomer = order.getCustomer();
+
+        assertThat(savedCustomer.getFullName()).isEqualTo(customerBuilder.getFullName());
+        assertThat(savedCustomer.getEmail()).isEqualTo(customerBuilder.getEmail().toLowerCase());
+        assertThat(savedCustomer.getPhoneNumber()).isEqualTo(
+                customerBuilder.getUserPhonePrefix() + customerBuilder.getUserPhoneNumber()
+        );
+        assertThat(order.getComment()).isEqualTo(rawComment.trim());
+    }
+
+    @Test
     void shouldFailIfUserNotBelongToAssociation() throws Exception{
         String otherToken = registerOtherUser().accessToken();
         AdminOrderCreate request = new AdminOrderCreateBuilder()

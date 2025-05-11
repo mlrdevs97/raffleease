@@ -27,4 +27,12 @@ public record AdminOrderCreate(
         @Nullable
         @Size(max = 500, message = "Comment must not exceed 500 characters")
         String comment
-) {}
+) {
+        public AdminOrderCreate {
+                comment = trim(comment);
+        }
+
+        private static String trim(String value) {
+                return value == null ? null : value.trim();
+        }
+}

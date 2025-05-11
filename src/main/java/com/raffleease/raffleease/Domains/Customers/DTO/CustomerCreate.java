@@ -19,5 +19,18 @@ public record CustomerCreate(
         @Nullable
         @Valid
         PhoneNumberData phoneNumber
-) {}
+) {
+        public CustomerCreate {
+                fullName = trim(fullName);
+                email = email == null ? null : trim(email).toLowerCase();
+                phoneNumber = phoneNumber == null ? null : new PhoneNumberData(
+                        trim(phoneNumber.prefix()),
+                        trim(phoneNumber.nationalNumber())
+                );
+        }
+
+        private static String trim(String value) {
+                return value == null ? null : value.trim();
+        }
+}
 
