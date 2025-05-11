@@ -27,6 +27,7 @@ public class AssociationsMapper implements IAssociationsMapper {
                 .phoneNumber(phoneNumber)
                 .address(addressMapper.toAddress(data.addressData()))
                 .memberships(new ArrayList<>())
+                .description(data.description())
                 .build();
     }
 

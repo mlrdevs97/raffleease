@@ -1,6 +1,8 @@
 package com.raffleease.raffleease.Domains.Auth.Controller;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
+import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsMembershipsRepository;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.PhoneNumberData;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.Model.VerificationToken;
@@ -10,6 +12,7 @@ import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -21,12 +24,15 @@ import java.util.Optional;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.verify;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class AuthControllerRegisterIT extends BaseAuthIT {
+    @Autowired
+    private AssociationsMembershipsRepository membershipsRepository;
     private RegisterBuilder validBuilder;
 
     @BeforeEach
@@ -41,47 +47,67 @@ class AuthControllerRegisterIT extends BaseAuthIT {
     private String clientHost;
 
     @Test
-    @Transactional
     void shouldRegisterAndCreateUnverifiedUserAndSendVerificationEmail() throws Exception {
         RegisterRequest request = validBuilder.build();
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("New association account created successfully"))
-                .andReturn();
+                .andExpect(jsonPath("$.message").value("New association account created successfully"));
 
-        // Assert user exists but is not enabled
-        Optional<User> optionalUser = usersRepository.findByIdentifier(request.userData().email());
+        // -- USER assertions --
+        String expectedUserName = request.userData().userName().trim().toLowerCase();
+        Optional<User> optionalUser = usersRepository.findByIdentifier(request.userData().email().trim());
         assertThat(optionalUser).isPresent();
         User user = optionalUser.get();
+
         assertThat(user.isEnabled()).isFalse();
+        assertThat(user.getFirstName()).isEqualTo(request.userData().firstName().trim().toLowerCase());
+        assertThat(user.getLastName()).isEqualTo(request.userData().lastName().trim().toLowerCase());
+        assertThat(user.getUserName()).isEqualTo(expectedUserName);
+        assertThat(user.getEmail()).isEqualTo(request.userData().email().trim());
+        assertThat(user.getPhoneNumber()).isEqualTo(
+                request.userData().phoneNumber().prefix().trim() + request.userData().phoneNumber().nationalNumber().trim()
+        );
 
-        // Assert association exists and membership was created
-        String phoneNumber = request.userData().phoneNumber().prefix() + request.userData().phoneNumber().nationalNumber();
-        assertThat(usersRepository.findByIdentifier(request.userData().userName())).isPresent();
-        assertThat(usersRepository.findByIdentifier(phoneNumber)).isPresent();
+        // Username and phone should be usable as identifiers
+        assertThat(usersRepository.findByIdentifier(expectedUserName)).isPresent();
+        assertThat(usersRepository.findByIdentifier(user.getPhoneNumber())).isPresent();
 
+        // -- ASSOCIATION assertions --
         List<Association> associations = associationsRepository.findAll();
         assertThat(associations.size()).isEqualTo(1);
         Association association = associations.get(0);
-        assertThat(association.getMemberships().size()).isEqualTo(1);
-        assertThat(association.getMemberships().get(0).getUser().getId()).isEqualTo(user.getId());
 
-        // Assert a verification token was created
+        assertThat(association.getName()).isEqualTo(request.associationData().associationName().trim());
+        assertThat(association.getEmail()).isEqualTo(request.associationData().email().trim());
+        assertThat(association.getDescription()).isEqualTo(request.associationData().description().trim());
+        assertThat(association.getPhoneNumber()).isEqualTo(
+                request.associationData().phoneNumber().prefix().trim() + request.associationData().phoneNumber().nationalNumber().trim()
+        );
+        assertThat(association.getAddress().getPlaceId()).isEqualTo(request.associationData().addressData().placeId());
+        assertThat(association.getAddress().getFormattedAddress()).isEqualTo(request.associationData().addressData().formattedAddress());
+
+        // Membership
+        List<AssociationMembership> memberships = membershipsRepository.findAll();
+        assertThat(memberships.size()).isEqualTo(1);
+        assertThat(memberships.get(0).getUser().getId()).isEqualTo(user.getId());
+
+        // -- VERIFICATION TOKEN --
         Optional<VerificationToken> tokenOpt = verificationTokenRepository.findByUser(user);
         assertThat(tokenOpt).isPresent();
         VerificationToken token = tokenOpt.get();
+
         assertThat(token.getToken()).isNotBlank();
         assertThat(token.getExpiryDate()).isAfter(LocalDateTime.now());
 
-        // Assert verification email was sent
+        // -- EMAIL SENT --
         String expectedLink = UriComponentsBuilder.fromHttpUrl(clientHost)
                 .path("/admin/auth/verify-email")
                 .queryParam("token", token.getToken())
                 .build()
                 .toUriString();
-        verify(emailsService).sendEmailVerificationEmail(eq(user), eq(expectedLink));
+        verify(emailsService).sendEmailVerificationEmail(refEq(user), eq(expectedLink));
     }
 
     @Test
