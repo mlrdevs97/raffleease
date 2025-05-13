@@ -4,15 +4,17 @@ import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterUserData;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.ConflictException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
+import com.raffleease.raffleease.Exceptions.CustomExceptions.UniqueConstraintViolationException;
+import com.raffleease.raffleease.Helpers.ConstraintViolationParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.raffleease.raffleease.Domains.Users.Model.UserRole.ASSOCIATION_MEMBER;
 
@@ -76,7 +78,13 @@ public class UsersServiceImpl implements UsersService {
         try {
             return repository.save(user);
         } catch (DataIntegrityViolationException ex) {
-            throw new ConflictException("Failed to save user due to unique constraint violation: " + ex.getMessage());
+            Optional<String> constraintName = ConstraintViolationParser.extractConstraintName(ex);
+
+            if (constraintName.isPresent()) {
+                throw new UniqueConstraintViolationException(constraintName.get(), "Unique constraint violated: " + constraintName.get());
+            } else {
+                throw ex;
+            }
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while saving user: " + ex.getMessage());
         }

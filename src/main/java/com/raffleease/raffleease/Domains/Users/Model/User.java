@@ -13,7 +13,11 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 @Entity
-@Table(name = "Users")
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_user_email", columnNames = "email"),
+        @UniqueConstraint(name = "uk_user_username", columnNames = "user_name"),
+        @UniqueConstraint(name = "uk_user_phone", columnNames = "phone_number")
+})
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,13 +29,12 @@ public class User {
     @Column(nullable = false, length = 100)
     private String lastName;
 
-    @Column(unique = true, nullable = false, length = 25)
+    @Column(nullable = false, length = 25)
     private String userName;
 
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(unique = true)
     private String phoneNumber;
 
     @Column(nullable = false)

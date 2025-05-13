@@ -12,11 +12,15 @@ import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.ConflictException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
+import com.raffleease.raffleease.Exceptions.CustomExceptions.UniqueConstraintViolationException;
+import com.raffleease.raffleease.Helpers.ConstraintViolationParser;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -52,7 +56,13 @@ public class AssociationsServiceImpl implements AssociationsService {
         try {
             return associationsRepository.save(entity);
         } catch (DataIntegrityViolationException ex) {
-            throw new ConflictException("Failed to save association due to unique constraint violation: " + ex.getMessage());
+            Optional<String> constraintName = ConstraintViolationParser.extractConstraintName(ex);
+
+            if (constraintName.isPresent()) {
+                throw new UniqueConstraintViolationException(constraintName.get(), "Unique constraint violated: " + constraintName.get());
+            } else {
+                throw ex;
+            }
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while saving association: " + ex.getMessage());
         }

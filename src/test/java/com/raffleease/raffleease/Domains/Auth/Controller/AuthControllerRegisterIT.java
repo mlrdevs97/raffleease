@@ -13,7 +13,6 @@ import com.raffleease.raffleease.Helpers.RegisterBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -63,8 +62,8 @@ class AuthControllerRegisterIT extends BaseAuthIT {
         User user = optionalUser.get();
 
         assertThat(user.isEnabled()).isFalse();
-        assertThat(user.getFirstName()).isEqualTo(request.userData().firstName().trim().toLowerCase());
-        assertThat(user.getLastName()).isEqualTo(request.userData().lastName().trim().toLowerCase());
+        assertThat(user.getFirstName()).isEqualTo(request.userData().firstName().trim());
+        assertThat(user.getLastName()).isEqualTo(request.userData().lastName().trim());
         assertThat(user.getUserName()).isEqualTo(expectedUserName);
         assertThat(user.getEmail()).isEqualTo(request.userData().email().trim());
         assertThat(user.getPhoneNumber()).isEqualTo(
@@ -310,44 +309,36 @@ class AuthControllerRegisterIT extends BaseAuthIT {
 
     @Test
     void shouldFailWhenUserNameAlreadyExists() throws Exception {
-        RegisterRequest original = validBuilder.build();
-        performRegisterRequest(original);
+        performRegisterRequest(validBuilder.build()); // first registration
 
         RegisterRequest duplicate = new RegisterBuilder()
-                .withUserEmail("random@mail.com")
-                .withUserPhone("+34", "600111111")
-                .withAssociationName("Another Association")
-                .withAssociationEmail("another@example.com")
-                .withAssociationPhone("+34", "600222222")
-                .withAddress("randomPlaceId", "Address", 40.0, -80.0, "Madrid", "Madrid", "28001")
-                .withPassword("MySecurePassword#123")
-                .withConfirmPassword("MySecurePassword#123")
+                .withUserEmail("new@mail.com")
+                .withUserPhone("+34", "600999888")
+                .withAssociationName("Another")
+                .withAssociationEmail("another@assoc.com")
+                .withAssociationPhone("+34", "600111122")
                 .build();
 
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value(containsString("Failed to save user")));
+                .andExpect(jsonPath("$.errors['userData.userName']").value("This value is already in use"));
     }
 
     @Test
     void shouldFailWhenUserEmailAlreadyExists() throws Exception {
-        RegisterRequest original = validBuilder.build();
-        performRegisterRequest(original);
+        performRegisterRequest(validBuilder.build());
 
         RegisterRequest duplicate = new RegisterBuilder()
-                .withUserName("new_user")
-                .withUserPhone("+34", "600111111")
-                .withAssociationName("Another Association")
-                .withAssociationEmail("another@example.com")
-                .withAssociationPhone("+34", "600222222")
-                .withAddress("randomPlaceId", "Address", 40.0, -81.0, "Madrid", "Madrid", "28001")
-                .withPassword("MySecurePassword#123")
-                .withConfirmPassword("MySecurePassword#123")
+                .withUserName("anotheruser")
+                .withUserPhone("+34", "600999888")
+                .withAssociationName("Another")
+                .withAssociationEmail("another@assoc.com")
+                .withAssociationPhone("+34", "600111122")
                 .build();
 
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value(containsString("Failed to save user")));
+                .andExpect(jsonPath("$.errors['userData.email']").value("This value is already in use"));
     }
 
     @Test
@@ -355,63 +346,54 @@ class AuthControllerRegisterIT extends BaseAuthIT {
         RegisterRequest original = validBuilder.build();
         performRegisterRequest(original);
 
-        PhoneNumberData phoneNumber = original.userData().phoneNumber();
+        PhoneNumberData phone = original.userData().phoneNumber();
+
         RegisterRequest duplicate = new RegisterBuilder()
-                .withUserEmail("unexisting@email.com")
+                .withUserEmail("unique@mail.com")
                 .withUserName("new_user")
-                .withAssociationName("Another Association")
-                .withAssociationEmail("another@example.com")
-                .withAssociationPhone(phoneNumber.prefix(), phoneNumber.nationalNumber())
-                .withAddress("randomPlaceId", "Address", 40.0, -81.0, "Madrid", "Madrid", "28001")
-                .withPassword("MySecurePassword#123")
-                .withConfirmPassword("MySecurePassword#123")
+                .withUserPhone(phone.prefix(), phone.nationalNumber())
+                .withAssociationName("Another")
+                .withAssociationEmail("another@assoc.com")
+                .withAssociationPhone("+34", "600111122")
                 .build();
 
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value(containsString("Failed to save user")));
+                .andExpect(jsonPath("$.errors['userData.phoneNumber']").value("This value is already in use"));
     }
 
     @Test
     void shouldFailWhenAssociationNameAlreadyExists() throws Exception {
-        RegisterRequest original = validBuilder.build();
-        performRegisterRequest(original);
+        performRegisterRequest(validBuilder.build());
 
         RegisterRequest duplicate = new RegisterBuilder()
-                .withUserEmail("unexisting@email.com")
-                .withUserName("new_user")
-                .withUserPhone("+34", "600111111")
-                .withAssociationEmail("another@example.com")
-                .withAssociationPhone("+34", "600222222")
-                .withAddress("randomPlaceId", "Address", 40.0, -81.0, "Madrid", "Madrid", "28001")
-                .withPassword("MySecurePassword#123")
-                .withConfirmPassword("MySecurePassword#123")
+                .withUserEmail("unique@mail.com")
+                .withUserName("another")
+                .withUserPhone("+34", "600111199")
+                .withAssociationEmail("new@assoc.com")
+                .withAssociationPhone("+34", "600111122")
                 .build();
 
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value(containsString("Failed to save association")));
+                .andExpect(jsonPath("$.errors['associationData.associationName']").value("This value is already in use"));
     }
 
     @Test
     void shouldFailWhenAssociationEmailAlreadyExists() throws Exception {
-        RegisterRequest original = validBuilder.build();
-        performRegisterRequest(original);
+        performRegisterRequest(validBuilder.build());
 
         RegisterRequest duplicate = new RegisterBuilder()
-                .withUserEmail("unexisting@mail.com")
-                .withUserName("new_user")
-                .withUserPhone("+34", "600111111")
-                .withAssociationName("Another Association")
-                .withAssociationPhone("+34", "600222222")
-                .withAddress("randomPlaceId", "Address", 40.0, -81.0, "Madrid", "Madrid", "28001")
-                .withPassword("MySecurePassword#123")
-                .withConfirmPassword("MySecurePassword#123")
+                .withUserEmail("unique@mail.com")
+                .withUserName("another")
+                .withUserPhone("+34", "600111199")
+                .withAssociationName("Another")
+                .withAssociationPhone("+34", "600111122")
                 .build();
 
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value(containsString("Failed to save association")));
+                .andExpect(jsonPath("$.errors['associationData.email']").value("This value is already in use"));
     }
 
     @Test
@@ -419,23 +401,42 @@ class AuthControllerRegisterIT extends BaseAuthIT {
         RegisterRequest original = validBuilder.build();
         performRegisterRequest(original);
 
-        PhoneNumberData phoneNumber = original.associationData().phoneNumber();
+        PhoneNumberData phone = original.associationData().phoneNumber();
+
         RegisterRequest duplicate = new RegisterBuilder()
-                .withUserEmail("unexisting@mail.com")
-                .withUserName("new_user")
-                .withUserPhone("+34", "600111111")
-                .withAssociationName("Another Association")
-                .withAssociationEmail("another@example.com")
-                .withAddress("randomPlaceId", "Address", 40.0, -81.0, "Madrid", "Madrid", "28001")
-                .withPassword("MySecurePassword#123")
-                .withConfirmPassword("MySecurePassword#123")
+                .withUserEmail("unique@mail.com")
+                .withUserName("another")
+                .withUserPhone("+34", "600111199")
+                .withAssociationName("Another")
+                .withAssociationEmail("another@assoc.com")
+                .withAssociationPhone(phone.prefix(), phone.nationalNumber())
                 .build();
 
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value(containsString("Failed to save association")));
+                .andExpect(jsonPath("$.errors['associationData.phoneNumber']").value("This value is already in use"));
     }
 
+    @Test
+    void shouldFailWithFirstUniqueViolationAmongMany() throws Exception {
+        RegisterRequest original = validBuilder.build();
+        performRegisterRequest(original);
+
+        // Attempt to violate multiple constraints at once
+        RegisterRequest duplicate = new RegisterBuilder()
+                .withUserEmail(original.userData().email())
+                .withUserName(original.userData().userName())
+                .withUserPhone(original.userData().phoneNumber().prefix(), original.userData().phoneNumber().nationalNumber())
+                .withAssociationName(original.associationData().associationName())
+                .withAssociationEmail(original.associationData().email())
+                .withAssociationPhone(original.associationData().phoneNumber().prefix(), original.associationData().phoneNumber().nationalNumber()) // duplicated
+                .build();
+
+        performRegisterRequest(duplicate)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errors").isMap()) // still one error
+                .andExpect(jsonPath("$.errors['userData.email']").value("This value is already in use"));
+    }
 
     @Test
     void shouldTrimAndNormalizeUserAndAssociationFieldsOnRegister() throws Exception {
@@ -477,4 +478,5 @@ class AuthControllerRegisterIT extends BaseAuthIT {
                 .isEqualTo(builder.getAssociationPhonePrefix().trim() + builder.getAssociationPhoneNumber().trim());
         assertThat(association.getDescription()).isEqualTo(builder.getDescription().trim());
     }
+
 }

@@ -1,30 +1,32 @@
 package com.raffleease.raffleease.Exceptions;
 
 import com.raffleease.raffleease.Exceptions.CustomExceptions.*;
+import com.raffleease.raffleease.Helpers.ConstraintNameMapper;
 import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
+@RequiredArgsConstructor
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private final ConstraintNameMapper constraintNameMapper;
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiResponse> handleNotFoundException(NotFoundException ex) {
         ApiResponse response = ResponseFactory.error(
@@ -191,7 +193,7 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity
-                .status(CONFLICT)
+                .status(INTERNAL_SERVER_ERROR)
                 .body(response);
     }
 
@@ -218,6 +220,23 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(UniqueConstraintViolationException.class)
+    public ResponseEntity<ApiResponse> handleUniqueConstraintViolationException(UniqueConstraintViolationException ex) {
+        Map<String, String> errors = new HashMap<>();
+
+        String field = constraintNameMapper.mapToField(ex.getField());
+        errors.put(field, "This value is already in use");
+
+        ApiResponse response = ResponseFactory.validationError(
+                "Validation failed",
+                CONFLICT.value(),
+                CONFLICT.getReasonPhrase(),
+                errors
+        );
+
+        return ResponseEntity.status(CONFLICT).body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
