@@ -134,22 +134,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
 
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            if (error instanceof FieldError fieldError) {
-                String fieldName = fieldError.getField();
-                String errorMessage;
+        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+            String fieldName = fieldError.getField();
+            String springCode = fieldError.getCode();
+            String errorCode = ValidationErrorCodeMapper.toAppCode(springCode);
 
-                if ("typeMismatch".equals(fieldError.getCode())) {
-                    Object rejectedValue = fieldError.getRejectedValue();
-                    String rejected = rejectedValue != null ? rejectedValue.toString() : "null";
-                    errorMessage = String.format("Invalid value '%s' for parameter '%s'", rejected, fieldName);
-                } else {
-                    errorMessage = fieldError.getDefaultMessage();
-                }
-
-                errors.put(fieldName, errorMessage);
-            }
-        });
+            errors.put(fieldName, errorCode);
+        }
 
         ApiResponse response = ResponseFactory.validationError(
                 "Validation failed",
