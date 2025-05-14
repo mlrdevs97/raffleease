@@ -46,7 +46,7 @@ public record RegisterUserData(
                 firstName = trim(firstName);
                 lastName = trim(lastName);
                 userName = trimAndLower(userName);
-                email = trim(email);
+                email = trimAndLower(email);
                 password = trim(password);
                 confirmPassword = trim(confirmPassword);
                 phoneNumber = phoneNumber == null ? null : new PhoneNumberData(

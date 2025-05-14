@@ -439,12 +439,12 @@ class AuthControllerRegisterIT extends BaseAuthIT {
     }
 
     @Test
-    void shouldTrimAndNormalizeUserAndAssociationFieldsOnRegister() throws Exception {
+    void shouldSanitizeFieldsOnRegister() throws Exception {
         RegisterBuilder builder = new RegisterBuilder()
                 .withUserFirstName("  Firstname  ")
                 .withUserLastName("  Last Name  ")
                 .withUserName("  Test_User  ")
-                .withUserEmail("  user@example.com  ")
+                .withUserEmail("  USER@example.com  ")
                 .withUserPhone(" +34 ", " 600001111 ")
                 .withAssociationName("  Test Association ")
                 .withAssociationEmail("  association@example.com ")
@@ -465,7 +465,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
         assertThat(user.getFirstName()).isEqualTo(builder.getFirstName().trim());
         assertThat(user.getLastName()).isEqualTo(builder.getLastName().trim());
         assertThat(user.getUserName()).isEqualTo(expectedUserName);
-        assertThat(user.getEmail()).isEqualTo(builder.getUserEmail().trim());
+        assertThat(user.getEmail()).isEqualTo(builder.getUserEmail().trim().toLowerCase());
         assertThat(user.getPhoneNumber()).isEqualTo(builder.getUserPhonePrefix().trim() + builder.getUserPhoneNumber().trim());
 
         List<Association> associations = associationsRepository.findAll();
@@ -478,5 +478,4 @@ class AuthControllerRegisterIT extends BaseAuthIT {
                 .isEqualTo(builder.getAssociationPhonePrefix().trim() + builder.getAssociationPhoneNumber().trim());
         assertThat(association.getDescription()).isEqualTo(builder.getDescription().trim());
     }
-
 }
