@@ -11,11 +11,11 @@ public class ResponseFactory {
         return new SuccessResponse<>(data, message);
     }
 
-    public static ApiResponse error(String message, int status, String statusText) {
-        return new ErrorResponse(message, status, statusText);
+    public static ApiResponse error(String message, int status, String statusText, String code) {
+        return new ErrorResponse(message, status, statusText, code);
     }
 
-    public static ApiResponse validationError(String message, int status, String statusText, Map<String, String> errors) {
-        return new ValidationErrorResponse(message, status, statusText, errors);
+    public static ApiResponse validationError(String message, int status, String statusText, String code, Map<String, String> errors) {
+        return new ValidationErrorResponse(message, status, statusText, code, errors);
     }
 }

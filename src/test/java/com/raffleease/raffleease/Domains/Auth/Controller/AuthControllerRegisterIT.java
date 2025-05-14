@@ -321,7 +321,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
 
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.errors['userData.userName']").value("This value is already in use"));
+                .andExpect(jsonPath("$.errors['userData.userName']").value("VALUE_ALREADY_EXISTS"));
     }
 
     @Test
@@ -338,7 +338,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
 
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.errors['userData.email']").value("This value is already in use"));
+                .andExpect(jsonPath("$.errors['userData.email']").value("VALUE_ALREADY_EXISTS"));
     }
 
     @Test
@@ -359,7 +359,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
 
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.errors['userData.phoneNumber']").value("This value is already in use"));
+                .andExpect(jsonPath("$.errors['userData.phoneNumber']").value("VALUE_ALREADY_EXISTS"));
     }
 
     @Test
@@ -376,7 +376,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
 
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.errors['associationData.associationName']").value("This value is already in use"));
+                .andExpect(jsonPath("$.errors['associationData.associationName']").value("VALUE_ALREADY_EXISTS"));
     }
 
     @Test
@@ -393,7 +393,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
 
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.errors['associationData.email']").value("This value is already in use"));
+                .andExpect(jsonPath("$.errors['associationData.email']").value("VALUE_ALREADY_EXISTS"));
     }
 
     @Test
@@ -414,7 +414,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
 
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.errors['associationData.phoneNumber']").value("This value is already in use"));
+                .andExpect(jsonPath("$.errors['associationData.phoneNumber']").value("VALUE_ALREADY_EXISTS"));
     }
 
     @Test
@@ -435,7 +435,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
         performRegisterRequest(duplicate)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errors").isMap()) // still one error
-                .andExpect(jsonPath("$.errors['userData.email']").value("This value is already in use"));
+                .andExpect(jsonPath("$.errors['userData.email']").value("VALUE_ALREADY_EXISTS"));
     }
 
     @Test

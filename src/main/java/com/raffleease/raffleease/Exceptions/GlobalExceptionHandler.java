@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -27,212 +28,102 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 public class GlobalExceptionHandler {
     private final ConstraintNameMapper constraintNameMapper;
 
+    private ResponseEntity<ApiResponse> wrapError(Exception ex, HttpStatus status, String code) {
+        return ResponseEntity.status(status)
+                .body(ResponseFactory.error(ex.getMessage(), status.value(), status.getReasonPhrase(), code));
+    }
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiResponse> handleNotFoundException(NotFoundException ex) {
-        ApiResponse response = ResponseFactory.error(
-                ex.getMessage(),
-                NOT_FOUND.value(),
-                NOT_FOUND.getReasonPhrase()
-        );
-
-        return ResponseEntity
-                .status(NOT_FOUND)
-                .body(response);
+        return wrapError(ex, NOT_FOUND, ErrorCodes.NOT_FOUND);
     }
 
     @ExceptionHandler(CustomMailException.class)
     public ResponseEntity<ApiResponse> handleCustomMailException(CustomMailException ex) {
-        ApiResponse apiError = ResponseFactory.error(
-                ex.getMessage(),
-                INTERNAL_SERVER_ERROR.value(),
-                INTERNAL_SERVER_ERROR.getReasonPhrase()
-        );
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(apiError);
+        return wrapError(ex, INTERNAL_SERVER_ERROR, ErrorCodes.MAIL_ERROR);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
-        ApiResponse apiError = ResponseFactory.error(
-                ex.getMessage(),
-                BAD_REQUEST.value(),
-                BAD_REQUEST.getReasonPhrase()
-        );
-        return ResponseEntity.status(BAD_REQUEST).body(apiError);
+        return wrapError(ex, BAD_REQUEST, ErrorCodes.BAD_REQUEST);
     }
 
     @ExceptionHandler(EmailVerificationException.class)
     public ResponseEntity<ApiResponse> handleEmailVerificationException(EmailVerificationException ex) {
-        ApiResponse apiError = ResponseFactory.error(
-                ex.getMessage(),
-                BAD_REQUEST.value(),
-                BAD_REQUEST.getReasonPhrase()
-        );
-        return ResponseEntity.status(BAD_REQUEST).body(apiError);
+        return wrapError(ex, BAD_REQUEST, ErrorCodes.EMAIL_VERIFICATION_FAILED);
     }
 
     @ExceptionHandler(FileStorageException.class)
     public ResponseEntity<ApiResponse> handleFileStorageException(FileStorageException ex) {
-        ApiResponse apiError = ResponseFactory.error(
-                ex.getMessage(),
-                INTERNAL_SERVER_ERROR.value(),
-                INTERNAL_SERVER_ERROR.getReasonPhrase()
-        );
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(apiError);
+        return wrapError(ex, INTERNAL_SERVER_ERROR, ErrorCodes.FILE_STORAGE_ERROR);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ApiResponse> handleUserNameNotFoundException(UsernameNotFoundException ex) {
-        ApiResponse response = ResponseFactory.error(
-                ex.getMessage(),
-                UNAUTHORIZED.value(),
-                UNAUTHORIZED.getReasonPhrase()
-        );
-
-        return ResponseEntity
-                .status(UNAUTHORIZED)
-                .body(response);
+        return wrapError(ex, UNAUTHORIZED, ErrorCodes.USER_NOT_FOUND);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponse> handleAuthenticationException(AuthenticationException ex) {
-        ApiResponse response = ResponseFactory.error(
-                ex.getMessage(),
-                UNAUTHORIZED.value(),
-                UNAUTHORIZED.getReasonPhrase()
-        );
-
-        return ResponseEntity
-                .status(UNAUTHORIZED)
-                .body(response);
+        return wrapError(ex, UNAUTHORIZED, ErrorCodes.UNAUTHORIZED);
     }
 
     @ExceptionHandler(AuthorizationException.class)
     public ResponseEntity<ApiResponse> handleAuthorizationException(AuthorizationException ex) {
-        ApiResponse response = ResponseFactory.error(
-                ex.getMessage(),
-                FORBIDDEN.value(),
-                FORBIDDEN.getReasonPhrase()
-        );
-
-        return ResponseEntity
-                .status(FORBIDDEN)
-                .body(response);
+        return wrapError(ex, FORBIDDEN, ErrorCodes.ACCESS_DENIED);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse> handleAccessDeniedException(AccessDeniedException ex) {
-        ApiResponse response = ResponseFactory.error(
-                ex.getMessage(),
-                FORBIDDEN.value(),
-                FORBIDDEN.getReasonPhrase()
-        );
-
-        return ResponseEntity
-                .status(FORBIDDEN)
-                .body(response);
+        return wrapError(ex, FORBIDDEN, ErrorCodes.ACCESS_DENIED);
     }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ApiResponse> handleConflictException(ConflictException ex) {
-        ApiResponse response = ResponseFactory.error(
-                ex.getMessage(),
-                CONFLICT.value(),
-                CONFLICT.getReasonPhrase()
-        );
-
-        return ResponseEntity
-                .status(CONFLICT)
-                .body(response);
+        return wrapError(ex, CONFLICT, ErrorCodes.CONFLICT);
     }
 
     @ExceptionHandler(CartHeaderMissingException.class)
     public ResponseEntity<ApiResponse> handleCartHeaderMissingException(CartHeaderMissingException ex) {
-        ApiResponse response = ResponseFactory.error(
-                ex.getMessage(),
-                BAD_REQUEST.value(),
-                BAD_REQUEST.getReasonPhrase()
-        );
-
-        return ResponseEntity
-                .status(BAD_REQUEST)
-                .body(response);
+        return wrapError(ex, BAD_REQUEST, ErrorCodes.CART_HEADER_MISSING);
     }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse> handleBusinessException(BusinessException ex) {
-        ApiResponse response = ResponseFactory.error(
-                ex.getMessage(),
-                BAD_REQUEST.value(),
-                BAD_REQUEST.getReasonPhrase()
-        );
-
-        return ResponseEntity
-                .status(BAD_REQUEST)
-                .body(response);
+        return wrapError(ex, BAD_REQUEST, ErrorCodes.BUSINESS_ERROR);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
-        ApiResponse error = ResponseFactory.error(
-                "Invalid request payload.",
-                BAD_REQUEST.value(),
-                BAD_REQUEST.getReasonPhrase()
-        );
-
-        return ResponseEntity
-                .status(BAD_REQUEST)
-                .body(error);
+        return wrapError(new IllegalArgumentException("Invalid request payload."), BAD_REQUEST, ErrorCodes.INVALID_REQUEST);
     }
 
     @ExceptionHandler(EncryptionException.class)
     public ResponseEntity<ApiResponse> handleEncryptionException(EncryptionException ex) {
-        ApiResponse response = ResponseFactory.error(
-                ex.getMessage(),
-                INTERNAL_SERVER_ERROR.value(),
-                INTERNAL_SERVER_ERROR.getReasonPhrase()
-        );
-
-        return ResponseEntity
-                .status(INTERNAL_SERVER_ERROR)
-                .body(response);
+        return wrapError(ex, INTERNAL_SERVER_ERROR, ErrorCodes.ENCRYPTION_ERROR);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse> handleGeneralException(Exception ex) {
-        ApiResponse response = ResponseFactory.error(
-                "An unexpected error occurred: " + ex.toString(),
-                INTERNAL_SERVER_ERROR.value(),
-                INTERNAL_SERVER_ERROR.getReasonPhrase()
-
-        );
-
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(response);
+        return wrapError(new RuntimeException("An unexpected error occurred: " + ex.toString()), INTERNAL_SERVER_ERROR, ErrorCodes.UNEXPECTED_ERROR);
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponse> handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
         String message = String.format("Missing required request parameter: '%s'", ex.getParameterName());
-
-        ApiResponse response = ResponseFactory.error(
-                message,
-                BAD_REQUEST.value(),
-                BAD_REQUEST.getReasonPhrase()
-        );
-
-        return ResponseEntity.status(BAD_REQUEST).body(response);
+        return wrapError(new IllegalArgumentException(message), BAD_REQUEST, ErrorCodes.MISSING_PARAMETER);
     }
 
     @ExceptionHandler(UniqueConstraintViolationException.class)
     public ResponseEntity<ApiResponse> handleUniqueConstraintViolationException(UniqueConstraintViolationException ex) {
-        Map<String, String> errors = new HashMap<>();
-
         String field = constraintNameMapper.mapToField(ex.getField());
-        errors.put(field, "This value is already in use");
+        Map<String, String> errors = Map.of(field, ErrorCodes.VALUE_ALREADY_EXISTS);
 
         ApiResponse response = ResponseFactory.validationError(
                 "Validation failed",
                 CONFLICT.value(),
                 CONFLICT.getReasonPhrase(),
+                ErrorCodes.VALIDATION_ERROR,
                 errors
         );
 
@@ -248,7 +139,7 @@ public class GlobalExceptionHandler {
                 String fieldName = fieldError.getField();
                 String errorMessage;
 
-                if (fieldError.getCode() != null && fieldError.getCode().equals("typeMismatch")) {
+                if ("typeMismatch".equals(fieldError.getCode())) {
                     Object rejectedValue = fieldError.getRejectedValue();
                     String rejected = rejectedValue != null ? rejectedValue.toString() : "null";
                     errorMessage = String.format("Invalid value '%s' for parameter '%s'", rejected, fieldName);
@@ -262,11 +153,12 @@ public class GlobalExceptionHandler {
 
         ApiResponse response = ResponseFactory.validationError(
                 "Validation failed",
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                BAD_REQUEST.value(),
+                BAD_REQUEST.getReasonPhrase(),
+                ErrorCodes.VALIDATION_ERROR,
                 errors
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return ResponseEntity.status(BAD_REQUEST).body(response);
     }
 }

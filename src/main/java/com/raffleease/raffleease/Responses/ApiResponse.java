@@ -6,12 +6,12 @@ import java.time.LocalDateTime;
 
 @Getter
 public abstract class ApiResponse {
-        private final boolean status;
+        private final boolean success;
         private final String message;
         private final LocalDateTime timestamp;
 
-        public ApiResponse(boolean status, String message) {
-                this.status = status;
+        public ApiResponse(boolean success, String message) {
+                this.success = success;
                 this.message = message;
                 this.timestamp = LocalDateTime.now();
         }
