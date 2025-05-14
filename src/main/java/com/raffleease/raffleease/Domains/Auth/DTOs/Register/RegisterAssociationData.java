@@ -10,21 +10,21 @@ import static com.raffleease.raffleease.Helpers.SanitizeUtils.trimAndLower;
 
 @Builder
 public record RegisterAssociationData(
-        @NotBlank(message = "Association's name is required")
-        @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
+        @NotBlank
+        @Size(min = 2, max = 100)
         String associationName,
 
-        @Size(max = 500, message = "Description must be at most 500 characters")
+        @Size(max = 500)
         String description,
 
-        @Email(message = "Must provide a valid email")
+        @Email
         String email,
 
         @Nullable
         @Valid
         PhoneNumberData phoneNumber,
 
-        @NotNull(message = "Must provide address data")
+        @NotNull
         @Valid
         RegisterAddressData addressData
 ) {

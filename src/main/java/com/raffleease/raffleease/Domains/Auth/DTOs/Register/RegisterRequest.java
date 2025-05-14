@@ -6,11 +6,11 @@ import lombok.Builder;
 
 @Builder
 public record RegisterRequest(
-        @NotNull(message = "Must provide user data")
+        @NotNull
         @Valid
         RegisterUserData userData,
 
-        @NotNull(message = "Must provide association data")
+        @NotNull
         @Valid
         RegisterAssociationData associationData
 ) {}

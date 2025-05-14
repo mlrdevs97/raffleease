@@ -114,28 +114,28 @@ class AuthControllerRegisterIT extends BaseAuthIT {
     void shouldFailWhenUserNameIsNull() throws Exception {
         performRegisterRequest(validBuilder.withUserName(null).build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['userData.userName']").value("User name is required"));
+                .andExpect(jsonPath("$.errors['userData.userName']").value("REQUIRED"));
     }
 
     @Test
     void shouldFailWhenUserNameDoesNotMatchLengthConstraint() throws Exception {
         performRegisterRequest(validBuilder.withUserName("A").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['userData.userName']").value("Name must be between 2 and 25 characters"));
+                .andExpect(jsonPath("$.errors['userData.userName']").value("INVALID_LENGTH"));
     }
 
     @Test
     void shouldFailWhenUserEmailIsNull() throws Exception {
         performRegisterRequest(validBuilder.withUserEmail(null).build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['userData.email']").value("User email is required"));
+                .andExpect(jsonPath("$.errors['userData.email']").value("REQUIRED"));
     }
 
     @Test
     void shouldFailWhenUserEmailIsInvalid() throws Exception {
         performRegisterRequest(validBuilder.withUserEmail("invalid-email").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['userData.email']").value("Must provide a valid email"));
+                .andExpect(jsonPath("$.errors['userData.email']").value("INVALID_EMAIL"));
     }
 
     @Test
@@ -149,28 +149,28 @@ class AuthControllerRegisterIT extends BaseAuthIT {
     void shouldFailWhenPhonePrefixIsNull() throws Exception {
         performRegisterRequest(validBuilder.withUserPhone(null, "600123456").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['userData.phoneNumber.prefix']").value("Must provide a prefix for phone number"));
+                .andExpect(jsonPath("$.errors['userData.phoneNumber.prefix']").value("REQUIRED"));
     }
 
     @Test
     void shouldFailWhenPhoneNumberInvalid() throws Exception {
         performRegisterRequest(validBuilder.withUserPhone("+34", "abc").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['userData.phoneNumber.nationalNumber']").value("Must provide a valid phone number"));
+                .andExpect(jsonPath("$.errors['userData.phoneNumber.nationalNumber']").value("INVALID_FORMAT"));
     }
 
     @Test
     void shouldFailWhenAssociationPhonePrefixIsInvalid() throws Exception {
         performRegisterRequest(validBuilder.withAssociationPhone("-x", "600009999").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['associationData.phoneNumber.prefix']").value("Must provide a valid prefix"));
+                .andExpect(jsonPath("$.errors['associationData.phoneNumber.prefix']").value("INVALID_FORMAT"));
     }
 
     @Test
     void shouldFailWhenAssociationPhoneNumberIsInvalid() throws Exception {
         performRegisterRequest(validBuilder.withAssociationPhone("+34", "invalid").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['associationData.phoneNumber.nationalNumber']").value("Must provide a valid phone number"));
+                .andExpect(jsonPath("$.errors['associationData.phoneNumber.nationalNumber']").value("INVALID_FORMAT"));
     }
 
     @Test
@@ -184,14 +184,14 @@ class AuthControllerRegisterIT extends BaseAuthIT {
     void shouldFailWhenPasswordMismatch() throws Exception {
         performRegisterRequest(validBuilder.withConfirmPassword("Different123!").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['userData.confirmPassword']").value("Password and confirm password don't match"));
+                .andExpect(jsonPath("$.errors['userData.confirmPassword']").value("INVALID_FIELD"));
     }
 
     @Test
     void shouldFailWhenAssociationNameIsNull() throws Exception {
         performRegisterRequest(validBuilder.withAssociationName(null).build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['associationData.associationName']").value("Association's name is required"));
+                .andExpect(jsonPath("$.errors['associationData.associationName']").value("REQUIRED"));
     }
 
     @Test
@@ -205,21 +205,21 @@ class AuthControllerRegisterIT extends BaseAuthIT {
     void shouldFailWhenAssociationEmailInvalid() throws Exception {
         performRegisterRequest(validBuilder.withAssociationEmail("invalid").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['associationData.email']").value("Must provide a valid email"));
+                .andExpect(jsonPath("$.errors['associationData.email']").value("INVALID_EMAIL"));
     }
 
     @Test
     void shouldFailWhenAddressPlaceIdIsNull() throws Exception {
         performRegisterRequest(validBuilder.withAddress(null, "Address", 40.0, -3.0, "Madrid", "Madrid", "28001").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['associationData.addressData.placeId']").value("Google Place ID is required"));
+                .andExpect(jsonPath("$.errors['associationData.addressData.placeId']").value("REQUIRED"));
     }
 
     @Test
     void shouldFailWhenAddressFormattedAddressIsNull() throws Exception {
         performRegisterRequest(validBuilder.withAddress("placeId", null, 40.0, -3.0, "Madrid", "Madrid", "28001").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['associationData.addressData.formattedAddress']").value("Formatted address is required"));
+                .andExpect(jsonPath("$.errors['associationData.addressData.formattedAddress']").value("REQUIRED"));
     }
 
     @Test
@@ -240,35 +240,35 @@ class AuthControllerRegisterIT extends BaseAuthIT {
     void shouldFailWhenLatitudeIsOutOfRange() throws Exception {
         performRegisterRequest(validBuilder.withAddress("placeId", "Address", -91.0, -3.0, "Madrid", "Madrid", "28001").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['associationData.addressData.latitude']").value("Latitude must be between -90 and 90"));
+                .andExpect(jsonPath("$.errors['associationData.addressData.latitude']").value("TOO_SMALL"));
     }
 
     @Test
     void shouldFailWhenLongitudeIsOutOfRange() throws Exception {
         performRegisterRequest(validBuilder.withAddress("placeId", "Address", 40.0, -181.0, "Madrid", "Madrid", "28001").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['associationData.addressData.longitude']").value("Longitude must be between -180 and 180"));
+                .andExpect(jsonPath("$.errors['associationData.addressData.longitude']").value("TOO_SMALL"));
     }
 
     @Test
     void shouldFailWhenCityIsNull() throws Exception {
         performRegisterRequest(validBuilder.withAddress("placeId", "Address", 40.0, -3.0, null, "Madrid", "28001").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['associationData.addressData.city']").value("City is required"));
+                .andExpect(jsonPath("$.errors['associationData.addressData.city']").value("REQUIRED"));
     }
 
     @Test
     void shouldFailWhenProvinceTooShort() throws Exception {
         performRegisterRequest(validBuilder.withAddress("placeId", "Address", 40.0, -3.0, "Madrid", "A", "28001").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['associationData.addressData.province']").value("Province must be between 2 and 100 characters"));
+                .andExpect(jsonPath("$.errors['associationData.addressData.province']").value("INVALID_LENGTH"));
     }
 
     @Test
     void shouldFailWhenZipCodeInvalid() throws Exception {
         performRegisterRequest(validBuilder.withAddress("placeId", "Address", 40.0, -3.0, "Madrid", "Madrid", "123").build())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['associationData.addressData.zipCode']").value("Must provide a valid zip code"));
+                .andExpect(jsonPath("$.errors['associationData.addressData.zipCode']").value("INVALID_FORMAT"));
     }
 
     @Test
@@ -277,7 +277,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
 
         performRegisterRequest(request)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['userData.password']").value(containsString("Password must be between 8 and 32 characters")));
+                .andExpect(jsonPath("$.errors['userData.password']").value(containsString("INVALID_FORMAT")));
     }
 
     @Test
@@ -286,7 +286,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
 
         performRegisterRequest(request)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['userData.password']").value("Password is required"));
+                .andExpect(jsonPath("$.errors['userData.password']").value("REQUIRED"));
     }
 
     @Test
@@ -304,7 +304,7 @@ class AuthControllerRegisterIT extends BaseAuthIT {
 
         performRegisterRequest(request)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['userData.confirmPassword']").value("Password and confirm password don't match"));
+                .andExpect(jsonPath("$.errors['userData.confirmPassword']").value("INVALID_FIELD"));
     }
 
     @Test

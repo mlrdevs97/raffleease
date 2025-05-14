@@ -5,30 +5,30 @@ import lombok.Builder;
 
 @Builder
 public record RegisterAddressData(
-        @NotBlank(message = "Google Place ID is required")
+        @NotBlank
         String placeId,
 
-        @NotNull(message = "Latitude is required")
-        @DecimalMin(value = "-90.0", inclusive = true, message = "Latitude must be between -90 and 90")
-        @DecimalMax(value = "90.0", inclusive = true, message = "Latitude must be between -90 and 90")
+        @NotNull
+        @DecimalMin(value = "-90.0")
+        @DecimalMax(value = "90.0")
         Double latitude,
 
-        @NotNull(message = "Longitude is required")
-        @DecimalMin(value = "-180.0", inclusive = true, message = "Longitude must be between -180 and 180")
-        @DecimalMax(value = "180.0", inclusive = true, message = "Longitude must be between -180 and 180")
+        @NotNull
+        @DecimalMin(value = "-180.0")
+        @DecimalMax(value = "180.0")
         Double longitude,
 
-        @NotBlank(message = "City is required")
-        @Size(min = 2, max = 100, message = "City must be between 2 and 100 characters")
+        @NotBlank
+        @Size(min = 2, max = 100)
         String city,
 
-        @Size(min = 2, max = 100, message = "Province must be between 2 and 100 characters")
+        @Size(min = 2, max = 100)
         String province,
 
-        @Pattern(regexp = "^$|^[0-9]{5}(?:-[0-9]{4})?$", message = "Must provide a valid zip code")
+        @Pattern(regexp = "^$|^[0-9]{5}(?:-[0-9]{4})?$")
         String zipCode,
 
-        @NotBlank(message = "Formatted address is required")
-        @Size(min = 5, max = 255, message = "Formatted address must be between 5 and 255 characters")
+        @NotBlank
+        @Size(min = 5, max = 255)
         String formattedAddress
 ) {}
