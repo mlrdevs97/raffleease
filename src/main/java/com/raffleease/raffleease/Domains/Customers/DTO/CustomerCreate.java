@@ -9,11 +9,11 @@ import lombok.Builder;
 
 @Builder
 public record CustomerCreate(
-        @NotBlank(message = "Must provide a name for user")
+        @NotBlank
         String fullName,
 
         @Nullable
-        @Email(message = "Must provide a valid email")
+        @Email
         String email,
 
         @Nullable

@@ -5,9 +5,9 @@ import lombok.Builder;
 
 @Builder
 public record SearchRequest(
-        @NotNull(message = "Must provide a ticket number")
+        @NotNull
         String ticketNumber,
 
-        @NotNull(message = "Must indicate the raffle")
+        @NotNull
         Long raffleId
 ) {}

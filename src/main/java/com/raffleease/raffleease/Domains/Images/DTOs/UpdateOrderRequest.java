@@ -12,8 +12,8 @@ import static com.raffleease.raffleease.Constants.Constants.MIN_IMAGES;
 
 @Builder
 public record UpdateOrderRequest(
-        @NotEmpty(message = "Must provide images to reorder")
-        @Size(min = MIN_IMAGES, max = MAX_IMAGES, message = "A minimum of 1 and a maximum of 10 images are allowed")
+        @NotEmpty
+        @Size(min = MIN_IMAGES, max = MAX_IMAGES)
         @Valid
         List<ImageDTO> images
 ) { }

@@ -5,23 +5,23 @@ import lombok.Builder;
 
 @Builder
 public record ImageDTO(
-        @NotNull(message = "Image ID cannot be null")
+        @NotNull
         Long id,
 
-        @NotBlank(message = "File name cannot be blank")
+        @NotBlank
         String fileName,
 
-        @NotBlank(message = "File path cannot be blank")
+        @NotBlank
         String filePath,
 
-        @NotBlank(message = "Content type cannot be blank")
+        @NotBlank
         String contentType,
 
-        @NotBlank(message = "URL cannot be blank")
+        @NotBlank
         String url,
 
-        @NotNull(message = "Image order cannot be null")
-        @Min(value = 1, message = "Image order must be a positive number")
-        @Max(value = 10, message = "Image order cannot be greater than 10")
+        @NotNull
+        @Min(value = 1)
+        @Max(value = 10)
         Integer imageOrder
 ) { }

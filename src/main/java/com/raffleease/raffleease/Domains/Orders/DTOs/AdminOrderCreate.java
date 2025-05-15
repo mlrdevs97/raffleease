@@ -13,19 +13,19 @@ import java.util.List;
 
 @Builder
 public record AdminOrderCreate(
-        @NotNull(message = "Must provide cart id")
-        @Positive(message = "Cart id must be a positive number")
+        @NotNull
+        @Positive
         Long cartId,
 
-        @NotEmpty(message = "At least one ticket is required to create an order")
+        @NotEmpty
         List<Long> ticketIds,
 
-        @NotNull(message = "Must provide customer data")
+        @NotNull
         @Valid
         CustomerCreate customer,
 
         @Nullable
-        @Size(max = 500, message = "Comment must not exceed 500 characters")
+        @Size(max = 500)
         String comment
 ) {
         public AdminOrderCreate {

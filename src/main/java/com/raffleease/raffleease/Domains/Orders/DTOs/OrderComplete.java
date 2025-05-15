@@ -6,6 +6,6 @@ import lombok.Builder;
 
 @Builder
 public record OrderComplete(
-        @NotNull(message = "Must provide a payment method")
+        @NotNull
         PaymentMethod paymentMethod
 ) { }

@@ -7,6 +7,6 @@ import java.util.List;
 
 @Builder
 public record ReservationRequest (
-        @NotEmpty(message = "Must select at least one ticket")
+        @NotEmpty
         List<Long> ticketsIds
 ) { }

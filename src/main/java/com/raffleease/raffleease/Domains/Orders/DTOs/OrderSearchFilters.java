@@ -25,22 +25,22 @@ public record OrderSearchFilters(
         OrderSource orderSource,
         String orderReference,
 
-        @Size(max = 100, message = "Customer name must not exceed 100 characters")
+        @Size(max = 100)
         String customerName,
 
-        @Size(max = 100, message = "Customer email must not exceed 100 characters")
+        @Size(max = 100)
         String customerEmail,
 
-        @Size(max = 30, message = "Phone number must not exceed 30 characters")
+        @Size(max = 30)
         String customerPhone,
 
-        @Positive(message = "Raffle ID must be a positive number")
+        @Positive
         Long raffleId,
 
-        @PositiveOrZero(message = "Minimum total must be 0 or more")
+        @PositiveOrZero
         BigDecimal minTotal,
 
-        @PositiveOrZero(message = "Maximum total must be 0 or more")
+        @PositiveOrZero
         BigDecimal maxTotal,
 
         LocalDateTime createdFrom,

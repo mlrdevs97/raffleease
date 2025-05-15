@@ -6,7 +6,7 @@ import lombok.Builder;
 
 @Builder
 public record AddCommentRequest(
-        @NotNull(message = "Comment cannot be null")
-        @Size(max = 500, message = "Comment must not exceed 500 characters")
+        @NotNull
+        @Size(max = 500)
         String comment
 ) {}

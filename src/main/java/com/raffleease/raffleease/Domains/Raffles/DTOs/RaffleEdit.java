@@ -13,24 +13,24 @@ import static com.raffleease.raffleease.Constants.Constants.MIN_IMAGES;
 
 @Builder
 public record RaffleEdit(
-        @Size(max = 100, message = "Tile cannot exceed 100 characters")
+        @Size(max = 100)
         String title,
 
-        @Size(max = 5000, message = "Description cannot exceed 5000 characters")
+        @Size(max = 5000)
         String description,
 
-        @Future(message = "End date must be in the future")
+        @Future
         LocalDateTime endDate,
 
-        @Size(min = MIN_IMAGES, max = MAX_IMAGES, message = "A minimum of 1 and a maximum of 10 images are allowed")
+        @Size(min = MIN_IMAGES, max = MAX_IMAGES)
         List<ImageDTO> images,
 
-        @DecimalMin(value = "0.0", inclusive = false, message = "Ticket price must be greater than 0")
+        @DecimalMin(value = "0.0", inclusive = false)
         BigDecimal ticketPrice,
 
-        @Positive(message = "Total tickets must be a positive number")
+        @Positive
         Long totalTickets,
 
-        @Positive(message = "Price must be greater than zero")
+        @Positive
         BigDecimal price
 ) { }

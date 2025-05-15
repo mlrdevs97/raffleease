@@ -10,7 +10,7 @@ import static com.raffleease.raffleease.Constants.Constants.MAX_IMAGES;
 import static com.raffleease.raffleease.Constants.Constants.MIN_IMAGES;
 
 public record ImageUpload(
-        @NotEmpty(message = "Must provide at least one image")
-        @Size(min = MIN_IMAGES, max = MAX_IMAGES, message = "Must provide between 1 and 10 images")
+        @NotEmpty
+        @Size(min = MIN_IMAGES, max = MAX_IMAGES)
         List<MultipartFile> files
 ) {}

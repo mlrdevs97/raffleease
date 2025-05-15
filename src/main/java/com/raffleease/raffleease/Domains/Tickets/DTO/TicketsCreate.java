@@ -9,15 +9,15 @@ import java.math.BigDecimal;
 
 @Builder
 public record TicketsCreate (
-    @NotNull(message = "Must indicate a tickets amount for raffle")
-    @Positive(message = "Tickets amount must be greater than zero")
+    @NotNull
+    @Positive
     Long amount,
 
-    @NotNull(message = "Must indicate a price for tickets in raffle")
-    @Positive(message = "Price must be greater than zero")
+    @NotNull
+    @Positive
     BigDecimal price,
 
-    @NotNull(message = "Must indicate a lower limit for the tickets")
-    @Min(value = 0, message = "Lower limit must be greater than or equal to zero")
+    @NotNull
+    @Min(value = 0)
     Long lowerLimit
 ){}

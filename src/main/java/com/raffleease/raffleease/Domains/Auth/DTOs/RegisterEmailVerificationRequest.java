@@ -5,7 +5,7 @@ import lombok.Builder;
 
 @Builder
 public record RegisterEmailVerificationRequest(
-        @NotBlank(message = "Must provide a verification token")
+        @NotBlank
         String verificationToken
 ) {
 }

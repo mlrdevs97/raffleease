@@ -15,24 +15,24 @@ import java.util.List;
 
 @Builder
 public record OrderDTO(
-        @NotNull(message = "Order ID cannot be null")
+        @NotNull
         Long id,
 
-        @NotNull(message = "Order reference cannot be null")
-        @Size(min = 20, max = 40, message = "Amount of characters not valid")
+        @NotNull
+        @Size(min = 20, max = 40)
         String orderReference,
 
-        @NotNull(message = "Orden source cannot be null")
+        @NotNull
         OrderSource orderSource,
 
-        @NotNull(message = "Payment status cannot be null")
+        @NotNull
         OrderStatus status,
 
-        @NotEmpty(message = "Order items are required")
+        @NotEmpty
         @Valid
         List<OrderItemDTO> orderItems,
 
-        @NotNull(message = "Order's payment is required")
+        @NotNull
         @Valid
         PaymentDTO payment,
 
@@ -40,14 +40,14 @@ public record OrderDTO(
         CustomerDTO customer,
 
         @Nullable
-        @Size(max = 500, message = "Comment must not exceed 500 characters")
+        @Size(max = 500)
         String comment,
 
-        @NotNull(message = "Order date cannot be null")
-        @PastOrPresent(message = "Order date cannot be in the future")
+        @NotNull
+        @PastOrPresent
         LocalDateTime createdAt,
 
-        @PastOrPresent(message = "Order date cannot be in the future")
+        @PastOrPresent
         LocalDateTime updatedAt,
         LocalDateTime completedAt,
         LocalDateTime cancelledAt

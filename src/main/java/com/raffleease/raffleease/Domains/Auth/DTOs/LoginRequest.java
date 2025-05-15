@@ -5,9 +5,9 @@ import lombok.Builder;
 
 @Builder
 public record LoginRequest(
-        @NotBlank(message = "Identifier is required")
+        @NotBlank
         String identifier,
 
-        @NotBlank(message = "Password is required")
+        @NotBlank
         String password
 ) {}

@@ -4,11 +4,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
 public record PhoneNumberDTO(
-        @NotBlank(message = "Must provide a prefix for phone number")
-        @Pattern(regexp = "^\\+\\d{1,3}", message = "Must provide a valid prefix")
+        @NotBlank
+        @Pattern(regexp = "^\\+\\d{1,3}")
         String prefix,
 
-        @NotBlank(message = "Must provide a phone number")
-        @Pattern(regexp = "^\\d{1,14}$", message = "Must provide a valid phone number")
+        @NotBlank
+        @Pattern(regexp = "^\\d{1,14}$")
         String nationalNumber
 ) { }
