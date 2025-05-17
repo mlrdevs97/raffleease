@@ -42,7 +42,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
         final int numOrders = 3;
         List<Long> ids = new ArrayList<>();
         for (int i = 0; i < numOrders; i++) {
-            createAndReserveTicketsForCart(associationId, accessToken);
+            createAndReserveTicketsForCart(associationId, accessToken, 0);
             ids.add(createOrder(associationId, accessToken));
         }
 
@@ -54,9 +54,9 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldFilterByOrderStatus() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         createOrder(associationId, accessToken);
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 1);
         Long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         order.setStatus(COMPLETED);
@@ -70,9 +70,9 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldFilterByPaymentStatus() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         createOrder(associationId, accessToken);
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 1);
         Long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         Payment payment = paymentsRepository.findByOrder(order).orElseThrow();
@@ -87,14 +87,14 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldFilterByPaymentMethod() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         Long orderId1 = createOrder(associationId, accessToken);
         Order order1 = ordersRepository.findById(orderId1).orElseThrow();
         Payment payment1 = paymentsRepository.findByOrder(order1).orElseThrow();
         payment1.setPaymentMethod(CARD);
         paymentsRepository.save(payment1);
 
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 1);
         long orderId2 = createOrder(associationId, accessToken);
         Order order2 = ordersRepository.findById(orderId2).orElseThrow();
         Payment payment2 = paymentsRepository.findByOrder(order2).orElseThrow();
@@ -111,9 +111,9 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     // TODO: Enhance order source testing when customer order source is implemented
     @Test
     void shouldFilterByOrderSource() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         createOrder(associationId, accessToken);
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 1);
         Order order = ordersRepository.save(Order.builder()
                 .association(associationsRepository.findById(associationId).orElseThrow())
                 .orderReference("example-order-reference")
@@ -151,9 +151,9 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldFilterByOrderReferenceContainingIgnoreCase() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         createOrder(associationId, accessToken);
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 1);
         long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         Map<String, String> filters = Map.of("orderReference", order.getOrderReference());
@@ -165,9 +165,9 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldFilterByCustomerNameContainingIgnoreCase() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         createOrder(associationId, accessToken);
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 1);
         long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         order.getCustomer().setFullName("Test Name For Other User");
@@ -182,9 +182,9 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldFilterByCustomerEmailContainingIgnoreCase() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         createOrder(associationId, accessToken);
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 1);
         long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         order.getCustomer().setEmail("UNIQUE-test-email@user.com");
@@ -199,9 +199,9 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldFilterByCustomerPhoneContaining() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         createOrder(associationId, accessToken);
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 1);
         long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         order.getCustomer().setPhoneNumber("987987987");
@@ -216,9 +216,9 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldFilterByRaffleId() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         createOrder(associationId, accessToken);
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 1);
         long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         OrderItem item = OrderItem.builder()
@@ -241,14 +241,14 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldFilterByMinAndMaxTotal() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         long orderId1 = createOrder(associationId, accessToken);
         Order order1 = ordersRepository.findById(orderId1).orElseThrow();
         Payment payment1 = paymentsRepository.findByOrder(order1).orElseThrow();
         payment1.setTotal(new BigDecimal("15.00"));
         paymentsRepository.save(payment1);
 
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 1);
         long orderId2 = createOrder(associationId, accessToken);
         Order order2 = ordersRepository.findById(orderId2).orElseThrow();
         Payment payment2 = paymentsRepository.findByOrder(order2).orElseThrow();
@@ -263,7 +263,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldFilterByCreatedAtRange() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         order.setCreatedAt(LocalDateTime.now().minusDays(3));
@@ -281,7 +281,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldFilterByCompletedAtRange() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         order.setStatus(COMPLETED);
@@ -300,7 +300,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldFilterByCancelledAtRange() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         order.setStatus(CANCELLED);
@@ -319,7 +319,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldReturnOrdersMatchingMultipleFilters() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         order.setStatus(COMPLETED);
@@ -354,7 +354,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
         performSearchRequest(associationId, accessToken, filters)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.errors.paymentMethod").value("Invalid value 'INVALID_ENUM' for parameter 'paymentMethod'"));
+                .andExpect(jsonPath("$.errors.paymentMethod").value("INVALID_TYPE"));
     }
 
     @Test
@@ -364,7 +364,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
         performSearchRequest(associationId, accessToken, filters)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.customerName").value("Customer name must not exceed 100 characters"));
+                .andExpect(jsonPath("$.errors.customerName").value("INVALID_LENGTH"));
     }
 
     @Test
@@ -374,7 +374,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
         performSearchRequest(associationId, accessToken, filters)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.customerEmail").value("Customer email must not exceed 100 characters"));
+                .andExpect(jsonPath("$.errors.customerEmail").value("INVALID_LENGTH"));
     }
 
     @Test
@@ -384,7 +384,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
         performSearchRequest(associationId, accessToken, filters)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.customerPhone").value("Phone number must not exceed 30 characters"));
+                .andExpect(jsonPath("$.errors.customerPhone").value("INVALID_LENGTH"));
     }
 
     @Test
@@ -393,7 +393,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
         performSearchRequest(associationId, accessToken, filters)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.raffleId").value("Raffle ID must be a positive number"));
+                .andExpect(jsonPath("$.errors.raffleId").value("MUST_BE_POSITIVE"));
     }
 
     @Test
@@ -402,7 +402,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
         performSearchRequest(associationId, accessToken, filters)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.minTotal").value("Minimum total must be 0 or more"));
+                .andExpect(jsonPath("$.errors.minTotal").value("MUST_BE_POSITIVE_OR_ZERO"));
     }
 
     @Test
@@ -411,7 +411,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
         performSearchRequest(associationId, accessToken, filters)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.maxTotal").value("Maximum total must be 0 or more"));
+                .andExpect(jsonPath("$.errors.maxTotal").value("MUST_BE_POSITIVE_OR_ZERO"));
     }
 
     @Test
@@ -420,7 +420,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
         performSearchRequest(associationId, accessToken, filters)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.minTotal").value("Minimum total cannot be greater than maximum total"));
+                .andExpect(jsonPath("$.errors.minTotal").value("INVALID_FIELD"));
     }
 
     @Test
@@ -432,7 +432,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
         performSearchRequest(associationId, accessToken, filters)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.createdFrom").value("createdFrom must be before or equal to createdTo"));
+                .andExpect(jsonPath("$.errors.createdFrom").value("INVALID_FIELD"));
     }
 
     @Test
@@ -444,7 +444,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
         performSearchRequest(associationId, accessToken, filters)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.completedFrom").value("completedFrom must be before or equal to completedTo"));
+                .andExpect(jsonPath("$.errors.completedFrom").value("INVALID_FIELD"));
     }
 
     @Test
@@ -456,14 +456,14 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
         performSearchRequest(associationId, accessToken, filters)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.cancelledFrom").value("cancelledFrom must be before or equal to cancelledTo"));
+                .andExpect(jsonPath("$.errors.cancelledFrom").value("INVALID_FIELD"));
     }
 
 
     @Test
     void shouldReturnPagedResults() throws Exception {
         for (int i = 0; i < 5; i++) {
-            createAndReserveTicketsForCart(associationId, accessToken);
+            createAndReserveTicketsForCart(associationId, accessToken, 0);
             createOrder(associationId, accessToken);
         }
 
@@ -477,9 +477,9 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldReturnSortedByCreatedAtDescByDefault() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         createOrder(associationId, accessToken);
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 1);
         long secondOrderId = createOrder(associationId, accessToken);
 
         performSearchRequest(associationId, accessToken, Map.of("page", "0", "size", "2"))
@@ -490,7 +490,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     @Test
     void shouldReturnCorrectSecondPage() throws Exception {
         for (int i = 0; i < 5; i++) {
-            createAndReserveTicketsForCart(associationId, accessToken);
+            createAndReserveTicketsForCart(associationId, accessToken, 0);
             createOrder(associationId, accessToken);
         }
 
@@ -502,7 +502,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     @Test
     void shouldReturnEmptyPageIfOutOfBounds() throws Exception {
         for (int i = 0; i < 3; i++) {
-            createAndReserveTicketsForCart(associationId, accessToken);
+            createAndReserveTicketsForCart(associationId, accessToken, 0);
             createOrder(associationId, accessToken);
         }
 
@@ -514,7 +514,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
     @Test
     void shouldRespectCustomPageSize() throws Exception {
         for (int i = 0; i < 4; i++) {
-            createAndReserveTicketsForCart(associationId, accessToken);
+            createAndReserveTicketsForCart(associationId, accessToken, 0);
             createOrder(associationId, accessToken);
         }
 
@@ -525,7 +525,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldNotReturnOrdersFromOtherAssociations() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         Long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         AuthResponse otherAuth = registerOtherUser();
@@ -537,7 +537,7 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
 
     @Test
     void shouldTrimOrderSearchFilters() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
         long orderId = createOrder(associationId, accessToken);
         Order order = ordersRepository.findById(orderId).orElseThrow();
         order.setOrderReference("TRIM-REF-001");

@@ -35,10 +35,10 @@ public class BaseAminOrdersIT extends BaseIT {
         raffle = rafflesRepository.findById(raffleId).orElseThrow();
     }
 
-    protected void createAndReserveTicketsForCart(Long associationId, String accessToken) throws Exception {
+    protected void createAndReserveTicketsForCart(Long associationId, String accessToken, int ticketId) throws Exception {
         Long cartId = createCart(associationId, accessToken);
         List<Ticket> tickets = ticketsRepository.findAllByRaffle(raffle);
-        reservedTicket = tickets.get(0).getId();
+        reservedTicket = tickets.get(ticketId).getId();
         ReservationRequest request = ReservationRequest.builder().ticketsIds(List.of(reservedTicket)).build();
         performReserveRequest(request, associationId, cartId, accessToken).andReturn();
         cart = cartsRepository.findById(cartId).orElseThrow();
