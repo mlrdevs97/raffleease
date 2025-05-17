@@ -3,16 +3,17 @@ package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleSearchFilters;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
-import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
 import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class RafflesQueryServiceImpl implements RafflesQueryService {
     }
 
     @Override
-    public List<PublicRaffleDTO> getAll(Long associationId) {
+    public List<PublicRaffleDTO> search(Long associationId) {
         Association association = associationsService.findById(associationId);
         return mapper.fromRaffleList(findByAssociation(association));
     }
@@ -51,5 +52,11 @@ public class RafflesQueryServiceImpl implements RafflesQueryService {
         } catch (DataAccessException exp) {
             throw new DatabaseException("Database error occurred while retrieving raffle by association: " + exp.getMessage());
         }
+    }
+
+    @Override
+    public Page<PublicRaffleDTO> search(Long associationId, RaffleSearchFilters filters, Pageable pageable) {
+        Page<Raffle> page = rafflesRepository.search(filters, associationId, pageable);
+        return page.map(mapper::fromRaffle);
     }
 }

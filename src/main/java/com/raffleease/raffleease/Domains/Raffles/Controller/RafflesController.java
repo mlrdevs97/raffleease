@@ -5,6 +5,7 @@ import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.StatusUpdate;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleSearchFilters;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesEditService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesService;
@@ -13,6 +14,7 @@ import com.raffleease.raffleease.Responses.ApiResponse;
 import com.raffleease.raffleease.Responses.ResponseFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -83,12 +85,14 @@ public class RafflesController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getAll(
-            @PathVariable Long associationId
+    public ResponseEntity<ApiResponse> search(
+            @PathVariable Long associationId,
+            RaffleSearchFilters searchFilters,
+            Pageable pageable
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                rafflesQueryService.getAll(associationId),
-                "All raffles retrieved successfully"
+                rafflesQueryService.search(associationId, searchFilters, pageable),
+                "Raffles retrieved successfully"
         ));
     }
 

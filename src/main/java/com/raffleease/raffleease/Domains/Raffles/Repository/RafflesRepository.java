@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface RafflesRepository extends JpaRepository<Raffle, Long> {
+public interface RafflesRepository extends JpaRepository<Raffle, Long>, RafflesSearchRepository {
     List<Raffle> findByAssociation(Association association);
 
     @Query("""
@@ -24,6 +24,5 @@ public interface RafflesRepository extends JpaRepository<Raffle, Long> {
           )
     """)
     List<Raffle> findAllEligibleForCompletion(@Param("status") RaffleStatus status);
-
     List<Raffle> findAllByAssociation(Association association);
 }
