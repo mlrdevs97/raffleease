@@ -1,5 +1,7 @@
 package com.raffleease.raffleease.Common.Configs;
 
+import com.raffleease.raffleease.Infraestructure.Security.CustomAccessDeniedHandler;
+import com.raffleease.raffleease.Infraestructure.Security.CustomAuthenticationEntryPoint;
 import com.raffleease.raffleease.Infraestructure.Security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +29,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AuthenticationProvider authProvider;
     private final LogoutHandler logoutHandler;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
     @Value("${logout_path}")
     private String logoutUrl;
@@ -50,6 +54,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                )
                 .logout(logoutConfigurer ->
                         logoutConfigurer
                             .logoutUrl(logoutUrl)
