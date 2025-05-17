@@ -9,7 +9,7 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;

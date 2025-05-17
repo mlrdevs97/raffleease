@@ -14,7 +14,7 @@ import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
 import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.FileStorageException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.FileStorageException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j

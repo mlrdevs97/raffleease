@@ -5,8 +5,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 
-import static com.raffleease.raffleease.Helpers.SanitizeUtils.trim;
-import static com.raffleease.raffleease.Helpers.SanitizeUtils.trimAndLower;
+import static com.raffleease.raffleease.Common.Utils.SanitizeUtils.trim;
+import static com.raffleease.raffleease.Common.Utils.SanitizeUtils.trimAndLower;
 
 @Builder
 public record RegisterAssociationData(

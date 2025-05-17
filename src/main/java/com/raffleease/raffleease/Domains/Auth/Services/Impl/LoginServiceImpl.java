@@ -1,10 +1,7 @@
 package com.raffleease.raffleease.Domains.Auth.Services.Impl;
 
-import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
-import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsMembershipsRepository;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsMembershipService;
-import com.raffleease.raffleease.Domains.Associations.Services.Impl.AssociationsMembershipServiceImpl;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Auth.Services.CookiesService;
@@ -12,7 +9,7 @@ import com.raffleease.raffleease.Domains.Auth.Services.LoginService;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensCreateService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthenticationException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthenticationException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

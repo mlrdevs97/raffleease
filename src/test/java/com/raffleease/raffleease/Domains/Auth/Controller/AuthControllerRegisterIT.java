@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Auth.Controller;
 
-import com.raffleease.raffleease.Configs.CorsProperties;
+import com.raffleease.raffleease.Common.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsMembershipsRepository;

@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Auth.Services.Impl;
 
-import com.raffleease.raffleease.Configs.CorsProperties;
+import com.raffleease.raffleease.Common.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
@@ -11,7 +11,7 @@ import com.raffleease.raffleease.Domains.Auth.Services.RegisterService;
 import com.raffleease.raffleease.Domains.Notifications.Services.EmailsService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static com.raffleease.raffleease.Constants.Constants.EMAIL_VERIFICATION_EXPIRATION_MINUTES;
+import static com.raffleease.raffleease.Common.Constants.Constants.EMAIL_VERIFICATION_EXPIRATION_MINUTES;
 import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.ADMIN;
 
 @RequiredArgsConstructor

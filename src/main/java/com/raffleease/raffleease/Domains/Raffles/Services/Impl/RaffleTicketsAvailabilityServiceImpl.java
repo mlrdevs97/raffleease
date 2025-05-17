@@ -3,7 +3,7 @@ package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RaffleTicketsAvailabilityService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

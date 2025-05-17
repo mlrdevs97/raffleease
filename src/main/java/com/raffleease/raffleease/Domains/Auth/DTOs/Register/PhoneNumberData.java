@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 
-import static com.raffleease.raffleease.Helpers.SanitizeUtils.trim;
+import static com.raffleease.raffleease.Common.Utils.SanitizeUtils.trim;
 
 @Builder
 public record PhoneNumberData(

@@ -1,7 +1,7 @@
 package com.raffleease.raffleease.Domains.Tokens.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

@@ -2,8 +2,8 @@ package com.raffleease.raffleease.Domains.Customers.Controller;
 
 import com.raffleease.raffleease.Domains.Customers.DTO.CustomerSearchFilters;
 import com.raffleease.raffleease.Domains.Customers.Services.CustomersService;
-import com.raffleease.raffleease.Responses.ApiResponse;
-import com.raffleease.raffleease.Responses.ResponseFactory;
+import com.raffleease.raffleease.Common.Responses.ApiResponse;
+import com.raffleease.raffleease.Common.Responses.ResponseFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;

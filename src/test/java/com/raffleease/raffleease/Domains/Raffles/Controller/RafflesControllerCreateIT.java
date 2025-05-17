@@ -1,7 +1,7 @@
 package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.raffleease.raffleease.Configs.CorsProperties;
+import com.raffleease.raffleease.Common.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Auth.DTOs.AuthResponse;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;

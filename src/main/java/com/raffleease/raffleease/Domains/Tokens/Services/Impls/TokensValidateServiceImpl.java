@@ -3,9 +3,8 @@ package com.raffleease.raffleease.Domains.Tokens.Services.Impls;
 import com.raffleease.raffleease.Domains.Tokens.Services.BlackListService;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensValidateService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;

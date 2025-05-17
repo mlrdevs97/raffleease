@@ -1,10 +1,10 @@
 package com.raffleease.raffleease.Domains.Payments.Services.Impls;
 
-import com.raffleease.raffleease.Configs.CorsProperties;
+import com.raffleease.raffleease.Common.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Payments.Services.StripeService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.CustomStripeException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.CustomStripeException;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;

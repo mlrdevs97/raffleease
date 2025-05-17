@@ -8,8 +8,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.raffleease.raffleease.Constants.Constants.MAX_IMAGES;
-import static com.raffleease.raffleease.Constants.Constants.MIN_IMAGES;
+import static com.raffleease.raffleease.Common.Constants.Constants.MAX_IMAGES;
+import static com.raffleease.raffleease.Common.Constants.Constants.MIN_IMAGES;
 
 @Builder
 public record RaffleEdit(

@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
-import com.raffleease.raffleease.Configs.CorsProperties;
+import com.raffleease.raffleease.Common.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
@@ -14,7 +14,7 @@ import com.raffleease.raffleease.Domains.Raffles.Services.RafflesService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

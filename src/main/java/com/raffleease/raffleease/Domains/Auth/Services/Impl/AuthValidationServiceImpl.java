@@ -1,7 +1,7 @@
 package com.raffleease.raffleease.Domains.Auth.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Auth.Services.AuthValidationService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthenticationException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthenticationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

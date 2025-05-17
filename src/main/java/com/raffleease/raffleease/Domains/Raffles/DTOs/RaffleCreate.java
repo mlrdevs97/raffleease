@@ -11,8 +11,8 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.raffleease.raffleease.Constants.Constants.MAX_IMAGES;
-import static com.raffleease.raffleease.Constants.Constants.MIN_IMAGES;
+import static com.raffleease.raffleease.Common.Constants.Constants.MAX_IMAGES;
+import static com.raffleease.raffleease.Common.Constants.Constants.MIN_IMAGES;
 
 public record RaffleCreate(
         @NotBlank

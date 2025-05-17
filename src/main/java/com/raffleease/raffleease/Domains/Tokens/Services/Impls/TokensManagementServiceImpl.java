@@ -7,7 +7,7 @@ import com.raffleease.raffleease.Domains.Auth.Services.CookiesService;
 import com.raffleease.raffleease.Domains.Tokens.Services.*;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

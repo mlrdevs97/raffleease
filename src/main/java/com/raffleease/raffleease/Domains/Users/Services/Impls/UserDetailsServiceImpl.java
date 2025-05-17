@@ -3,7 +3,7 @@ package com.raffleease.raffleease.Domains.Users.Services.Impls;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Model.CostumUserDetails;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

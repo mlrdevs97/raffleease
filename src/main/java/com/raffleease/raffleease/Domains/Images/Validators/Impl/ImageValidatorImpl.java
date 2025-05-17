@@ -1,13 +1,13 @@
 package com.raffleease.raffleease.Domains.Images.Validators.Impl;
 
-import com.raffleease.raffleease.Constants.Constants;
+import com.raffleease.raffleease.Common.Constants.Constants;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;

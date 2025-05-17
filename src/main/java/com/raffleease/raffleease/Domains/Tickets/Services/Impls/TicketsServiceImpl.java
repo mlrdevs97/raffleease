@@ -7,7 +7,7 @@ import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 import com.raffleease.raffleease.Domains.Tickets.Repository.CustomTicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;

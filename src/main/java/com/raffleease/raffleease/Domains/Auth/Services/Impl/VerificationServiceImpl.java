@@ -3,11 +3,8 @@ package com.raffleease.raffleease.Domains.Auth.Services.Impl;
 import com.raffleease.raffleease.Domains.Auth.Model.VerificationToken;
 import com.raffleease.raffleease.Domains.Auth.Repository.VerificationTokenRepository;
 import com.raffleease.raffleease.Domains.Auth.Services.VerificationService;
-import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.EmailVerificationException;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.EmailVerificationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

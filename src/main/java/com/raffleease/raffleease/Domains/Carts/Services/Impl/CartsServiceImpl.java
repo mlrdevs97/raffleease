@@ -7,8 +7,8 @@ import com.raffleease.raffleease.Domains.Carts.Model.CartOwnerType;
 import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import static com.raffleease.raffleease.Domains.Carts.Model.CartOwnerType.ADMIN;
 import static com.raffleease.raffleease.Domains.Carts.Model.CartOwnerType.CUSTOMER;
 import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.ACTIVE;
-import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
 
 @RequiredArgsConstructor
 @Service

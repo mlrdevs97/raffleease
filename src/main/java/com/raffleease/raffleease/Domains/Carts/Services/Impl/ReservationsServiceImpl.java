@@ -14,7 +14,7 @@ import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

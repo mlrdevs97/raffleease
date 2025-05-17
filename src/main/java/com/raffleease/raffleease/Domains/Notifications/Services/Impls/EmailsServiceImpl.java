@@ -8,7 +8,7 @@ import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Users.Model.User;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.CustomMailException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.CustomMailException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;

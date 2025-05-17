@@ -9,11 +9,10 @@ import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRep
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterAssociationData;
 import com.raffleease.raffleease.Domains.Users.Model.User;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.ConflictException;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.DatabaseException;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.UniqueConstraintViolationException;
-import com.raffleease.raffleease.Helpers.ConstraintViolationParser;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.UniqueConstraintViolationException;
+import com.raffleease.raffleease.Common.Utils.ConstraintViolationParser;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;

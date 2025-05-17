@@ -1,12 +1,11 @@
 package com.raffleease.raffleease.Domains.Auth.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Auth.Services.CookiesService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 

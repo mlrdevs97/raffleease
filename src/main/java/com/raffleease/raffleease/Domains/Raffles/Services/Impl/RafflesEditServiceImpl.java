@@ -12,7 +12,7 @@ import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceServ
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.BusinessException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

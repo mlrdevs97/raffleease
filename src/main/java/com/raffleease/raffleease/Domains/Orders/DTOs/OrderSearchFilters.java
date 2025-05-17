@@ -4,9 +4,7 @@ import com.raffleease.raffleease.Domains.Orders.Model.OrderSource;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderStatus;
 import com.raffleease.raffleease.Domains.Payments.Model.PaymentMethod;
 import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
-import com.raffleease.raffleease.Helpers.SanitizeUtils;
-import com.raffleease.raffleease.Validations.ValidOrderSearchFilters;
-import jakarta.validation.constraints.Email;
+import com.raffleease.raffleease.Common.Validations.ValidOrderSearchFilters;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -14,8 +12,8 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import static com.raffleease.raffleease.Helpers.SanitizeUtils.trim;
-import static com.raffleease.raffleease.Helpers.SanitizeUtils.trimAndLower;
+import static com.raffleease.raffleease.Common.Utils.SanitizeUtils.trim;
+import static com.raffleease.raffleease.Common.Utils.SanitizeUtils.trimAndLower;
 
 @ValidOrderSearchFilters
 public record OrderSearchFilters(

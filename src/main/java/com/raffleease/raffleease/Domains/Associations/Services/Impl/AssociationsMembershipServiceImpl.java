@@ -5,10 +5,9 @@ import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembershi
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsMembershipsRepository;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsMembershipService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.AuthorizationException;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.NotFoundException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor

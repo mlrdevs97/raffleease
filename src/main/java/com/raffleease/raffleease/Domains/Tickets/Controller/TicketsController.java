@@ -2,10 +2,9 @@ package com.raffleease.raffleease.Domains.Tickets.Controller;
 
 import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAccess;
 import com.raffleease.raffleease.Domains.Tickets.DTO.*;
-import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
-import com.raffleease.raffleease.Responses.ApiResponse;
-import com.raffleease.raffleease.Responses.ResponseFactory;
+import com.raffleease.raffleease.Common.Responses.ApiResponse;
+import com.raffleease.raffleease.Common.Responses.ResponseFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;

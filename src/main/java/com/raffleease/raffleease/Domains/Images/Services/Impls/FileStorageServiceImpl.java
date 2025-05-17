@@ -1,7 +1,7 @@
 package com.raffleease.raffleease.Domains.Images.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
-import com.raffleease.raffleease.Exceptions.CustomExceptions.FileStorageException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.FileStorageException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
