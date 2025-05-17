@@ -6,7 +6,7 @@ import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Mappers.ImagesMapper;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
-import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import lombok.RequiredArgsConstructor;
@@ -42,14 +42,14 @@ public class RafflesMapper implements IRafflesMapper {
     }
 
     @Override
-    public PublicRaffleDTO fromRaffle(Raffle raffle) {
+    public RaffleDTO fromRaffle(Raffle raffle) {
         AssociationDTO association = associationsMapper.fromAssociation(raffle.getAssociation());
 
         List<ImageDTO> images = imagesMapper.fromImagesList(raffle.getImages()).stream()
                 .sorted(Comparator.comparing(ImageDTO::imageOrder))
                 .toList();
 
-        return PublicRaffleDTO.builder()
+        return RaffleDTO.builder()
                 .id(raffle.getId())
                 .title(raffle.getTitle())
                 .description(raffle.getDescription())
@@ -67,14 +67,13 @@ public class RafflesMapper implements IRafflesMapper {
                 .totalTickets(raffle.getTotalTickets())
                 .soldTickets(raffle.getSoldTickets())
                 .revenue(raffle.getRevenue())
-                .association(association)
                 .completionReason(raffle.getCompletionReason())
                 .winningTicketId(raffle.getWinningTicket() != null ? raffle.getWinningTicket().getId() : null)
                 .build();
     }
 
     @Override
-    public List<PublicRaffleDTO> fromRaffleList(List<Raffle> raffles) {
+    public List<RaffleDTO> fromRaffleList(List<Raffle> raffles) {
         return raffles.stream().map(this::fromRaffle).toList();
     }
 }

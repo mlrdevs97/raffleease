@@ -2,7 +2,7 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAccess;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
-import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.StatusUpdate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleSearchFilters;
@@ -36,7 +36,7 @@ public class RafflesController {
             @PathVariable Long associationId,
             @RequestBody @Valid RaffleCreate raffleData
     ) {
-        PublicRaffleDTO createdRaffle = rafflesService.create(associationId, raffleData);
+        RaffleDTO createdRaffle = rafflesService.create(associationId, raffleData);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()

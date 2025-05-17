@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
-import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.StatusUpdate;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
@@ -24,17 +24,17 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
     private final IRafflesMapper mapper;
 
     @Override
-    public PublicRaffleDTO updateStatus(Raffle raffle, RaffleStatus newStatus) {
+    public RaffleDTO updateStatus(Raffle raffle, RaffleStatus newStatus) {
         return performUpdate(raffle, newStatus);
     }
 
     @Override
-    public PublicRaffleDTO updateStatus(Long id, StatusUpdate request) {
+    public RaffleDTO updateStatus(Long id, StatusUpdate request) {
         Raffle raffle = rafflesPersistence.findById(id);
         return performUpdate(raffle, request.status());
     }
 
-    private PublicRaffleDTO performUpdate(Raffle raffle, RaffleStatus newStatus) {
+    private RaffleDTO performUpdate(Raffle raffle, RaffleStatus newStatus) {
         switch (newStatus) {
             case ACTIVE -> updateToActive(raffle);
             case PAUSED -> pause(raffle);

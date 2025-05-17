@@ -6,7 +6,7 @@ import com.raffleease.raffleease.Domains.Associations.Services.AssociationsServi
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesAssociateService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
-import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
@@ -33,7 +33,7 @@ public class RafflesServiceImpl implements RafflesService {
 
     @Override
     @Transactional
-    public PublicRaffleDTO create(Long associationId, RaffleCreate raffleData) {
+    public RaffleDTO create(Long associationId, RaffleCreate raffleData) {
         Association association = associationsService.findById(associationId);
         Raffle mappedRaffle = rafflesMapper.toRaffle(raffleData, association);
         Raffle raffle = rafflesPersistence.save(mappedRaffle);

@@ -2,7 +2,7 @@ package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
-import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleSearchFilters;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
@@ -27,12 +27,12 @@ public class RafflesQueryServiceImpl implements RafflesQueryService {
     private final AssociationsService associationsService;
 
     @Override
-    public PublicRaffleDTO get(Long id) {
+    public RaffleDTO get(Long id) {
         return mapper.fromRaffle(rafflesPersistence.findById(id));
     }
 
     @Override
-    public List<PublicRaffleDTO> search(Long associationId) {
+    public List<RaffleDTO> search(Long associationId) {
         Association association = associationsService.findById(associationId);
         return mapper.fromRaffleList(findByAssociation(association));
     }
@@ -55,7 +55,7 @@ public class RafflesQueryServiceImpl implements RafflesQueryService {
     }
 
     @Override
-    public Page<PublicRaffleDTO> search(Long associationId, RaffleSearchFilters filters, Pageable pageable) {
+    public Page<RaffleDTO> search(Long associationId, RaffleSearchFilters filters, Pageable pageable) {
         Page<Raffle> page = rafflesRepository.search(filters, associationId, pageable);
         return page.map(mapper::fromRaffle);
     }

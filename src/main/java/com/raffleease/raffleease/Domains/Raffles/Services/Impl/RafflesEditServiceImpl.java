@@ -3,7 +3,7 @@ package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesAssociateService;
-import com.raffleease.raffleease.Domains.Raffles.DTOs.PublicRaffleDTO;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
@@ -30,7 +30,7 @@ public class RafflesEditServiceImpl implements RafflesEditService {
     private final IRafflesMapper rafflesMapper;
 
     @Transactional
-    public PublicRaffleDTO edit(Long id, RaffleEdit raffleEdit) {
+    public RaffleDTO edit(Long id, RaffleEdit raffleEdit) {
         Raffle raffle = rafflesPersistence.findById(id);
 
         if (raffleEdit.title() != null) {
