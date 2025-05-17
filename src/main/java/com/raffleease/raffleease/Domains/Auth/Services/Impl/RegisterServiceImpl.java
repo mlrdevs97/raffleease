@@ -54,7 +54,7 @@ public class RegisterServiceImpl implements RegisterService {
     private void handleUserVerification(User user) {
         VerificationToken verificationToken = createVerificationToken(user);
         String verificationLink = UriComponentsBuilder.fromHttpUrl(corsProperties.getClientAsList().get(0))
-                .path("/auth/verify-email")
+                .path("/auth/email-verification")
                 .queryParam("token", verificationToken.getToken())
                 .build()
                 .toUriString();
@@ -76,9 +76,6 @@ public class RegisterServiceImpl implements RegisterService {
     private RegisterResponse toRegisterResponse(User user) {
         return RegisterResponse.builder()
                 .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .userName(user.getUserName())
                 .email(user.getEmail())
                 .build();
     }
