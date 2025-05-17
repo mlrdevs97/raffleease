@@ -3,6 +3,7 @@ package com.raffleease.raffleease.Domains.Auth.Controller;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.RegisterEmailVerificationRequest;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterResponse;
 import com.raffleease.raffleease.Domains.Auth.Services.AuthValidationService;
 import com.raffleease.raffleease.Domains.Auth.Services.LoginService;
 import com.raffleease.raffleease.Domains.Auth.Services.RegisterService;
@@ -33,10 +34,9 @@ public class AuthController {
             @Valid @RequestBody RegisterRequest request,
             HttpServletResponse response
     ) {
-        registerService.register(request, response);
         return ResponseEntity.ok().body(
                 ResponseFactory.success(
-                        null,
+                        registerService.register(request, response),
                         "New association account created successfully"
                 )
         );

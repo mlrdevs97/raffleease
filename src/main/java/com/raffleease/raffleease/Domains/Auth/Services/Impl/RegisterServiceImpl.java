@@ -4,6 +4,7 @@ import com.raffleease.raffleease.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
+import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterResponse;
 import com.raffleease.raffleease.Domains.Auth.Model.VerificationToken;
 import com.raffleease.raffleease.Domains.Auth.Repository.VerificationTokenRepository;
 import com.raffleease.raffleease.Domains.Auth.Services.RegisterService;
@@ -41,18 +42,19 @@ public class RegisterServiceImpl implements RegisterService {
 
     @Transactional
     @Override
-    public void register(RegisterRequest request, HttpServletResponse response) {
+    public RegisterResponse register(RegisterRequest request, HttpServletResponse response) {
         String encodedPassword = passwordEncoder.encode(request.userData().password());
         User user = usersService.create(request.userData(), encodedPassword);
         Association association = associationsService.create(request.associationData());
         associationsService.createMembership(association, user, ADMIN);
         handleUserVerification(user);
+        return toRegisterResponse(user);
     }
 
     private void handleUserVerification(User user) {
         VerificationToken verificationToken = createVerificationToken(user);
         String verificationLink = UriComponentsBuilder.fromHttpUrl(corsProperties.getClientAsList().get(0))
-                .path("/admin/auth/verify-email")
+                .path("/auth/verify-email")
                 .queryParam("token", verificationToken.getToken())
                 .build()
                 .toUriString();
@@ -69,5 +71,15 @@ public class RegisterServiceImpl implements RegisterService {
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while saving verification token");
         }
+    }
+
+    private RegisterResponse toRegisterResponse(User user) {
+        return RegisterResponse.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .userName(user.getUserName())
+                .email(user.getEmail())
+                .build();
     }
 }
