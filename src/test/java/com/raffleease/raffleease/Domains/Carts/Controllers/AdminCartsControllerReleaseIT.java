@@ -57,7 +57,7 @@ public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT {
 
         performReleaseRequest(request, getReleaseURL(cartId), accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.ticketsIds").value("Must select at least one ticket"));
+                .andExpect(jsonPath("$.errors.ticketsIds").value("REQUIRED"));
     }
 
     @Test
@@ -66,7 +66,7 @@ public class AdminCartsControllerReleaseIT extends BaseAdminCartsIT {
         ReservationRequest request = ReservationRequest.builder().ticketsIds(List.of()).build();
         performReleaseRequest(request, getReleaseURL(cartId), accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.ticketsIds").value("Must select at least one ticket"));
+                .andExpect(jsonPath("$.errors.ticketsIds").value("REQUIRED"));
     }
 
     @Test

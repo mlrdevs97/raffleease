@@ -143,7 +143,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.title").value("Raffle title is required"));
+                .andExpect(jsonPath("$.errors.title").value("REQUIRED"));
     }
 
     @Test
@@ -157,7 +157,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.title").value("Tile cannot exceed 100 characters"));
+                .andExpect(jsonPath("$.errors.title").value("INVALID_LENGTH"));
     }
 
     @Test
@@ -169,7 +169,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.description").value("Raffle's description is required"));
+                .andExpect(jsonPath("$.errors.description").value("REQUIRED"));
     }
 
     @Test
@@ -183,7 +183,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.description").value("Description cannot exceed 5000 characters"));
+                .andExpect(jsonPath("$.errors.description").value("INVALID_LENGTH"));
     }
 
     @Test
@@ -195,7 +195,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.endDate").value("Raffle's end date is required"));
+                .andExpect(jsonPath("$.errors.endDate").value("REQUIRED"));
     }
 
     @Test
@@ -207,7 +207,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.endDate").value("Raffle's end date must be in the future"));
+                .andExpect(jsonPath("$.errors.endDate").value("MUST_BE_IN_FUTURE"));
     }
 
     @Test
@@ -218,7 +218,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.images").value("Must provide at least one picture for raffle"));
+                .andExpect(jsonPath("$.errors.images").value("REQUIRED"));
     }
 
     @Test
@@ -229,7 +229,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.images").value("A minimum of 1 and a maximum of 10 images are allowed"));
+                .andExpect(jsonPath("$.errors.images").value("INVALID_LENGTH"));
     }
 
     @Test
@@ -379,7 +379,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.ticketsInfo").value("Raffle ticket's info is required"));
+                .andExpect(jsonPath("$.errors.ticketsInfo").value("REQUIRED"));
     }
 
     @Test
@@ -393,7 +393,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['ticketsInfo.amount']").value("Tickets amount must be greater than zero"));
+                .andExpect(jsonPath("$.errors['ticketsInfo.amount']").value("MUST_BE_POSITIVE"));
     }
 
     @Test
@@ -407,7 +407,7 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['ticketsInfo.price']").value("Price must be greater than zero"));
+                .andExpect(jsonPath("$.errors['ticketsInfo.price']").value("MUST_BE_POSITIVE"));
     }
 
     @Test
@@ -421,6 +421,6 @@ class RafflesControllerCreateIT extends BaseRafflesIT {
 
         performCreateRaffleRequest(raffle, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['ticketsInfo.lowerLimit']").value("Lower limit must be greater than or equal to zero"));
+                .andExpect(jsonPath("$.errors['ticketsInfo.lowerLimit']").value("TOO_SMALL"));
     }
 }

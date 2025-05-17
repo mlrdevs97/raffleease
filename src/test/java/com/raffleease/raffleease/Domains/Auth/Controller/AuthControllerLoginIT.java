@@ -88,7 +88,7 @@ public class AuthControllerLoginIT extends BaseAuthIT {
 
         performLoginRequest(loginRequest)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.identifier").value("Identifier is required"));
+                .andExpect(jsonPath("$.errors.identifier").value("REQUIRED"));
     }
 
     @Test
@@ -100,7 +100,7 @@ public class AuthControllerLoginIT extends BaseAuthIT {
 
         performLoginRequest(loginRequest)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.password").value("Password is required"));
+                .andExpect(jsonPath("$.errors.password").value("REQUIRED"));
     }
 
     @Test

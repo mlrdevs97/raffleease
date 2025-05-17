@@ -113,7 +113,7 @@ class AdminCartsControllerReserveIT extends BaseAdminCartsIT {
 
         performReserveRequest(request, associationId, cartId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.ticketsIds").value("Must select at least one ticket"));
+                .andExpect(jsonPath("$.errors.ticketsIds").value("REQUIRED"));
     }
 
     @Test
@@ -126,7 +126,7 @@ class AdminCartsControllerReserveIT extends BaseAdminCartsIT {
 
         performReserveRequest(request, associationId, cartId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.ticketsIds").value("Must select at least one ticket"));
+                .andExpect(jsonPath("$.errors.ticketsIds").value("REQUIRED"));
     }
 
     @Test

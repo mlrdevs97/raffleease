@@ -44,7 +44,7 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
     @BeforeEach
     void setUp() throws Exception {
         super.setUp();
-        createAndReserveTicketsForCart(associationId, accessToken);
+        createAndReserveTicketsForCart(associationId, accessToken, 0);
     }
 
     @Test
@@ -157,7 +157,7 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
 
         performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.cartId").value("Must provide cart id"));
+                .andExpect(jsonPath("$.errors.cartId").value("REQUIRED"));
     }
 
     @Test
@@ -182,7 +182,7 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
 
         performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.ticketIds").value("At least one ticket is required to create an order"));
+                .andExpect(jsonPath("$.errors.ticketIds").value("REQUIRED"));
     }
 
     @Test
@@ -196,7 +196,7 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
 
         performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.comment").value("Comment must not exceed 500 characters"));
+                .andExpect(jsonPath("$.errors.comment").value("INVALID_LENGTH"));
     }
 
     @Test
@@ -210,7 +210,7 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
 
         performCreateOrderRequest(request, associationId, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['customer.fullName']").value("Must provide a name for user"));
+                .andExpect(jsonPath("$.errors['customer.fullName']").value("REQUIRED"));
     }
 
     @Test
@@ -401,7 +401,7 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
         AddCommentRequest commentRequest = AddCommentRequest.builder().comment(longComment).build();
         performAddCommentRequest(orderId, commentRequest, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.comment").value("Comment must not exceed 500 characters"));
+                .andExpect(jsonPath("$.errors.comment").value("INVALID_LENGTH"));
     }
 
     @Test
@@ -411,7 +411,7 @@ class AdminOrdersControllerIT extends BaseAminOrdersIT {
         AddCommentRequest commentRequest = AddCommentRequest.builder().comment(null).build();
         performAddCommentRequest(orderId, commentRequest, accessToken)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.comment").value("Comment cannot be null"));
+                .andExpect(jsonPath("$.errors.comment").value("REQUIRED"));
     }
 
     @Test

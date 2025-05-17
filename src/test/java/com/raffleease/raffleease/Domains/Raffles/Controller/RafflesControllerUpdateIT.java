@@ -153,7 +153,7 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
 
         performEditRaffleRequest(raffleId, edit)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.title").value("Tile cannot exceed 100 characters"));
+                .andExpect(jsonPath("$.errors.title").value("INVALID_LENGTH"));
     }
 
     @Test
@@ -165,7 +165,7 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
 
         performEditRaffleRequest(raffleId, edit)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.description").value("Description cannot exceed 5000 characters"));
+                .andExpect(jsonPath("$.errors.description").value("INVALID_LENGTH"));
     }
 
     @Test
@@ -177,7 +177,7 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
 
         performEditRaffleRequest(raffleId, edit)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.endDate").value("End date must be in the future"));
+                .andExpect(jsonPath("$.errors.endDate").value("MUST_BE_IN_FUTURE"));
     }
 
     @Test
@@ -186,7 +186,7 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
 
         performEditRaffleRequest(raffleId, edit)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.images").value("A minimum of 1 and a maximum of 10 images are allowed"));
+                .andExpect(jsonPath("$.errors.images").value("INVALID_LENGTH"));
     }
 
     @Test
@@ -197,7 +197,7 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
 
         performEditRaffleRequest(raffleId, editWithZero)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.images").value("A minimum of 1 and a maximum of 10 images are allowed"));
+                .andExpect(jsonPath("$.errors.images").value("INVALID_LENGTH"));
     }
 
     @Test
@@ -259,7 +259,7 @@ public class RafflesControllerUpdateIT extends BaseRafflesIT {
 
         performEditRaffleRequest(raffleId, edit)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.ticketPrice").value("Ticket price must be greater than 0"));
+                .andExpect(jsonPath("$.errors.ticketPrice").value("TOO_SMALL"));
     }
 
     @Test
