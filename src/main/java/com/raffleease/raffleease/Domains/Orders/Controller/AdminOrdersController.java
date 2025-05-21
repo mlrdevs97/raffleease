@@ -47,7 +47,7 @@ public class AdminOrdersController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> searchOrders(
+    public ResponseEntity<ApiResponse> search(
             @PathVariable Long associationId,
             @Valid OrderSearchFilters filters,
             Pageable pageable

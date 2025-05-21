@@ -19,6 +19,7 @@ import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.raffleease.raffleease.Common.Exceptions.ErrorCodes.VALIDATION_ERROR;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
@@ -122,7 +123,7 @@ public class GlobalExceptionHandler {
                 "Validation failed",
                 CONFLICT.value(),
                 CONFLICT.getReasonPhrase(),
-                ErrorCodes.VALIDATION_ERROR,
+                VALIDATION_ERROR,
                 errors
         );
 
@@ -145,7 +146,7 @@ public class GlobalExceptionHandler {
                 "Validation failed",
                 BAD_REQUEST.value(),
                 BAD_REQUEST.getReasonPhrase(),
-                ErrorCodes.VALIDATION_ERROR,
+                VALIDATION_ERROR,
                 errors
         );
 
