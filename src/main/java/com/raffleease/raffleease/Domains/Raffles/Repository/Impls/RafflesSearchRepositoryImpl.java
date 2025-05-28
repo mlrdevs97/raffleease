@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -29,22 +30,34 @@ public class RafflesSearchRepositoryImpl implements RafflesSearchRepository {
         List<Predicate> predicates = buildPredicates(searchFilters, associationId, cb, raffle, associationJoin);
         query.select(raffle).distinct(true).where(predicates.toArray(new Predicate[0]));
 
-        String sortBy = searchFilters.sortBy();
-        String sortDirection = searchFilters.sortDirection();
-        Path<?> sortPath;
-        if ("title".equalsIgnoreCase(sortBy)) {
-            sortPath = raffle.get("title");
-        } else if ("startDate".equalsIgnoreCase(sortBy)) {
-            sortPath = raffle.get("startDate");
-        } else if ("endDate".equalsIgnoreCase(sortBy)) {
-            sortPath = raffle.get("endDate");
+        if (pageable.getSort().isSorted()) {
+            List<Order> orders = new ArrayList<>();
+            for (Sort.Order sortOrder : pageable.getSort()) {
+                Path<?> sortPath;
+                switch (sortOrder.getProperty().toLowerCase()) {
+                    case "title":
+                        sortPath = raffle.get("title");
+                        break;
+                    case "startDate":
+                        sortPath = raffle.get("startDate");
+                        break;
+                    case "endDate":
+                        sortPath = raffle.get("endDate");
+                        break;
+                    default:
+                        sortPath = raffle.get("createdAt");
+                        break;
+                }
+                
+                if (sortOrder.isAscending()) {
+                    orders.add(cb.asc(sortPath));
+                } else {
+                    orders.add(cb.desc(sortPath));
+                }
+            }
+            query.orderBy(orders);
         } else {
-            sortPath = raffle.get("createdAt");
-        }
-        if ("asc".equalsIgnoreCase(sortDirection)) {
-            query.orderBy(cb.asc(sortPath));
-        } else {
-            query.orderBy(cb.desc(sortPath));
+            query.orderBy(cb.desc(raffle.get("createdAt")));
         }
 
         List<Raffle> resultList = entityManager.createQuery(query)
