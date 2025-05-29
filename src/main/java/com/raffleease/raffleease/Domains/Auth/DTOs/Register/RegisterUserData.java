@@ -33,7 +33,7 @@ public record RegisterUserData(
         PhoneNumberData phoneNumber,
 
         @NotBlank
-        @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,32}$")
+        @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%-^&_*(),.?\":{}|<>]).{8,32}$")
         String password,
 
         @NotBlank
