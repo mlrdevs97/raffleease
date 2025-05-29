@@ -18,7 +18,6 @@ public class CartsMapperImpl implements CartsMapper {
                 .id(cart.getId())
                 .customerId(cart.getCustomer() != null ? cart.getCustomer().getId() : null)
                 .tickets(ticketsMapper.fromTicketList(cart.getTickets()))
-                .ownerType(cart.getOwnerType())
                 .status(cart.getStatus())
                 .createdAt(cart.getCreatedAt())
                 .updatedAt(cart.getUpdatedAt())

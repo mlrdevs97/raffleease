@@ -97,10 +97,6 @@ public class OrdersSearchRepositoryImpl implements OrdersSearchRepository {
             predicates.add(cb.equal(paymentJoin.get("paymentMethod"), filters.paymentMethod()));
         }
 
-        if (filters.orderSource() != null) {
-            predicates.add(cb.equal(root.get("orderSource"), filters.orderSource()));
-        }
-
         if (filters.orderReference() != null && !filters.orderReference().isBlank()) {
             predicates.add(cb.like(cb.lower(root.get("orderReference")), "%" + filters.orderReference().toLowerCase() + "%"));
         }

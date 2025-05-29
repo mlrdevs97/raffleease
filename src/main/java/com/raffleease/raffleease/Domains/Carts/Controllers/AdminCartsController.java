@@ -18,14 +18,14 @@ import java.net.URI;
 @ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/admin/api/v1/associations/{associationId}/carts")
+@RequestMapping("/v1/associations/{associationId}/carts")
 public class AdminCartsController {
     private final CartsService cartsService;
     private final ReservationsService reservationsService;
 
     @PostMapping
     public ResponseEntity<ApiResponse> create() {
-        CartDTO createdCart = cartsService.createAdminCart();
+        CartDTO createdCart = cartsService.create();
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()

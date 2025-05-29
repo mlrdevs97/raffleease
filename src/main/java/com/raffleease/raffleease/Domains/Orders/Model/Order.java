@@ -33,10 +33,6 @@ public class Order {
     private Raffle raffle;
 
     @Enumerated(STRING)
-    @Column(nullable = false, updatable = false)
-    private OrderSource orderSource;
-
-    @Enumerated(STRING)
     @Column(nullable = false)
     private OrderStatus status;
 

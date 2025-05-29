@@ -1,7 +1,6 @@
 package com.raffleease.raffleease.Domains.Payments.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
-import com.raffleease.raffleease.Domains.Payments.DTOs.PaymentEdit;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Payments.Repository.PaymentsRepository;
 import com.raffleease.raffleease.Domains.Payments.Services.PaymentsService;
@@ -12,7 +11,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Objects;
 
 import static com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus.PENDING;
 
@@ -36,44 +34,6 @@ public class PaymentsServiceImpl implements PaymentsService {
                 .status(PENDING)
                 .total(total)
                 .build();
-        return save(payment);
-    }
-
-    @Override
-    public Payment edit(Long paymentId, PaymentEdit paymentEdit) {
-        Payment payment = findById(paymentId);
-        return editInternal(payment, paymentEdit);
-    }
-
-    @Override
-    public Payment edit(Payment payment, PaymentEdit paymentEdit) {
-        return editInternal(payment, paymentEdit);
-    }
-
-    private Payment editInternal(Payment payment, PaymentEdit paymentEdit) {
-        if (Objects.nonNull(paymentEdit.paymentIntentId())) {
-            payment.setPaymentIntentId(paymentEdit.paymentIntentId());
-        }
-
-        /*
-        if (Objects.nonNull(paymentEdit.paymentMethod())) {
-            payment.setPaymentMethod(paymentEdit.paymentMethod());
-        }
-
-         */
-
-        if (Objects.nonNull(paymentEdit.paymentStatus())) {
-            payment.setStatus(paymentEdit.paymentStatus());
-        }
-
-        if (Objects.nonNull(paymentEdit.completedAt())) {
-            payment.setUpdatedAt(paymentEdit.completedAt());
-        }
-
-        if (Objects.nonNull(paymentEdit.total())) {
-            payment.setTotal(paymentEdit.total());
-        }
-
         return save(payment);
     }
 

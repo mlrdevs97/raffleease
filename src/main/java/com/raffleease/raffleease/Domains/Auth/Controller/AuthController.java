@@ -19,7 +19,7 @@ import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/v1/auth")
 @RestController
 public class AuthController {
     private final RegisterService registerService;

@@ -5,5 +5,4 @@ import com.raffleease.raffleease.Domains.Orders.DTOs.OrderDTO;
 
 public interface OrdersCreateService {
     OrderDTO create(AdminOrderCreate adminOrder, Long associationID);
-    String create(Long cartId);
 }

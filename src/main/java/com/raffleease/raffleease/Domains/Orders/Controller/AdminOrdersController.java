@@ -19,7 +19,7 @@ import java.net.URI;
 @ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/admin/api/v1/associations/{associationId}/orders")
+@RequestMapping("/v1/associations/{associationId}/orders")
 public class AdminOrdersController {
     private final OrdersService ordersService;
     private final OrdersCreateService ordersCreateService;

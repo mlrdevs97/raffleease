@@ -15,7 +15,7 @@ import java.util.List;
 @ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/associations/{associationId}/raffles/{raffleId}/tickets")
+@RequestMapping("/v1/associations/{associationId}/raffles/{raffleId}/tickets")
 public class TicketsController {
     private final TicketsQueryService queryService;
 

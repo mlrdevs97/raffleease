@@ -17,7 +17,7 @@ import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 @ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/associations/{associationId}/images")
+@RequestMapping("/v1/associations/{associationId}/images")
 public class PendingImagesController {
     private final ImagesService imagesService;
     private final ImagesCreateService imagesCreateService;

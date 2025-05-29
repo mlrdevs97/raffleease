@@ -43,11 +43,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(req ->
                         req.requestMatchers(OPTIONS, "/**").permitAll()
                                 .requestMatchers(
-                                        "/api/v1/auth/login",
-                                        "/api/v1/auth/register",
-                                        "/api/v1/auth/verify",
-                                        "/api/v1/associations/*/images/*",
-                                        "/api/v1/associations/*/raffles/*/images/*"
+                                        "/v1/auth/login",
+                                        "/v1/auth/register",
+                                        "/v1/auth/verify",
+                                        "/v1/associations/*/images/*",
+                                        "/v1/associations/*/raffles/*/images/*"
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )

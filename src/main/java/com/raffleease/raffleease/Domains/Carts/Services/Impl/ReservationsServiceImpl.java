@@ -45,14 +45,13 @@ public class ReservationsServiceImpl implements ReservationsService {
         List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketsIds());
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
-        return reserveInternal(tickets, cartId);
-    }
-
-    @Override
-    @Transactional
-    public CartDTO reserve(ReservationRequest request, Long cartId) {
-        List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketsIds());
-        return reserveInternal(tickets, cartId);
+        validateTicketsAvailability(tickets);
+        Cart cart = cartsService.findById(cartId);
+        reserveTickets(tickets, cart);
+        reduceRaffleTicketsAvailability(tickets);
+        cart.getTickets().addAll(tickets);
+        cartsService.save(cart);
+        return cartsMapper.fromCart(cartsService.save(cart));
     }
 
     @Override
@@ -69,30 +68,12 @@ public class ReservationsServiceImpl implements ReservationsService {
 
     @Override
     @Transactional
-    public void release(ReservationRequest request, Long cartId) {
-        Cart cart = cartsService.findById(cartId);
-        List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketsIds());
-        releaseTicketsFromCart(cart, tickets);
-    }
-
-    @Override
-    @Transactional
     public void release(ReservationRequest request, Long associationId, Long cartId) {
         Cart cart = cartsService.findById(cartId);
         List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketsIds());
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
         releaseTicketsFromCart(cart, tickets);
-    }
-
-    private CartDTO reserveInternal(List<Ticket> tickets, Long cartId) {
-        validateTicketsAvailability(tickets);
-        Cart cart = cartsService.findById(cartId);
-        reserveTickets(tickets, cart);
-        reduceRaffleTicketsAvailability(tickets);
-        cart.getTickets().addAll(tickets);
-        cartsService.save(cart);
-        return cartsMapper.fromCart(cartsService.save(cart));
     }
 
     private void releaseTicketsFromCart(Cart cart, List<Ticket> tickets) {

@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Domains.Orders.DTOs;
 
-import com.raffleease.raffleease.Domains.Orders.Model.OrderSource;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderStatus;
 import com.raffleease.raffleease.Domains.Payments.Model.PaymentMethod;
 import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
@@ -20,7 +19,6 @@ public record OrderSearchFilters(
         OrderStatus status,
         PaymentStatus paymentStatus,
         PaymentMethod paymentMethod,
-        OrderSource orderSource,
         String orderReference,
 
         @Size(max = 100)

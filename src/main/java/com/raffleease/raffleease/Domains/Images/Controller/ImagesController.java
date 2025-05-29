@@ -17,7 +17,7 @@ import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 @ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/associations/{associationId}/raffles/{raffleId}/images")
+@RequestMapping("/v1/associations/{associationId}/raffles/{raffleId}/images")
 public class ImagesController {
     private final ImagesService imagesService;
     private final ImagesDeleteService imagesDeleteService;

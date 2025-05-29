@@ -15,7 +15,6 @@ import com.raffleease.raffleease.Domains.Orders.Services.OrdersCreateService;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Payments.Services.PaymentsService;
-import com.raffleease.raffleease.Domains.Payments.Services.StripeService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
@@ -33,7 +32,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
-import static com.raffleease.raffleease.Domains.Orders.Model.OrderSource.ADMIN;
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.PENDING;
 import static java.time.format.DateTimeFormatter.BASIC_ISO_DATE;
 
@@ -48,7 +46,6 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
     private final TicketsQueryService ticketsQueryService;
     private final TicketsService ticketsService;
     private final PaymentsService paymentsService;
-    private final StripeService stripeService;
     private final AssociationsService associationsService;
     private final OrdersMapper mapper;
 
@@ -70,21 +67,6 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         order.getOrderItems().addAll(orderItems);
         order = ordersService.save(order);
         return mapper.fromOrder(order);
-    }
-
-    @Override
-    public String create(Long cartId) {
-        Cart cart = cartsService.findById(cartId);
-        Payment payment = paymentsService.create();
-
-        // TODO: Check and fix order items
-        Order order = ordersService.save(Order.builder()
-                .payment(payment)
-                .orderItems(new ArrayList<>())
-                .build()
-        );
-
-        return stripeService.createSession(order);
     }
 
     private void validateRequest(List<Ticket> requestedTickets, Cart cart, Association association) {
@@ -116,7 +98,6 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         return ordersService.save(Order.builder()
                 .raffle(raffle)
                 .status(PENDING)
-                .orderSource(ADMIN)
                 .orderReference(generateOrderReference())
                 .customer(customer)
                 .orderItems(new ArrayList<>())

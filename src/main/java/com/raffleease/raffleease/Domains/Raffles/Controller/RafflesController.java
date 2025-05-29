@@ -24,7 +24,7 @@ import java.net.URI;
 @ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/associations/{associationId}/raffles")
+@RequestMapping("/v1/associations/{associationId}/raffles")
 public class RafflesController {
     private final RafflesService rafflesService;
     private final RafflesEditService rafflesEditService;

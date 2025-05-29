@@ -5,9 +5,7 @@ import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
 import com.raffleease.raffleease.Domains.Orders.Repository.OrderItemsRepository;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
-import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
 import com.raffleease.raffleease.Domains.Payments.Repository.PaymentsRepository;
-import com.raffleease.raffleease.Helpers.CustomerBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.ResultActions;
@@ -19,12 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.raffleease.raffleease.Domains.Orders.Model.OrderSource.CUSTOMER;
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.*;
 import static com.raffleease.raffleease.Domains.Payments.Model.PaymentMethod.CARD;
 import static com.raffleease.raffleease.Domains.Payments.Model.PaymentMethod.CASH;
 import static com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus.SUCCEEDED;
-import static java.math.BigDecimal.ZERO;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -102,47 +98,6 @@ public class AdminOrdersSearchIT extends BaseAminOrdersIT {
         paymentsRepository.save(payment2);
 
         Map<String, String> filters = Map.of("paymentMethod", CASH.toString());
-        performSearchRequest(associationId, accessToken, filters)
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content").isArray())
-                .andExpect(jsonPath("$.data.content.length()").value(1));
-    }
-
-    // TODO: Enhance order source testing when customer order source is implemented
-    @Test
-    void shouldFilterByOrderSource() throws Exception {
-        createAndReserveTicketsForCart(associationId, accessToken, 0);
-        createOrder(associationId, accessToken);
-        createAndReserveTicketsForCart(associationId, accessToken, 1);
-        Order order = ordersRepository.save(Order.builder()
-                .association(associationsRepository.findById(associationId).orElseThrow())
-                .orderReference("example-order-reference")
-                .orderSource(CUSTOMER)
-                .status(PENDING)
-                .customer(new CustomerBuilder().build())
-                .build());
-
-        OrderItem orderItem = OrderItem.builder()
-                .ticketNumber("12345")
-                .priceAtPurchase(new BigDecimal("15.50"))
-                .ticketId(reservedTicket)
-                .raffleId(raffleId)
-                .order(order)
-                .build();
-        List<OrderItem> items = new ArrayList<>();
-        items.add(orderItem);
-
-        Payment payment = paymentsRepository.save(Payment.builder()
-                .order(order)
-                .total(ZERO)
-                .status(PaymentStatus.PENDING)
-                .build());
-
-        order.setPayment(payment);
-        order.setOrderItems(items);
-        ordersRepository.save(order);
-
-        Map<String, String> filters = Map.of("orderSource", CUSTOMER.toString());
         performSearchRequest(associationId, accessToken, filters)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content").isArray())

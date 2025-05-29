@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.*;
 import static com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus.SUCCEEDED;
@@ -74,31 +73,6 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         Order order = ordersService.findById(orderId);
         order.setComment(request.comment());
         return mapper.fromOrder(ordersService.save(order));
-    }
-
-    @Override
-    public Order edit(Order order, OrderEdit orderEdit) {
-        // TODO: CHeck and fix
-        /*
-        if (Objects.nonNull(orderEdit.cart())) {
-            order.setCart(orderEdit.cart());
-        }
-
-         */
-
-        if (Objects.nonNull(orderEdit.payment())) {
-            order.setPayment(orderEdit.payment());
-        }
-
-        if (Objects.nonNull(orderEdit.customer())) {
-            order.setCustomer(orderEdit.customer());
-        }
-
-        if (Objects.nonNull(orderEdit.orderDate())) {
-            order.setCreatedAt(orderEdit.orderDate());
-        }
-
-        return ordersService.save(order);
     }
 
     private void releaseOrderTickets(Order order) {

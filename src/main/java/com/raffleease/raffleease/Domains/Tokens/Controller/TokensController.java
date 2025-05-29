@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/tokens")
+@RequestMapping("/v1/tokens")
 public class TokensController {
     private final TokensManagementService service;
 

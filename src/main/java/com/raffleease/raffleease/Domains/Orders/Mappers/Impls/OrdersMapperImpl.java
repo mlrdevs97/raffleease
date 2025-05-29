@@ -24,7 +24,6 @@ public class OrdersMapperImpl implements OrdersMapper {
         return OrderDTO.builder()
                 .id(order.getId())
                 .raffleSummary(buildRaffleSummary(order.getRaffle()))
-                .orderSource(order.getOrderSource())
                 .status(order.getStatus())
                 .orderReference(order.getOrderReference())
                 .orderItems(fromOrderItemList(order.getOrderItems()))

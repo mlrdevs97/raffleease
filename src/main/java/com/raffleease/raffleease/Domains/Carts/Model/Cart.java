@@ -36,8 +36,6 @@ public class Cart {
     @OneToMany(mappedBy = "cart", fetch = LAZY, cascade = ALL)
     private List<Ticket> tickets;
 
-    private CartOwnerType ownerType;
-
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

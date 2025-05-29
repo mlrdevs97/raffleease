@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Domains.Carts.DTO;
 
-import com.raffleease.raffleease.Domains.Carts.Model.CartOwnerType;
 import com.raffleease.raffleease.Domains.Carts.Model.CartStatus;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketDTO;
 import lombok.Builder;
@@ -14,7 +13,6 @@ public record CartDTO(
         Long customerId,
         List<TicketDTO> tickets,
         CartStatus status,
-        CartOwnerType ownerType,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) { }
