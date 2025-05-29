@@ -7,6 +7,8 @@ import com.raffleease.raffleease.Domains.Orders.Mappers.OrdersMapper;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
 import com.raffleease.raffleease.Domains.Payments.Mappers.IPaymentsMapper;
+import com.raffleease.raffleease.Domains.Raffles.DTOs.OrderRaffleSummary;
+import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ public class OrdersMapperImpl implements OrdersMapper {
     public OrderDTO fromOrder(Order order) {
         return OrderDTO.builder()
                 .id(order.getId())
+                .raffleSummary(buildRaffleSummary(order.getRaffle()))
                 .orderSource(order.getOrderSource())
                 .status(order.getStatus())
                 .orderReference(order.getOrderReference())
@@ -44,5 +47,13 @@ public class OrdersMapperImpl implements OrdersMapper {
                 .ticketId(orderItem.getTicketId())
                 .build()
         ).toList();
+    }
+
+    private OrderRaffleSummary buildRaffleSummary(Raffle raffle) {
+        return OrderRaffleSummary.builder()
+                .id(raffle.getId())
+                .title(raffle.getTitle())
+                .imageURL(raffle.getImages().get(0).getUrl())
+                .build();
     }
 }
