@@ -4,13 +4,12 @@ import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderSearchFilters;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
-import com.raffleease.raffleease.Domains.Orders.Repository.OrdersRepository;
 import com.raffleease.raffleease.Domains.Orders.Repository.OrdersSearchRepository;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
+import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -32,11 +31,12 @@ public class OrdersSearchRepositoryImpl implements OrdersSearchRepository {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Order> query = cb.createQuery(Order.class);
         Root<Order> root = query.from(Order.class);
+        Join<Order, Raffle> raffleJoin = root.join("raffle");
         Join<Order, Customer> customerJoin = root.join("customer", LEFT);
         Join<Order, Payment> paymentJoin = root.join("payment");
         Join<Order, OrderItem> itemJoin = root.join("orderItems", LEFT);
 
-        List<Predicate> predicates = buildPredicates(filters, associationId, cb, root, customerJoin, paymentJoin, itemJoin);
+        List<Predicate> predicates = buildPredicates(filters, associationId, cb, root, raffleJoin, customerJoin, paymentJoin, itemJoin);
         query.where(cb.and(predicates.toArray(new Predicate[0])));
         query.distinct(true);
         query.orderBy(cb.desc(root.get("createdAt")));
@@ -48,11 +48,13 @@ public class OrdersSearchRepositoryImpl implements OrdersSearchRepository {
 
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<Order> countRoot = countQuery.from(Order.class);
+        Join<Order, Raffle> countRaffleJoin = root.join("raffle");
         Join<Order, Customer> countCustomerJoin = countRoot.join("customer", LEFT);
         Join<Order, Payment> countPaymentJoin = countRoot.join("payment");
         Join<Order, OrderItem> countItemJoin = countRoot.join("orderItems", LEFT);
-        List<Predicate> countPredicates = buildPredicates(filters, associationId, cb, countRoot, countCustomerJoin, countPaymentJoin, countItemJoin);
-        countQuery.select(cb.countDistinct(countRoot)).where(cb.and(countPredicates.toArray(new Predicate[0])));
+        List<Predicate> countPredicates = buildPredicates(filters, associationId, cb, countRoot, countRaffleJoin, countCustomerJoin, countPaymentJoin, countItemJoin);
+        countQuery.select(cb.countDistinct(countRoot));
+        countQuery.where(cb.and(countPredicates.toArray(new Predicate[0])));
         Long total = entityManager.createQuery(countQuery).getSingleResult();
 
         return new PageImpl<>(resultList, pageable, total);
@@ -74,11 +76,14 @@ public class OrdersSearchRepositoryImpl implements OrdersSearchRepository {
             Long associationId,
             CriteriaBuilder cb,
             Root<Order> root,
+            Join<Order, Raffle> raffleJoin,
             Join<Order, Customer> customerJoin,
             Join<Order, Payment> paymentJoin,
             Join<Order, OrderItem> itemJoin
     ) {
         List<Predicate> predicates = new ArrayList<>();
+
+        predicates.add(cb.equal(raffleJoin.get("association").get("id"), associationId));
 
         if (filters.status() != null) {
             predicates.add(cb.equal(root.get("status"), filters.status()));
@@ -123,8 +128,6 @@ public class OrdersSearchRepositoryImpl implements OrdersSearchRepository {
         if (filters.maxTotal() != null) {
             predicates.add(cb.le(paymentJoin.get("total"), filters.maxTotal()));
         }
-
-        predicates.add(cb.equal(root.get("association").get("id"), associationId));
 
         applyDateRange(cb, predicates, root.get("createdAt"), filters.createdFrom(), filters.createdTo());
         applyDateRange(cb, predicates, root.get("completedAt"), filters.completedFrom(), filters.completedTo());

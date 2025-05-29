@@ -17,6 +17,7 @@ import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Payments.Services.PaymentsService;
 import com.raffleease.raffleease.Domains.Payments.Services.StripeService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
@@ -42,6 +43,7 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
     private final OrdersService ordersService;
     private final CartsService cartsService;
     private final RafflesQueryService rafflesQueryService;
+    private final RafflesPersistenceService rafflesPersistenceService;
     private final CustomersService customersService;
     private final TicketsQueryService ticketsQueryService;
     private final TicketsService ticketsService;
@@ -60,7 +62,8 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         closeCart(cart);
         Customer customer = customersService.create(adminOrder.customer());
         finalizeTickets(requestedTickets, customer);
-        Order order = createOrder(association, customer, adminOrder.comment());
+        Raffle raffle = rafflesPersistenceService.findById(adminOrder.raffleId());
+        Order order = createOrder(raffle, customer, adminOrder.comment());
         Payment payment = createPayment(order, requestedTickets);
         List<OrderItem> orderItems = createOrderItems(order, requestedTickets);
         order.setPayment(payment);
@@ -109,9 +112,9 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         return paymentsService.create(order, total);
     }
 
-    private Order createOrder(Association association, Customer customer, String comment) {
+    private Order createOrder(Raffle raffle, Customer customer, String comment) {
         return ordersService.save(Order.builder()
-                .association(association)
+                .raffle(raffle)
                 .status(PENDING)
                 .orderSource(ADMIN)
                 .orderReference(generateOrderReference())

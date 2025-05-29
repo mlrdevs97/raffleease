@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Domains.Raffles.Model;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,9 +13,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDING;
 import static jakarta.persistence.CascadeType.ALL;
-import static java.math.BigDecimal.ZERO;
+import static jakarta.persistence.CascadeType.PERSIST;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -75,6 +75,9 @@ public class Raffle {
 
     @OneToMany(mappedBy = "raffle", cascade = ALL, orphanRemoval = true)
     private List<Ticket> tickets;
+
+    @OneToMany(mappedBy = "raffle", cascade = PERSIST)
+    private List<Order> orders;
 
     @ManyToOne
     @JoinColumn(name = "association_id", nullable = false)

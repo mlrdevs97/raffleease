@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Associations.Model;
 
+import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -40,6 +41,9 @@ public class Association {
 
     @OneToMany(mappedBy = "association", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AssociationMembership> memberships;
+
+    @OneToMany(mappedBy = "association", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Raffle> raffles;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

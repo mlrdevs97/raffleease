@@ -1,8 +1,8 @@
 package com.raffleease.raffleease.Domains.Orders.Model;
 
-import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
+import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,6 +13,7 @@ import java.util.List;
 
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.EnumType.STRING;
+import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 @NoArgsConstructor
@@ -27,9 +28,9 @@ public class Order {
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "association_id", nullable = false, updatable = false)
-    private Association association;
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = "raffle_id", nullable = false, updatable = false)
+    private Raffle raffle;
 
     @Enumerated(STRING)
     @Column(nullable = false, updatable = false)

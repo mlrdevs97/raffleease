@@ -17,6 +17,10 @@ public record AdminOrderCreate(
         @Positive
         Long cartId,
 
+        @NotNull
+        @Positive
+        Long raffleId,
+
         @NotEmpty
         List<Long> ticketIds,
 
