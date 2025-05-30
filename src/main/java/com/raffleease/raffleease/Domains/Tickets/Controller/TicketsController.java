@@ -20,7 +20,7 @@ public class TicketsController {
     private final TicketsQueryService queryService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse> get(
+    public ResponseEntity<ApiResponse> search(
             @PathVariable Long associationId,
             @PathVariable Long raffleId,
             TicketsSearchFilters searchFilters,

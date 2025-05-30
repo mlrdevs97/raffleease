@@ -4,7 +4,7 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
-import com.raffleease.raffleease.Domains.Tickets.Repository.CustomTicketsRepository;
+import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsSearchRepository;
 import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
@@ -23,7 +23,7 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAIL
 @Service
 public class TicketsServiceImpl implements TicketsService {
     private final TicketsRepository repository;
-    private final CustomTicketsRepository customRepository;
+    private final TicketsSearchRepository customRepository;
 
     @Override
     public List<Ticket> create(Raffle raffle, TicketsCreate request) {
@@ -35,15 +35,6 @@ public class TicketsServiceImpl implements TicketsService {
                         .raffle(raffle)
                         .build()
                 ).collect(Collectors.toCollection(ArrayList::new));
-    }
-
-    @Override
-    public List<Ticket> updateStatus(List<Ticket> tickets, TicketStatus status) {
-        try {
-            return customRepository.updateStatus(tickets, status);
-        } catch (DataAccessException ex) {
-            throw new DatabaseException("Database error occurred while updating tickets status: " + ex.getMessage());
-        }
     }
 
     @Override

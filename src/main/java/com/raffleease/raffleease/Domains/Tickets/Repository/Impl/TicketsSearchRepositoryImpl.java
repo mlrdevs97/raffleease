@@ -3,8 +3,7 @@ package com.raffleease.raffleease.Domains.Tickets.Repository.Impl;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsSearchFilters;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
-import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
-import com.raffleease.raffleease.Domains.Tickets.Repository.CustomTicketsRepository;
+import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsSearchRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.*;
@@ -17,33 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-public class CustomTicketsRepositoryImpl implements CustomTicketsRepository {
+public class TicketsSearchRepositoryImpl implements TicketsSearchRepository {
     @PersistenceContext
     private EntityManager entityManager;
-
-    @Override
-    public List<Ticket> updateStatus(List<Ticket> tickets, TicketStatus status) {
-        List<Long> ticketIds = tickets.stream().map(Ticket::getId).toList();
-
-        String updateQuery = "UPDATE Ticket t " +
-                "SET t.status = :status " +
-                "WHERE t.id IN :ticketIds";
-
-        entityManager.createQuery(updateQuery)
-                .setParameter("status", status)
-                .setParameter("ticketIds", ticketIds)
-                .executeUpdate();
-
-        entityManager.flush();
-        entityManager.clear();
-
-        String selectQuery = "SELECT t FROM Ticket t " +
-                "WHERE t.id IN :ticketIds";
-
-        return entityManager.createQuery(selectQuery, Ticket.class)
-                .setParameter("ticketIds", ticketIds)
-                .getResultList();
-    }
 
     @Override
     public Page<Ticket> search(TicketsSearchFilters searchFilters, Long associationId, Long raffleId, Pageable pageable) {

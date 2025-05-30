@@ -82,7 +82,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
 
     private void updateTicketsStatus(Order order) {
         List<Ticket> tickets = getTicketsFromOrder(order);
-        ticketsService.updateStatus(tickets, SOLD);
+        ticketsService.saveAll(tickets.stream().peek(ticket -> ticket.setStatus(SOLD)).toList());
     }
 
     private List<Ticket> getTicketsFromOrder(Order order) {

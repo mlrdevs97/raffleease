@@ -8,7 +8,7 @@ import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsSearchFilters;
 import com.raffleease.raffleease.Domains.Tickets.Mappers.TicketsMapper;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
-import com.raffleease.raffleease.Domains.Tickets.Repository.CustomTicketsRepository;
+import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsSearchRepository;
 import com.raffleease.raffleease.Domains.Tickets.Repository.TicketsRepository;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
@@ -30,7 +30,7 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAIL
 public class TicketsQueryServiceImpl implements TicketsQueryService {
     private final RafflesPersistenceService rafflePersistence;
     private final TicketsRepository repository;
-    private final CustomTicketsRepository customRepository;
+    private final TicketsSearchRepository customRepository;
     private final TicketsMapper mapper;
 
     @Override
