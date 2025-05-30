@@ -29,10 +29,6 @@ public class Cart {
     @Column(nullable = false)
     private CartStatus status;
 
-    @OneToOne
-    @JoinColumn(name = "customer_id")
-    private Customer customer;
-
     @OneToMany(mappedBy = "cart", fetch = LAZY, cascade = ALL)
     private List<Ticket> tickets;
 

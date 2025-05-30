@@ -16,7 +16,6 @@ public class CartsMapperImpl implements CartsMapper {
     public CartDTO fromCart(Cart cart) {
         return CartDTO.builder()
                 .id(cart.getId())
-                .customerId(cart.getCustomer() != null ? cart.getCustomer().getId() : null)
                 .tickets(ticketsMapper.fromTicketList(cart.getTickets()))
                 .status(cart.getStatus())
                 .createdAt(cart.getCreatedAt())
