@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
 @Builder
-public record AddCommentRequest(
+public record CommentRequest(
         @NotNull
         @Size(max = 500)
         String comment

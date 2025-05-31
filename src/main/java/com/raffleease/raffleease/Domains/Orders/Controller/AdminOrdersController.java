@@ -92,11 +92,22 @@ public class AdminOrdersController {
     @PostMapping("/{orderId}/comment")
     public ResponseEntity<ApiResponse> addComment(
             @PathVariable Long orderId,
-            @Valid @RequestBody AddCommentRequest request
+            @Valid @RequestBody CommentRequest request
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
                 ordersEditService.addComment(orderId, request),
                 "Order comment added successfully"
+        ));
+    }
+
+    @PutMapping("/{orderId}/comment")
+    public ResponseEntity<ApiResponse> editComment(
+            @PathVariable Long orderId,
+            @Valid @RequestBody CommentRequest request
+    ) {
+        return ResponseEntity.ok(ResponseFactory.success(
+                ordersEditService.addComment(orderId, request),
+                "Order comment edited successfully"
         ));
     }
 

@@ -63,7 +63,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
     }
 
     @Override
-    public OrderDTO addComment(Long orderId, AddCommentRequest request) {
+    public OrderDTO addComment(Long orderId, CommentRequest request) {
         Order order = ordersService.findById(orderId);
         order.setComment(request.comment());
         return mapper.fromOrder(ordersService.save(order));
