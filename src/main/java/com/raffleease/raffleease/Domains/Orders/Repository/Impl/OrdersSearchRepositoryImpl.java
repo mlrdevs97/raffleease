@@ -48,7 +48,7 @@ public class OrdersSearchRepositoryImpl implements OrdersSearchRepository {
 
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<Order> countRoot = countQuery.from(Order.class);
-        Join<Order, Raffle> countRaffleJoin = root.join("raffle");
+        Join<Order, Raffle> countRaffleJoin = countRoot.join("raffle");
         Join<Order, Customer> countCustomerJoin = countRoot.join("customer", LEFT);
         Join<Order, Payment> countPaymentJoin = countRoot.join("payment");
         Join<Order, OrderItem> countItemJoin = countRoot.join("orderItems", LEFT);
