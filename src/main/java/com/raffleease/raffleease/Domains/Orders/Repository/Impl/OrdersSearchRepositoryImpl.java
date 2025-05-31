@@ -89,10 +89,6 @@ public class OrdersSearchRepositoryImpl implements OrdersSearchRepository {
             predicates.add(cb.equal(root.get("status"), filters.status()));
         }
 
-        if (filters.paymentStatus() != null) {
-            predicates.add(cb.equal(paymentJoin.get("status"), filters.paymentStatus()));
-        }
-
         if (filters.paymentMethod() != null) {
             predicates.add(cb.equal(paymentJoin.get("paymentMethod"), filters.paymentMethod()));
         }

@@ -2,7 +2,6 @@ package com.raffleease.raffleease.Domains.Orders.DTOs;
 
 import com.raffleease.raffleease.Domains.Orders.Model.OrderStatus;
 import com.raffleease.raffleease.Domains.Payments.Model.PaymentMethod;
-import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
 import com.raffleease.raffleease.Common.Validations.ValidOrderSearchFilters;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -17,7 +16,6 @@ import static com.raffleease.raffleease.Common.Utils.SanitizeUtils.trimAndLower;
 @ValidOrderSearchFilters
 public record OrderSearchFilters(
         OrderStatus status,
-        PaymentStatus paymentStatus,
         PaymentMethod paymentMethod,
         String orderReference,
 

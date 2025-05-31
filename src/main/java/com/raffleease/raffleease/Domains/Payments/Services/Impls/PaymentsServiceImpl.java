@@ -12,26 +12,15 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 
-import static com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus.PENDING;
-
 @RequiredArgsConstructor
 @Service
 public class PaymentsServiceImpl implements PaymentsService {
     private final PaymentsRepository repository;
 
     @Override
-    public Payment create() {
-        Payment payment = Payment.builder()
-                .status(PENDING)
-                .build();
-        return save(payment);
-    }
-
-    @Override
     public Payment create(Order order, BigDecimal total) {
         Payment payment = Payment.builder()
                 .order(order)
-                .status(PENDING)
                 .total(total)
                 .build();
         return save(payment);

@@ -30,11 +30,6 @@ public class Payment {
     @Enumerated(STRING)
     private PaymentMethod paymentMethod;
 
-    private String paymentIntentId;
-
-    @Column(nullable = false)
-    private PaymentStatus status;
-
     @Column(precision = 10, scale = 2)
     private BigDecimal total;
 
@@ -45,5 +40,4 @@ public class Payment {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
     private LocalDateTime completedAt;
-    private LocalDateTime cancelledAt;
 }

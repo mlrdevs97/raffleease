@@ -6,6 +6,5 @@ import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import java.math.BigDecimal;
 
 public interface PaymentsService {
-    Payment create();
     Payment create(Order order, BigDecimal total);
 }

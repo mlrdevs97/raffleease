@@ -8,7 +8,6 @@ import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersEditService;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
-import com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
@@ -21,7 +20,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.*;
-import static com.raffleease.raffleease.Domains.Payments.Model.PaymentStatus.SUCCEEDED;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 
 @RequiredArgsConstructor
@@ -43,7 +41,6 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         updateTicketsStatus(order);
         LocalDateTime now = LocalDateTime.now();
         Payment payment = order.getPayment();
-        payment.setStatus(SUCCEEDED);
         payment.setPaymentMethod(orderComplete.paymentMethod());
         payment.setCompletedAt(now);
         order.setStatus(COMPLETED);
@@ -60,9 +57,6 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         }
         releaseOrderTickets(order);
         LocalDateTime now = LocalDateTime.now();
-        Payment payment = order.getPayment();
-        payment.setStatus(PaymentStatus.CANCELLED);
-        payment.setCancelledAt(now);
         order.setStatus(CANCELLED);
         order.setCancelledAt(now);
         return mapper.fromOrder(ordersService.save(order));
