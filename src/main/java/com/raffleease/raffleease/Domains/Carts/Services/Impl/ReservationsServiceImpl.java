@@ -42,7 +42,7 @@ public class ReservationsServiceImpl implements ReservationsService {
     @Override
     @Transactional
     public CartDTO reserve(ReservationRequest request, Long associationId, Long cartId) {
-        List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketsIds());
+        List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketIds());
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
         validateTicketsAvailability(tickets);
@@ -70,7 +70,7 @@ public class ReservationsServiceImpl implements ReservationsService {
     @Transactional
     public void release(ReservationRequest request, Long associationId, Long cartId) {
         Cart cart = cartsService.findById(cartId);
-        List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketsIds());
+        List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketIds());
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
         releaseTicketsFromCart(cart, tickets);

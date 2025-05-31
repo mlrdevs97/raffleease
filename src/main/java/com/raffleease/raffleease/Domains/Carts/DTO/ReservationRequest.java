@@ -8,5 +8,5 @@ import java.util.List;
 @Builder
 public record ReservationRequest (
         @NotEmpty
-        List<Long> ticketsIds
+        List<Long> ticketIds
 ) { }
