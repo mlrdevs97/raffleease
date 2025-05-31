@@ -1,13 +1,16 @@
 package com.raffleease.raffleease.Domains.Customers.DTO;
 
+import static com.raffleease.raffleease.Common.Utils.SanitizeUtils.trim;
+import static com.raffleease.raffleease.Common.Utils.SanitizeUtils.trimAndLower;
+
 public record CustomerSearchFilters(
     String fullName,
     String email,
     String phoneNumber
 ) {
     public CustomerSearchFilters {
-        fullName = fullName != null? fullName.trim() : null;
-        email = email != null? email.trim() : null;
-        phoneNumber = phoneNumber != null? phoneNumber.trim() : null;
+        fullName = trim(fullName);
+        email = trimAndLower(email);
+        phoneNumber = trim(phoneNumber);
     }
 }
