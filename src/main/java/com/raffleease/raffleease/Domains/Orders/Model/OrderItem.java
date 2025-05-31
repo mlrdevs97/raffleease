@@ -31,6 +31,9 @@ public class OrderItem {
     @Column(nullable = false, updatable = false)
     private Long raffleId;
 
+    @Column(nullable = false, updatable = false)
+    private Long customerId;
+
     @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;

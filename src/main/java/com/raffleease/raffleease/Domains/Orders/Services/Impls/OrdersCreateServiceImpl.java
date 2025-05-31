@@ -112,6 +112,7 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
                 .priceAtPurchase(ticket.getRaffle().getTicketPrice())
                 .ticketId(ticket.getId())
                 .raffleId(ticket.getRaffle().getId())
+                .customerId(order.getCustomer().getId())
                 .build()).toList();
     }
 

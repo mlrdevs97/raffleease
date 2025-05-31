@@ -10,5 +10,6 @@ public record OrderItemDTO(
         String ticketNumber,
         BigDecimal priceAtPurchase,
         Long ticketId,
-        Long raffleId
+        Long raffleId,
+        Long customerId
 ) {}

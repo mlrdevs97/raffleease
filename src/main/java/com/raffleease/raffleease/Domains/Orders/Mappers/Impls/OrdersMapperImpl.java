@@ -44,6 +44,7 @@ public class OrdersMapperImpl implements OrdersMapper {
                 .ticketNumber(orderItem.getTicketNumber())
                 .raffleId(orderItem.getRaffleId())
                 .ticketId(orderItem.getTicketId())
+                .customerId(orderItem.getCustomerId())
                 .build()
         ).toList();
     }
