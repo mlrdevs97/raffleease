@@ -69,7 +69,7 @@ public class AdminOrdersController {
     }
 
     @PutMapping("/{orderId}/complete")
-    public ResponseEntity<ApiResponse> completeOrder(
+    public ResponseEntity<ApiResponse> complete(
             @PathVariable Long orderId,
             @Valid @RequestBody OrderComplete orderComplete
     ) {
@@ -80,7 +80,7 @@ public class AdminOrdersController {
     }
 
     @PutMapping("/{orderId}/cancel")
-    public ResponseEntity<ApiResponse> updateStatus(
+    public ResponseEntity<ApiResponse> cancel(
             @PathVariable Long orderId
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
@@ -89,7 +89,7 @@ public class AdminOrdersController {
         ));
     }
 
-    @PatchMapping("/{orderId}/comment")
+    @PostMapping("/{orderId}/comment")
     public ResponseEntity<ApiResponse> addComment(
             @PathVariable Long orderId,
             @Valid @RequestBody AddCommentRequest request
@@ -98,5 +98,13 @@ public class AdminOrdersController {
                 ordersEditService.addComment(orderId, request),
                 "Order comment added successfully"
         ));
+    }
+
+    @DeleteMapping("/{orderId}/comment")
+    public ResponseEntity<ApiResponse> removeComment(
+            @PathVariable Long orderId
+    ) {
+        ordersService.deleteComment(orderId);
+        return ResponseEntity.noContent().build();
     }
 }

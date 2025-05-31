@@ -14,5 +14,5 @@ public interface OrdersService {
     Page<OrderDTO> search(OrderSearchFilters filters, Long associationId, Pageable pageable);
     Order findById(Long id);
     Order save(Order entity);
-    List<OrderItem> findOrderItemByOrder(Order order);
+    void deleteComment(Long orderId);
 }

@@ -48,20 +48,18 @@ public class OrdersServiceImpl implements OrdersService {
     }
 
     @Override
-    public List<OrderItem> findOrderItemByOrder(Order order) {
-        try {
-            return orderItemsRepository.findByOrder(order);
-        } catch (DataAccessException ex) {
-            throw new DatabaseException("Database error occurred while fetching order with ID <" + order.getId() + ">: " + ex.getMessage());
-        }
-    }
-
-    @Override
     public Order save(Order order) {
         try {
             return repository.save(order);
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while saving order: " + ex.getMessage());
         }
+    }
+
+    @Override
+    public void deleteComment(Long orderId) {
+        Order order = findById(orderId);
+        order.setComment(null);
+        save(order);
     }
 }
