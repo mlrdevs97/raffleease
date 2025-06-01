@@ -170,8 +170,7 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
     }
 
     private String generateOrderReference() {
-        String datePart = LocalDateTime.now().format(BASIC_ISO_DATE);
         String randomPart = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        return "ORD-" + datePart + "-" + randomPart;
+        return "ORD-" + "-" + randomPart;
     }
 }

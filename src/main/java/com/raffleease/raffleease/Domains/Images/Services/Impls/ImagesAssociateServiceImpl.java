@@ -88,7 +88,7 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
                         image.getFilePath()
                 );
                 image.setFilePath(finalPath.toString());
-                image.setUrl(host + "//v1/associations/" + raffle.getAssociation().getId() + "/raffles/" + raffle.getId() + "/images/" + image.getId());
+                image.setUrl(host + "/v1/associations/" + raffle.getAssociation().getId() + "/raffles/" + raffle.getId() + "/images/" + image.getId());
                 image.setRaffle(raffle);
             }
             image.setImageOrder(imageOrderMap.get(image.getId()));

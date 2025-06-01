@@ -24,7 +24,6 @@ public class ImagesController {
     private final ImagesCreateService imagesCreateService;
 
     @PostMapping(consumes = MULTIPART_FORM_DATA_VALUE)
-    @ValidateAssociationAccess
     public ResponseEntity<ApiResponse> uploadImages(
             @PathVariable Long associationId,
             @PathVariable Long raffleId,

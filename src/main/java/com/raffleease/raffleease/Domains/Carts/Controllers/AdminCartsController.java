@@ -47,10 +47,9 @@ public class AdminCartsController {
             @PathVariable Long cartId,
             @Valid @RequestBody ReservationRequest reservationRequest
     ) {
-        CartDTO cartDTO = reservationsService.reserve(reservationRequest, associationId, cartId);
         return ResponseEntity.ok(
                 ResponseFactory.success(
-                        cartDTO,
+                        reservationsService.reserve(reservationRequest, associationId, cartId),
                         "New reservation generated successfully"
                 )
         );

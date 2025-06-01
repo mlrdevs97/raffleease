@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+
 @RequiredArgsConstructor
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
@@ -22,12 +24,12 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
         ErrorResponse errorResponse = new ErrorResponse(
                 "Authentication required",
-                HttpStatus.UNAUTHORIZED.value(),
-                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                UNAUTHORIZED.value(),
+                UNAUTHORIZED.getReasonPhrase(),
                 ErrorCodes.UNAUTHORIZED
         );
 
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setStatus(UNAUTHORIZED.value());
         response.setContentType("application/json");
         objectMapper.writeValue(response.getOutputStream(), errorResponse);
     }
