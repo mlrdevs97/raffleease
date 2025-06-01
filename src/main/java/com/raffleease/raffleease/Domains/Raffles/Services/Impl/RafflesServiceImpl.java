@@ -8,6 +8,7 @@ import com.raffleease.raffleease.Domains.Images.Services.ImagesAssociateService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
+import com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesService;
@@ -19,7 +20,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+
+import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 
 @RequiredArgsConstructor
 @Service
@@ -52,5 +56,16 @@ public class RafflesServiceImpl implements RafflesService {
             throw new BusinessException("Only raffles in 'PENDING' state can be deleted.");
         }
         rafflesPersistence.delete(raffle);
+    }
+
+    @Override
+    public void completeRaffleIfAllTicketsSold(Raffle raffle) {
+        boolean allTicketsSold = raffle.getTickets().stream().allMatch(ticket -> ticket.getStatus().equals(SOLD));
+        if (allTicketsSold) {
+            raffle.setStatus(RaffleStatus.COMPLETED);
+            raffle.setCompletedAt(LocalDateTime.now());
+            raffle.setCompletionReason(CompletionReason.ALL_TICKETS_SOLD);
+        }
+        rafflesPersistence.save(raffle);
     }
 }

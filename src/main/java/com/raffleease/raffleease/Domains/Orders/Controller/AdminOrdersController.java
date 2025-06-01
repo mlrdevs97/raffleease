@@ -74,7 +74,7 @@ public class AdminOrdersController {
             @Valid @RequestBody OrderComplete orderComplete
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                ordersEditService.completeOrder(orderId, orderComplete),
+                ordersEditService.complete(orderId, orderComplete),
                 "Order completed successfully"
         ));
     }
@@ -84,8 +84,18 @@ public class AdminOrdersController {
             @PathVariable Long orderId
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                ordersEditService.cancelOrder(orderId),
+                ordersEditService.cancel(orderId),
                 "Order cancelled successfully"
+        ));
+    }
+
+    @PutMapping("/{orderId}/refund")
+    public ResponseEntity<ApiResponse> refund(
+            @PathVariable Long orderId
+    ) {
+        return ResponseEntity.ok(ResponseFactory.success(
+                ordersEditService.refund(orderId),
+                "Order refunded successfully"
         ));
     }
 

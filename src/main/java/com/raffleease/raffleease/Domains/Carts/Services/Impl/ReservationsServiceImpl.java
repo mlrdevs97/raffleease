@@ -87,6 +87,7 @@ public class ReservationsServiceImpl implements ReservationsService {
         ticketsService.saveAll(tickets.stream().peek(ticket -> {
             ticket.setStatus(AVAILABLE);
             ticket.setCart(null);
+            ticket.setCustomer(null);
         }).toList());
         increaseRafflesTicketsAvailability(tickets);
     }
