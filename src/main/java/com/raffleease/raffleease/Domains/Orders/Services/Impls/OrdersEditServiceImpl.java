@@ -44,7 +44,6 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         LocalDateTime now = LocalDateTime.now();
         Payment payment = order.getPayment();
         payment.setPaymentMethod(orderComplete.paymentMethod());
-        payment.setCompletedAt(now);
         order.setStatus(COMPLETED);
         order.setCompletedAt(now);
         return mapper.fromOrder(ordersService.save(order));
