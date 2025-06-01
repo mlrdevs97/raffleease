@@ -6,7 +6,9 @@ import com.raffleease.raffleease.Domains.Images.Services.ImagesAssociateService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
+import com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesEditService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
@@ -14,12 +16,16 @@ import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.Future;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason.END_DATE_REACHED;
+import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.COMPLETED;
 
 @RequiredArgsConstructor
 @Service
@@ -42,7 +48,7 @@ public class RafflesEditServiceImpl implements RafflesEditService {
         }
 
         if (raffleEdit.endDate() != null) {
-            raffle.setEndDate(raffleEdit.endDate());
+            editEndDate(raffle, raffleEdit.endDate());
         }
 
         if (raffleEdit.images() != null && !raffleEdit.images().isEmpty()) {
@@ -71,6 +77,15 @@ public class RafflesEditServiceImpl implements RafflesEditService {
         raffle.setSoldTickets(raffle.getSoldTickets() + soldTickets);
         raffle.setRevenue(raffle.getRevenue().add(revenue));
         rafflesPersistence.save(raffle);
+    }
+
+    private void editEndDate(Raffle raffle, LocalDateTime endDate) {
+        raffle.setEndDate(endDate);
+        if (raffle.getStatus().equals(COMPLETED) && raffle.getCompletionReason().equals(END_DATE_REACHED) ) {
+            raffle.setStatus(RaffleStatus.ACTIVE);
+            raffle.setCompletionReason(null);
+            raffle.setCompletedAt(null);
+        }
     }
 
     private void addNewImages(Raffle raffle, List<ImageDTO> imageDTOs) {
