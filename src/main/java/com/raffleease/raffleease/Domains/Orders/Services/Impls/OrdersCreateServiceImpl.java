@@ -171,6 +171,6 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
 
     private String generateOrderReference() {
         String randomPart = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        return "ORD-" + "-" + randomPart;
+        return "ORD-" + randomPart;
     }
 }
