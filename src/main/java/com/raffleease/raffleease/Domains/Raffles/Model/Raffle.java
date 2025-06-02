@@ -67,6 +67,18 @@ public class Raffle {
     @Column(nullable = false)
     private Long soldTickets;
 
+    @Column(nullable = false)
+    private Long closedSells;
+
+    @Column(nullable = false)
+    private Long failedSells;
+
+    @Column(nullable = false)
+    private Long refundTickets;
+
+    @Column(nullable = false)
+    private Long unpaidTickets;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal revenue;
 

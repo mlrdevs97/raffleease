@@ -37,6 +37,10 @@ public class RafflesMapper implements IRafflesMapper {
                 .firstTicketNumber(raffleData.ticketsInfo().lowerLimit())
                 .association(association)
                 .soldTickets(0L)
+                .closedSells(0L)
+                .failedSells(0L)
+                .refundTickets(0L)
+                .unpaidTickets(0L)
                 .revenue(ZERO)
                 .build();
     }
