@@ -71,13 +71,6 @@ public class RafflesEditServiceImpl implements RafflesEditService {
         return rafflesMapper.fromRaffle(savedRaffle);
     }
 
-    @Override
-    public void updateStatistics(Raffle raffle, BigDecimal revenue, Long soldTickets) {
-        raffle.setSoldTickets(raffle.getSoldTickets() + soldTickets);
-        raffle.setRevenue(raffle.getRevenue().add(revenue));
-        rafflesPersistence.save(raffle);
-    }
-
     private void editEndDate(Raffle raffle, LocalDateTime endDate) {
         raffle.setEndDate(endDate);
         if (raffle.getStatus().equals(COMPLETED) && raffle.getCompletionReason().equals(END_DATE_REACHED) ) {

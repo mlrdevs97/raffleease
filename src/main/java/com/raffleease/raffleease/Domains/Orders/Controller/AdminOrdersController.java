@@ -99,6 +99,16 @@ public class AdminOrdersController {
         ));
     }
 
+    @PutMapping("/{orderId}/unpaid")
+    public ResponseEntity<ApiResponse> setUnpaid(
+            @PathVariable Long orderId
+    ) {
+        return ResponseEntity.ok(ResponseFactory.success(
+                ordersEditService.setUnpaid(orderId),
+                "Order unpaid successfully"
+        ));
+    }
+
     @PostMapping("/{orderId}/comment")
     public ResponseEntity<ApiResponse> addComment(
             @PathVariable Long orderId,

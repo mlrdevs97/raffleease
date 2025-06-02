@@ -61,4 +61,5 @@ public class Order {
     private LocalDateTime completedAt;
     private LocalDateTime cancelledAt;
     private LocalDateTime refundedAt;
+    private LocalDateTime unpaidAt;
 }

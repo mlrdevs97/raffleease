@@ -27,13 +27,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.PENDING;
-import static java.time.format.DateTimeFormatter.BASIC_ISO_DATE;
 
 @RequiredArgsConstructor
 @Service

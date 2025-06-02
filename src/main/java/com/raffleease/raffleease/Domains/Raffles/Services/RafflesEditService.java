@@ -8,5 +8,4 @@ import java.math.BigDecimal;
 
 public interface RafflesEditService {
     RaffleDTO edit(Long id, RaffleEdit raffleEdit);
-    void updateStatistics(Raffle raffle, BigDecimal revenue, Long soldTickets);
 }

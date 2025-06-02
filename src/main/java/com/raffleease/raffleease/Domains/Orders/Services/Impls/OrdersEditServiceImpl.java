@@ -9,6 +9,9 @@ import com.raffleease.raffleease.Domains.Orders.Model.OrderStatus;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersEditService;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
+import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatisticsService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
@@ -22,6 +25,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.*;
+import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.COMPLETED;
+import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.ACTIVE;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 
 @RequiredArgsConstructor
@@ -33,19 +38,21 @@ public class OrdersEditServiceImpl implements OrdersEditService {
     private final TicketsQueryService ticketsQueryService;
     private final OrdersMapper mapper;
     private final RafflesService rafflesService;
+    private final RafflesStatisticsService rafflesStatisticsService;
 
     @Override
     @Transactional
     public OrderDTO complete(Long orderId, OrderComplete orderComplete) {
         Order order = ordersService.findById(orderId);
-        throwIfInvalidTransition(order.getStatus(), PENDING, COMPLETED);
+        throwIfInvalidOrderTransition(order.getStatus(), PENDING, COMPLETED);
         updateTicketsStatus(order);
-        rafflesService.completeRaffleIfAllTicketsSold(order.getRaffle());
-        LocalDateTime now = LocalDateTime.now();
+        Raffle raffle = order.getRaffle();
+        rafflesService.completeRaffleIfAllTicketsSold(raffle);
+        rafflesStatisticsService.setSellStatistics(raffle, order.getOrderItems().stream().count());
         Payment payment = order.getPayment();
         payment.setPaymentMethod(orderComplete.paymentMethod());
         order.setStatus(COMPLETED);
-        order.setCompletedAt(now);
+        order.setCompletedAt(LocalDateTime.now());
         return mapper.fromOrder(ordersService.save(order));
     }
 
@@ -53,22 +60,39 @@ public class OrdersEditServiceImpl implements OrdersEditService {
     @Transactional
     public OrderDTO cancel(Long orderId) {
         Order order = ordersService.findById(orderId);
-        throwIfInvalidTransition(order.getStatus(), PENDING, CANCELLED);
+        throwIfInvalidOrderTransition(order.getStatus(), PENDING, CANCELLED);
+        throwIfInvalidRaffleTransition(order.getRaffle(), PENDING, UNPAID, ACTIVE);
         releaseOrderTickets(order);
+        rafflesStatisticsService.setCancelStatistics(order.getRaffle(), order.getOrderItems().stream().count());
         order.setStatus(CANCELLED);
         order.setCancelledAt(LocalDateTime.now());
         return mapper.fromOrder(ordersService.save(order));
     }
 
     @Override
+    @Transactional
     public OrderDTO refund(Long orderId) {
         Order order = ordersService.findById(orderId);
-        throwIfInvalidTransition(order.getStatus(), COMPLETED, REFUNDED);
+        throwIfInvalidOrderTransition(order.getStatus(), COMPLETED, REFUNDED);
         releaseOrderTickets(order);
-        LocalDateTime now = LocalDateTime.now();
+        Raffle raffle = order.getRaffle();
+        rafflesStatisticsService.setRefundStatistics(raffle, order.getOrderItems().stream().count());
+        rafflesService.reactivateRaffleIfAllTicketsSold(raffle);
         order.setStatus(REFUNDED);
-        order.setCompletedAt(now);
-        order.setRefundedAt(now);
+        order.setRefundedAt(LocalDateTime.now());
+        return mapper.fromOrder(ordersService.save(order));
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO setUnpaid(Long orderId) {
+        Order order = ordersService.findById(orderId);
+        throwIfInvalidOrderTransition(order.getStatus(), PENDING, UNPAID);
+        throwIfInvalidRaffleTransition(order.getRaffle(), PENDING, UNPAID, RaffleStatus.COMPLETED);
+        rafflesStatisticsService.setUnpaidStatistics(order.getRaffle(), order.getOrderItems().stream().count());
+        releaseOrderTickets(order);
+        order.setStatus(UNPAID);
+        order.setUnpaidAt(LocalDateTime.now());
         return mapper.fromOrder(ordersService.save(order));
     }
 
@@ -79,9 +103,16 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         return mapper.fromOrder(ordersService.save(order));
     }
 
-    private void throwIfInvalidTransition(OrderStatus oldStatus, OrderStatus expectedStatus, OrderStatus newStatus) {
+    private void throwIfInvalidOrderTransition(OrderStatus oldStatus, OrderStatus expectedStatus, OrderStatus newStatus) {
         if (!oldStatus.equals(expectedStatus)) {
             throw new BusinessException(String.format("Unsupported status transition from %s to %s", oldStatus, newStatus));
+        }
+    }
+
+    private void throwIfInvalidRaffleTransition(Raffle raffle, OrderStatus oldStatus, OrderStatus newStatus, RaffleStatus expectedRaffleStatus) {
+        if (!raffle.getStatus().equals(expectedRaffleStatus)) {
+            throw new BusinessException(String.format("Cannot transition order from %s to %s when raffle status is %s, expected %s", 
+                oldStatus, newStatus, raffle.getStatus(), expectedRaffleStatus));
         }
     }
 

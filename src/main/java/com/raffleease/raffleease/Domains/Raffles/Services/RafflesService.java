@@ -8,4 +8,5 @@ public interface RafflesService {
     RaffleDTO create(Long associationId, RaffleCreate raffleData);
     void delete(Long id);
     void completeRaffleIfAllTicketsSold(Raffle raffle);
+    void reactivateRaffleIfAllTicketsSold(Raffle raffle);
 }
