@@ -24,18 +24,9 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
     private final IRafflesMapper mapper;
 
     @Override
-    public RaffleDTO updateStatus(Raffle raffle, RaffleStatus newStatus) {
-        return performUpdate(raffle, newStatus);
-    }
-
-    @Override
     public RaffleDTO updateStatus(Long id, StatusUpdate request) {
         Raffle raffle = rafflesPersistence.findById(id);
-        return performUpdate(raffle, request.status());
-    }
-
-    private RaffleDTO performUpdate(Raffle raffle, RaffleStatus newStatus) {
-        switch (newStatus) {
+        switch (raffle.getStatus()) {
             case ACTIVE -> updateToActive(raffle);
             case PAUSED -> pause(raffle);
             case COMPLETED -> completeRaffle(raffle);
