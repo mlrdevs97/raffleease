@@ -43,7 +43,6 @@ public class RafflesServiceImpl implements RafflesService {
         Association association = associationsService.findById(associationId);
         Raffle mappedRaffle = rafflesMapper.toRaffle(raffleData, association);
         Raffle raffle = rafflesPersistence.save(mappedRaffle);
-        raffle.setURL(corsProperties.getClientAsList().get(0) + "/client/raffle/" + raffle.getId());
         List<Image> images = imagesAssociateService.associateImagesToRaffleOnCreate(raffle, raffleData.images());
         raffle.setImages(images);
         List<Ticket> tickets = ticketsCreateService.create(raffle, raffleData.ticketsInfo());

@@ -57,7 +57,6 @@ public class RafflesMapper implements IRafflesMapper {
                 .id(raffle.getId())
                 .title(raffle.getTitle())
                 .description(raffle.getDescription())
-                .url(raffle.getURL())
                 .startDate(raffle.getStartDate())
                 .endDate(raffle.getEndDate())
                 .createdAt(raffle.getCreatedAt())

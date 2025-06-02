@@ -37,8 +37,6 @@ public class Raffle {
     @Column(nullable = false)
     private RaffleStatus status;
 
-    private String URL;
-
     @Column(nullable = false, updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
