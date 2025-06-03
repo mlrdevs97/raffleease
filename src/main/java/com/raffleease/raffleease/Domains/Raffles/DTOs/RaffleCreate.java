@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Raffles.DTOs;
 
+import com.raffleease.raffleease.Common.Validations.StartDateNotAfterEndDate;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import jakarta.validation.Valid;
@@ -14,6 +15,7 @@ import java.util.List;
 import static com.raffleease.raffleease.Common.Constants.Constants.MAX_IMAGES;
 import static com.raffleease.raffleease.Common.Constants.Constants.MIN_IMAGES;
 
+@StartDateNotAfterEndDate
 public record RaffleCreate(
         @NotBlank
         @Size(max = 100)
@@ -22,6 +24,8 @@ public record RaffleCreate(
         @NotBlank
         @Size(max = 5000)
         String description,
+
+        LocalDateTime startDate,
 
         @NotNull
         @Future
