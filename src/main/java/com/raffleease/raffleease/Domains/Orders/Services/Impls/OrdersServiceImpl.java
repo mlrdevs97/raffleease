@@ -24,7 +24,6 @@ import java.util.List;
 public class OrdersServiceImpl implements OrdersService {
     private final OrdersSearchRepository searchRepository;
     private final OrdersRepository repository;
-    private final OrderItemsRepository orderItemsRepository;
     private final OrdersMapper ordersMapper;
 
     @Override

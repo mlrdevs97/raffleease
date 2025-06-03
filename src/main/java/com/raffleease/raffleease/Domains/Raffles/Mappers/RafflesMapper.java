@@ -7,8 +7,7 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 
 import java.util.List;
 
-public interface IRafflesMapper {
-    Raffle toRaffle(RaffleCreate request, Association association);
+public interface RafflesMapper {
     RaffleDTO fromRaffle(Raffle raffle);
     List<RaffleDTO> fromRaffleList(List<Raffle> raffles);
 }

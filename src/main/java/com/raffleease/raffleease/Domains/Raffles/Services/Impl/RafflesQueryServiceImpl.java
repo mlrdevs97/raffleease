@@ -4,7 +4,7 @@ import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleSearchFilters;
-import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
+import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
@@ -23,7 +23,7 @@ import java.util.List;
 public class RafflesQueryServiceImpl implements RafflesQueryService {
     private final RafflesPersistenceService rafflesPersistence;
     private final RafflesRepository rafflesRepository;
-    private final IRafflesMapper mapper;
+    private final RafflesMapper mapper;
     private final AssociationsService associationsService;
 
     @Override

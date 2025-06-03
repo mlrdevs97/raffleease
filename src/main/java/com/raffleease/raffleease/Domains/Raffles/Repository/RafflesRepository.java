@@ -16,10 +16,11 @@ public interface RafflesRepository extends JpaRepository<Raffle, Long>, RafflesS
 
     @Query("""
     SELECT r FROM Raffle r
+    JOIN r.statistics s
     WHERE r.status <> :status
       AND (
-            r.availableTickets = 0 OR
-            r.soldTickets = r.totalTickets OR
+            s.availableTickets = 0 OR
+            s.soldTickets = r.totalTickets OR
             r.endDate <= CURRENT_TIMESTAMP
           )
     """)

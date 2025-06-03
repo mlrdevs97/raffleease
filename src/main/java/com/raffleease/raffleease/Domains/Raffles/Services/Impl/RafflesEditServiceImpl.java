@@ -5,8 +5,9 @@ import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesAssociateService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
-import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
+import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatistics;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesEditService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
@@ -17,7 +18,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class RafflesEditServiceImpl implements RafflesEditService {
     private final RafflesPersistenceService rafflesPersistence;
     private final TicketsService ticketsCreateService;
     private final ImagesAssociateService imagesAssociateService;
-    private final IRafflesMapper rafflesMapper;
+    private final RafflesMapper rafflesMapper;
 
     @Transactional
     public RaffleDTO edit(Long id, RaffleEdit raffleEdit) {
@@ -85,7 +85,9 @@ public class RafflesEditServiceImpl implements RafflesEditService {
     }
 
     private void editTotalTickets(Raffle raffle, long editTotal) {
-        if (raffle.getSoldTickets() != null && editTotal < raffle.getSoldTickets()) {
+        RaffleStatistics statistics = raffle.getStatistics();
+
+        if (statistics.getSoldTickets() != null && editTotal < statistics.getSoldTickets()) {
             throw new BusinessException("The total tickets count cannot be less than the number of tickets already sold for this raffle");
         }
 
@@ -97,7 +99,7 @@ public class RafflesEditServiceImpl implements RafflesEditService {
             return;
         }
 
-        raffle.setAvailableTickets(raffle.getAvailableTickets() + ticketDifference);
+        statistics.setAvailableTickets(statistics.getAvailableTickets() + ticketDifference);
         createAdditionalTickets(raffle, oldTotal, ticketDifference);
 
         if (raffle.getStatus().equals(COMPLETED) && raffle.getCompletionReason().equals(ALL_TICKETS_SOLD)) {

@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatistics;
 import com.raffleease.raffleease.Domains.Raffles.Services.RaffleTicketsAvailabilityService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
@@ -14,21 +15,23 @@ public class RaffleTicketsAvailabilityServiceImpl implements RaffleTicketsAvaila
 
     @Override
     public void reduceAvailableTickets(Raffle raffle, long reductionQuantity) {
-        long availableTickets = raffle.getAvailableTickets() - reductionQuantity;
+        RaffleStatistics statistics = raffle.getStatistics();
+        long availableTickets = statistics.getAvailableTickets() - reductionQuantity;
         if (availableTickets < 0) {
             throw new BusinessException("Insufficient tickets available to complete the operation");
         }
-        raffle.setAvailableTickets(availableTickets);
+        statistics.setAvailableTickets(availableTickets);
         rafflesPersistence.save(raffle);
     }
 
     @Override
     public void increaseAvailableTickets(Raffle raffle, long increaseQuantity) {
-        Long availableTickets = raffle.getAvailableTickets() + increaseQuantity;
+        RaffleStatistics statistics = raffle.getStatistics();
+        Long availableTickets = statistics.getAvailableTickets() + increaseQuantity;
         if (availableTickets > raffle.getTotalTickets()) {
             throw new BusinessException("The operation exceeds the total ticket limit");
         }
-        raffle.setAvailableTickets(availableTickets);
+        statistics.setAvailableTickets(availableTickets);
         rafflesPersistence.save(raffle);
     }
 }

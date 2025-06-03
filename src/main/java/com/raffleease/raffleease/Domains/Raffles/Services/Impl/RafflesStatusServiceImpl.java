@@ -2,7 +2,7 @@ package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.StatusUpdate;
-import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
+import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
@@ -21,7 +21,7 @@ import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.*;
 @Service
 public class RafflesStatusServiceImpl implements RafflesStatusService {
     private final RafflesPersistenceService rafflesPersistence;
-    private final IRafflesMapper mapper;
+    private final RafflesMapper mapper;
 
     @Override
     public RaffleDTO updateStatus(Long id, StatusUpdate request) {
@@ -74,7 +74,7 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
             throw new BusinessException("The end date of the raffle must be at least one day after the current date to reactivate");
         }
 
-        if (raffle.getAvailableTickets() == 0 || raffle.getTotalTickets() <= raffle.getSoldTickets()) {
+        if (raffle.getStatistics().getAvailableTickets() == 0 || raffle.getTotalTickets() <= raffle.getStatistics().getSoldTickets()) {
             throw new BusinessException("Available tickets for raffle are required to reactivate");
         }
 

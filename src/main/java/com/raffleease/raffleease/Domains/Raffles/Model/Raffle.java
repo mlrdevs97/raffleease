@@ -15,6 +15,7 @@ import java.util.List;
 
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.CascadeType.PERSIST;
+import static jakarta.persistence.FetchType.LAZY;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,57 +29,28 @@ public class Raffle {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = "association_id", nullable = false)
+    private Association association;
+
     @Column(nullable = false)
     private String title;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RaffleStatus status;
-
-    @Column(nullable = false, updatable = false)
-    @CreationTimestamp
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
-
-    private LocalDateTime startDate;
-
-    private LocalDateTime endDate;
-
-    private LocalDateTime completedAt;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal ticketPrice;
 
     @Column(nullable = false)
-    private Long firstTicketNumber;
-
-    @Column(nullable = false)
     private Long totalTickets;
 
     @Column(nullable = false)
-    private Long availableTickets;
-
-    @Column(nullable = false)
-    private Long soldTickets;
-
-    @Column(nullable = false)
-    private Long closedSells;
-
-    @Column(nullable = false)
-    private Long failedSells;
-
-    @Column(nullable = false)
-    private Long refundTickets;
-
-    @Column(nullable = false)
-    private Long unpaidTickets;
-
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal revenue;
+    private Long firstTicketNumber;
 
     @OneToMany(mappedBy = "raffle", cascade = ALL, orphanRemoval = true)
     private List<Image> images;
@@ -89,13 +61,23 @@ public class Raffle {
     @OneToMany(mappedBy = "raffle", cascade = PERSIST)
     private List<Order> orders;
 
-    @ManyToOne
-    @JoinColumn(name = "association_id", nullable = false)
-    private Association association;
-
+    @Enumerated(EnumType.STRING)
     private CompletionReason completionReason;
 
-    @OneToOne
+    @OneToOne(fetch = LAZY)
     @JoinColumn(name = "winning_ticket_id")
     private Ticket winningTicket;
+
+    @OneToOne(mappedBy = "raffle", cascade = ALL, orphanRemoval = true, fetch = LAZY)
+    private RaffleStatistics statistics;
+
+    @Column(nullable = false, updatable = false)
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    private LocalDateTime completedAt;
 }

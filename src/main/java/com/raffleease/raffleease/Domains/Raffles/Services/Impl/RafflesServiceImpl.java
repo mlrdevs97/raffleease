@@ -7,8 +7,9 @@ import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesAssociateService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
-import com.raffleease.raffleease.Domains.Raffles.Mappers.IRafflesMapper;
+import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatistics;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
@@ -20,19 +21,20 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason.ALL_TICKETS_SOLD;
-import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.ACTIVE;
-import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.COMPLETED;
+import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.*;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
+import static java.math.BigDecimal.ZERO;
 
 @RequiredArgsConstructor
 @Service
 public class RafflesServiceImpl implements RafflesService {
     private final RafflesPersistenceService rafflesPersistence;
     private final TicketsService ticketsCreateService;
-    private final IRafflesMapper rafflesMapper;
+    private final RafflesMapper rafflesMapper;
     private final AssociationsService associationsService;
     private final ImagesAssociateService imagesAssociateService;
     private final CorsProperties corsProperties;
@@ -41,8 +43,10 @@ public class RafflesServiceImpl implements RafflesService {
     @Transactional
     public RaffleDTO create(Long associationId, RaffleCreate raffleData) {
         Association association = associationsService.findById(associationId);
-        Raffle mappedRaffle = rafflesMapper.toRaffle(raffleData, association);
-        Raffle raffle = rafflesPersistence.save(mappedRaffle);
+        Raffle newRaffle = createNewRaffle(raffleData, association);
+        RaffleStatistics statistics = createNewStatistics(newRaffle, raffleData.ticketsInfo().amount());
+        newRaffle.setStatistics(statistics);
+        Raffle raffle = rafflesPersistence.save(newRaffle);
         List<Image> images = imagesAssociateService.associateImagesToRaffleOnCreate(raffle, raffleData.images());
         raffle.setImages(images);
         List<Ticket> tickets = ticketsCreateService.create(raffle, raffleData.ticketsInfo());
@@ -78,5 +82,35 @@ public class RafflesServiceImpl implements RafflesService {
             raffle.setCompletionReason(null);
         }
         rafflesPersistence.save(raffle);
+    }
+
+    private Raffle createNewRaffle(RaffleCreate raffleData, Association association) {
+        return Raffle.builder()
+                .association(association)
+                .title(raffleData.title())
+                .description(raffleData.description())
+                .status(PENDING)
+                .ticketPrice(raffleData.ticketsInfo().price())
+                .totalTickets(raffleData.ticketsInfo().amount())
+                .firstTicketNumber(raffleData.ticketsInfo().lowerLimit())
+                .images(new ArrayList<>())
+                .tickets(new ArrayList<>())
+                .orders(new ArrayList<>())
+                .startDate(raffleData.startDate())
+                .endDate(raffleData.endDate())
+                .build();
+    }
+
+    private RaffleStatistics createNewStatistics(Raffle raffle, long ticketAmount) {
+        return RaffleStatistics.builder()
+                .raffle(raffle)
+                .availableTickets(ticketAmount)
+                .soldTickets(0L)
+                .closedSells(0L)
+                .failedSells(0L)
+                .refundTickets(0L)
+                .unpaidTickets(0L)
+                .revenue(ZERO)
+                .build();
     }
 }
