@@ -14,9 +14,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.HandlerMapping;
 
 import java.util.Map;
+
+import static org.springframework.web.servlet.HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE;
 
 @RequiredArgsConstructor
 @Component
@@ -30,7 +31,7 @@ public class AssociationAccessInterceptor implements HandlerInterceptor {
             if (!(handler instanceof HandlerMethod method)) return true;
             if (!method.getBeanType().isAnnotationPresent(ValidateAssociationAccess.class)) return true;
 
-            Map<String, String> pathVariables = (Map<String, String>) request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+            Map<String, String> pathVariables = (Map<String, String>) request.getAttribute(URI_TEMPLATE_VARIABLES_ATTRIBUTE);
             String associationIdStr = pathVariables.get("associationId");
 
             Long associationId;
@@ -41,13 +42,10 @@ public class AssociationAccessInterceptor implements HandlerInterceptor {
             }
 
             Association association = associationsService.findById(associationId);
-
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String identifier = auth.getName();
             User user = usersService.findByIdentifier(identifier);
-
             membershipsService.validateIsMember(association, user);
-
             return true;
         }
 }

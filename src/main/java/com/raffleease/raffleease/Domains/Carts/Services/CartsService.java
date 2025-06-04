@@ -7,4 +7,6 @@ public interface CartsService {
     CartDTO create();
     Cart save(Cart entity);
     Cart findById(Long id);
+    CartDTO get(Long cartId);
+    CartDTO getUserCart();
 }

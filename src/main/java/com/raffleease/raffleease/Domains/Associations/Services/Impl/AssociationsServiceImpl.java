@@ -56,7 +56,6 @@ public class AssociationsServiceImpl implements AssociationsService {
             return associationsRepository.save(entity);
         } catch (DataIntegrityViolationException ex) {
             Optional<String> constraintName = ConstraintViolationParser.extractConstraintName(ex);
-
             if (constraintName.isPresent()) {
                 throw new UniqueConstraintViolationException(constraintName.get(), "Unique constraint violated: " + constraintName.get());
             } else {

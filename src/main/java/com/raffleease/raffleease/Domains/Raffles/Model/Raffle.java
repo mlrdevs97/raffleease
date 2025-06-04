@@ -15,7 +15,9 @@ import java.util.List;
 
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.CascadeType.PERSIST;
+import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.LAZY;
+import static jakarta.persistence.GenerationType.IDENTITY;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,7 +28,7 @@ import static jakarta.persistence.FetchType.LAZY;
 @Table(name = "Raffles")
 public class Raffle {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = LAZY)
@@ -39,7 +41,7 @@ public class Raffle {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(nullable = false)
     private RaffleStatus status;
 
@@ -61,7 +63,7 @@ public class Raffle {
     @OneToMany(mappedBy = "raffle", cascade = PERSIST)
     private List<Order> orders;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     private CompletionReason completionReason;
 
     @OneToOne(fetch = LAZY)

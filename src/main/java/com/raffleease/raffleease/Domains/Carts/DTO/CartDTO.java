@@ -10,6 +10,7 @@ import java.util.List;
 @Builder
 public record CartDTO(
         Long id,
+        Long userId,
         List<TicketDTO> tickets,
         CartStatus status,
         LocalDateTime createdAt,

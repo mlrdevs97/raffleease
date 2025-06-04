@@ -7,6 +7,7 @@ import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
 import com.raffleease.raffleease.Domains.Carts.Services.ReservationsService;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,28 @@ public class AdminCartsController {
                 ResponseFactory.success(
                         createdCart,
                         "New cart created successfully"
+                )
+        );
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse> getUserCart() {
+        return ResponseEntity.ok(
+                ResponseFactory.success(
+                        cartsService.getUserCart(),
+                        "User cart retrieved successfully"
+                )
+        );
+    }
+
+    @GetMapping("/{cartId}")
+    public ResponseEntity<ApiResponse> get(
+            @PathVariable Long cartId
+    ) {
+        return ResponseEntity.ok(
+                ResponseFactory.success(
+                        cartsService.findById(cartId),
+                        "Cart retrieved successfully"
                 )
         );
     }
