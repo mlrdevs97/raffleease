@@ -37,7 +37,6 @@ public class RafflesServiceImpl implements RafflesService {
     private final RafflesMapper rafflesMapper;
     private final AssociationsService associationsService;
     private final ImagesAssociateService imagesAssociateService;
-    private final CorsProperties corsProperties;
 
     @Override
     @Transactional
@@ -48,9 +47,9 @@ public class RafflesServiceImpl implements RafflesService {
         newRaffle.setStatistics(statistics);
         Raffle raffle = rafflesPersistence.save(newRaffle);
         List<Image> images = imagesAssociateService.associateImagesToRaffleOnCreate(raffle, raffleData.images());
-        raffle.setImages(images);
+        raffle.getImages().addAll(images);
         List<Ticket> tickets = ticketsCreateService.create(raffle, raffleData.ticketsInfo());
-        raffle.setTickets(tickets);
+        raffle.getTickets().addAll(tickets);
         return rafflesMapper.fromRaffle(rafflesPersistence.save(raffle));
     }
 
