@@ -8,6 +8,8 @@ import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException;
+import com.raffleease.raffleease.Domains.Carts.Services.CartLifecycleService;
+import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +32,9 @@ public class CartsServiceImpl implements CartsService {
     private final CartsRepository repository;
     private final CartsMapper mapper;
     private final UsersService usersService;
-    
+    private final CartLifecycleService cartLifecycleService;
+    private final CartsPersistenceService cartsPersistenceService;
+
     @Override
     public CartDTO create() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -44,17 +48,8 @@ public class CartsServiceImpl implements CartsService {
     }
 
     @Override
-    public Cart findById(Long id) {
-        try {
-            return repository.findById(id).orElseThrow(() -> new NotFoundException("Cart not found for id <" + id + ">"));
-        } catch (DataAccessException ex) {
-            throw new DatabaseException("Database error occurred while fetching cart with ID <" + id + ">: " + ex.getMessage());
-        }
-    }
-
-    @Override
     public CartDTO get(Long cartId) {
-        return mapper.fromCart(findById(cartId));
+        return mapper.fromCart(cartsPersistenceService.findById(cartId));
     }
 
     @Override
@@ -87,7 +82,6 @@ public class CartsServiceImpl implements CartsService {
             return;
         }
         Cart cart = existingCart.get();
-        cart.setStatus(CLOSED);
-        save(cart);
+        cartLifecycleService.releaseCart(cart);
     }
 }

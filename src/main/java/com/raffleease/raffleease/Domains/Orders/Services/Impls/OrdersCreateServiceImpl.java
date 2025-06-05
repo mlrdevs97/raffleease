@@ -3,7 +3,8 @@ package com.raffleease.raffleease.Domains.Orders.Services.Impls;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
-import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
+import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
+import com.raffleease.raffleease.Domains.Carts.Services.CartLifecycleService;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Customers.Services.CustomersService;
 import com.raffleease.raffleease.Domains.Orders.DTOs.AdminOrderCreate;
@@ -20,7 +21,6 @@ import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceServ
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
-import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -30,37 +30,35 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.PENDING;
 
 @RequiredArgsConstructor
 @Service
 public class OrdersCreateServiceImpl implements OrdersCreateService {
     private final OrdersService ordersService;
-    private final CartsService cartsService;
     private final RafflesQueryService rafflesQueryService;
-    private final RafflesPersistenceService rafflesPersistenceService;
+    private final RafflesPersistenceService rafflesPersistence;
+    private final CartsPersistenceService cartsPersistence;
     private final CustomersService customersService;
     private final TicketsQueryService ticketsQueryService;
-    private final TicketsService ticketsService;
     private final PaymentsService paymentsService;
     private final AssociationsService associationsService;
+    private final CartLifecycleService cartLifecycleService;
     private final OrdersMapper mapper;
 
     @Override
     @Transactional
     public OrderDTO create(AdminOrderCreate adminOrder, Long associationId) {
         Association association = associationsService.findById(associationId);
-        Cart cart = cartsService.findById(adminOrder.cartId());
+        Cart cart = cartsPersistence.findById(adminOrder.cartId());
         List<Ticket> requestedTickets = ticketsQueryService.findAllById(adminOrder.ticketIds());
         validateRequest(requestedTickets, cart, association);
-        closeCart(cart);
-        Customer customer = customersService.create(adminOrder.customer());
-        finalizeTickets(requestedTickets, customer);
-        Raffle raffle = rafflesPersistenceService.findById(adminOrder.raffleId());
+        Customer customer = customersService.create(adminOrder.customer());        
+        List<Ticket> finalizedTickets = cartLifecycleService.finalizeCart(cart, customer);
+        Raffle raffle = rafflesPersistence.findById(adminOrder.raffleId());
         Order order = createOrder(raffle, customer, adminOrder.comment());
-        Payment payment = createPayment(order, requestedTickets);
-        List<OrderItem> orderItems = createOrderItems(order, requestedTickets);
+        Payment payment = createPayment(order, finalizedTickets);
+        List<OrderItem> orderItems = createOrderItems(order, finalizedTickets);
         order.setPayment(payment);
         order.getOrderItems().addAll(orderItems);
         order = ordersService.save(order);
@@ -72,46 +70,6 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         validateAllTicketsBelongToAssociationRaffle(requestedTickets, association);
         validateAllTicketsBelongToCart(cartTickets, requestedTickets);
         validateAllCartTicketsIncludedInRequest(cartTickets, requestedTickets);
-    }
-
-    private void closeCart(Cart cart) {
-        cart.setStatus(CLOSED);
-        cart.setTickets(null);
-        cartsService.save(cart);
-    }
-
-    private void finalizeTickets(List<Ticket> tickets, Customer customer) {
-        ticketsService.saveAll(tickets.stream().peek(ticket -> {
-            ticket.setCustomer(customer);
-            ticket.setCart(null);
-        }).toList());
-    }
-
-    private Payment createPayment(Order order, List<Ticket> tickets) {
-        BigDecimal total = calculateOrderTotal(tickets);
-        return paymentsService.create(order, total);
-    }
-
-    private Order createOrder(Raffle raffle, Customer customer, String comment) {
-        return ordersService.save(Order.builder()
-                .raffle(raffle)
-                .status(PENDING)
-                .orderReference(generateOrderReference())
-                .customer(customer)
-                .orderItems(new ArrayList<>())
-                .comment(comment)
-                .build());
-    }
-
-    private List<OrderItem> createOrderItems(Order order, List<Ticket> tickets) {
-        return tickets.stream().map(ticket -> OrderItem.builder()
-                .order(order)
-                .ticketNumber(ticket.getTicketNumber())
-                .priceAtPurchase(ticket.getRaffle().getTicketPrice())
-                .ticketId(ticket.getId())
-                .raffleId(ticket.getRaffle().getId())
-                .customerId(order.getCustomer().getId())
-                .build()).toList();
     }
 
     private void validateAllTicketsBelongToCart(List<Ticket> cartTickets, List<Ticket> requestedTickets) {
@@ -170,5 +128,32 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
     private String generateOrderReference() {
         String randomPart = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         return "ORD-" + randomPart;
+    }
+
+    private Payment createPayment(Order order, List<Ticket> tickets) {
+        BigDecimal total = calculateOrderTotal(tickets);
+        return paymentsService.create(order, total);
+    }
+
+    private Order createOrder(Raffle raffle, Customer customer, String comment) {
+        return ordersService.save(Order.builder()
+                .raffle(raffle)
+                .status(PENDING)
+                .orderReference(generateOrderReference())
+                .customer(customer)
+                .orderItems(new ArrayList<>())
+                .comment(comment)
+                .build());
+    }
+
+    private List<OrderItem> createOrderItems(Order order, List<Ticket> tickets) {
+        return tickets.stream().map(ticket -> OrderItem.builder()
+                .order(order)
+                .ticketNumber(ticket.getTicketNumber())
+                .priceAtPurchase(ticket.getRaffle().getTicketPrice())
+                .ticketId(ticket.getId())
+                .raffleId(ticket.getRaffle().getId())
+                .customerId(order.getCustomer().getId())
+                .build()).toList();
     }
 }

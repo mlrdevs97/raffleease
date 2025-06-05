@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Domains.Carts.Controllers;
 
 import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAccess;
 import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
+import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
 import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
 import com.raffleease.raffleease.Domains.Carts.Services.ReservationsService;
@@ -23,6 +24,7 @@ import java.net.URI;
 public class AdminCartsController {
     private final CartsService cartsService;
     private final ReservationsService reservationsService;
+    private final CartsPersistenceService cartsPersistenceService;
 
     @PostMapping
     public ResponseEntity<ApiResponse> create() {
@@ -42,12 +44,12 @@ public class AdminCartsController {
         );
     }
 
-    @GetMapping
+    @GetMapping("/active")
     public ResponseEntity<ApiResponse> getUserCart() {
         return ResponseEntity.ok(
                 ResponseFactory.success(
                         cartsService.getUserCart(),
-                        "User cart retrieved successfully"
+                        "Active uiser cart retrieved successfully"
                 )
         );
     }
@@ -58,7 +60,7 @@ public class AdminCartsController {
     ) {
         return ResponseEntity.ok(
                 ResponseFactory.success(
-                        cartsService.findById(cartId),
+                        cartsPersistenceService.findById(cartId),
                         "Cart retrieved successfully"
                 )
         );

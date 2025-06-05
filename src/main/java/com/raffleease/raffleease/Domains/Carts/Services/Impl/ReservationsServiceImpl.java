@@ -5,7 +5,7 @@ import com.raffleease.raffleease.Domains.Associations.Services.AssociationsServi
 import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
 import com.raffleease.raffleease.Domains.Carts.Mappers.CartsMapper;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
-import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
+import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RaffleTicketsAvailabilityService;
 import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
@@ -36,7 +36,7 @@ public class ReservationsServiceImpl implements ReservationsService {
     private final TicketsService ticketsService;
     private final AssociationsService associationsService;
     private final RafflesQueryService rafflesQueryService;
-    private final CartsService cartsService;
+    private final CartsPersistenceService cartsPersistenceService;
     private final CartsMapper cartsMapper;
 
     @Override
@@ -46,30 +46,43 @@ public class ReservationsServiceImpl implements ReservationsService {
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
         validateTicketsAvailability(tickets);
-        Cart cart = cartsService.findById(cartId);
+        Cart cart = cartsPersistenceService.findById(cartId);
         reserveTickets(tickets, cart);
         reduceRaffleTicketsAvailability(tickets);
         cart.getTickets().addAll(tickets);
-        cartsService.save(cart);
-        return cartsMapper.fromCart(cartsService.save(cart));
+        cartsPersistenceService.save(cart);
+        return cartsMapper.fromCart(cartsPersistenceService.save(cart));
     }
 
+    /**
+     * Releases tickets without cart manipulation.
+     * Use this when tickets are associated to an order but not a cart.
+     */
     @Override
     @Transactional
     public void release(List<Ticket> tickets) {
         releaseTickets(tickets);
     }
 
+    /**
+     * Releases ALL tickets from a cart and clears the cart.
+     * Use this for complete cart abandonment/expiration.
+     */
     @Override
     @Transactional
     public void release(Cart cart) {
-        releaseTicketsFromCart(cart, cart.getTickets());
+        List<Ticket> cartTickets = List.copyOf(cart.getTickets());
+        releaseTicketsFromCart(cart, cartTickets);
     }
 
+    /**
+     * Releases specific tickets from a cart (partial release).
+     * Validates that tickets belong to the association and cart.
+     */
     @Override
     @Transactional
     public void release(ReservationRequest request, Long associationId, Long cartId) {
-        Cart cart = cartsService.findById(cartId);
+        Cart cart = cartsPersistenceService.findById(cartId);
         List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketIds());
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
@@ -77,16 +90,26 @@ public class ReservationsServiceImpl implements ReservationsService {
     }
 
     private void releaseTicketsFromCart(Cart cart, List<Ticket> tickets) {
+        if (tickets == null || tickets.isEmpty()) {
+            return; 
+        }
+        
         checkTicketsBelongToCart(cart, tickets);
         releaseTickets(tickets);
-        cart.getTickets().removeAll(tickets);
-        cartsService.save(cart);
+        
+        if (cart.getTickets() != null) {
+            cart.getTickets().removeAll(tickets);
+        }
+        cartsPersistenceService.save(cart);
     }
 
     private void releaseTickets(List<Ticket> tickets) {
+        if (tickets == null || tickets.isEmpty()) {
+            return;
+        }
+        
         ticketsService.saveAll(tickets.stream().peek(ticket -> {
             ticket.setStatus(AVAILABLE);
-            ticket.setCart(null);
             ticket.setCustomer(null);
         }).toList());
         increaseRafflesTicketsAvailability(tickets);
@@ -110,9 +133,21 @@ public class ReservationsServiceImpl implements ReservationsService {
     }
 
     private void checkTicketsBelongToCart(Cart cart, List<Ticket> tickets) {
-        Set<Ticket> cartTickets = new HashSet<>(cart.getTickets());
-        if (tickets.stream().anyMatch(ticket -> !cartTickets.contains(ticket))) {
-            throw new BusinessException("Cannot release a ticket that does not belong to the cart");
+        if (cart.getTickets() == null || cart.getTickets().isEmpty()) {
+            throw new BusinessException("Cart has no tickets to release");
+        }
+        
+        Set<Long> cartTicketIds = cart.getTickets().stream()
+                .map(Ticket::getId)
+                .collect(Collectors.toSet());
+        
+        List<Long> invalidTicketIds = tickets.stream()
+                .map(Ticket::getId)
+                .filter(id -> !cartTicketIds.contains(id))
+                .toList();
+                
+        if (!invalidTicketIds.isEmpty()) {
+            throw new BusinessException("Cannot release tickets that do not belong to the cart. Invalid ticket IDs: " + invalidTicketIds);
         }
     }
 
