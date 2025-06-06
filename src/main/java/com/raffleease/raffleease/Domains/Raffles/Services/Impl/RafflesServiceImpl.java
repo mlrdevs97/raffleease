@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 
-import com.raffleease.raffleease.Common.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
@@ -105,11 +104,19 @@ public class RafflesServiceImpl implements RafflesService {
                 .raffle(raffle)
                 .availableTickets(ticketAmount)
                 .soldTickets(0L)
-                .closedSells(0L)
-                .failedSells(0L)
-                .refundTickets(0L)
-                .unpaidTickets(0L)
                 .revenue(ZERO)
+                .averageOrderValue(ZERO)
+                .totalOrders(0L)
+                .completedOrders(0L)
+                .pendingOrders(0L)
+                .cancelledOrders(0L)
+                .unpaidOrders(0L)
+                .refundedOrders(0L)
+                .participants(0L)
+                .ticketsPerParticipant(ZERO)
+                .firstSaleDate(null)
+                .lastSaleDate(null)
+                .dailySalesVelocity(ZERO)
                 .build();
     }
 }

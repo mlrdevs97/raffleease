@@ -19,6 +19,7 @@ import com.raffleease.raffleease.Domains.Payments.Services.PaymentsService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatisticsService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
@@ -38,6 +39,7 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
     private final OrdersService ordersService;
     private final RafflesQueryService rafflesQueryService;
     private final RafflesPersistenceService rafflesPersistence;
+    private final RafflesStatisticsService statisticsService;
     private final CartsPersistenceService cartsPersistence;
     private final CustomersService customersService;
     private final TicketsQueryService ticketsQueryService;
@@ -56,6 +58,7 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         Customer customer = customersService.create(adminOrder.customer());        
         List<Ticket> finalizedTickets = cartLifecycleService.finalizeCart(cart, customer);
         Raffle raffle = rafflesPersistence.findById(adminOrder.raffleId());
+        statisticsService.setCreateOrderStatistics(raffle, finalizedTickets.stream().count());
         Order order = createOrder(raffle, customer, adminOrder.comment());
         Payment payment = createPayment(order, finalizedTickets);
         List<OrderItem> orderItems = createOrderItems(order, finalizedTickets);

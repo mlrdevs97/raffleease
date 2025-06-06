@@ -52,14 +52,23 @@ public class RafflesMapperImpl implements RafflesMapper {
 
     private RaffleStatisticsDTO fromStatistics(Long raffleId, RaffleStatistics statistics) {
         return RaffleStatisticsDTO.builder()
+                .id(statistics.getId())
                 .raffleId(raffleId)
                 .availableTickets(statistics.getAvailableTickets())
                 .soldTickets(statistics.getSoldTickets())
-                .closedSells(statistics.getClosedSells())
-                .failedSells(statistics.getFailedSells())
-                .refundTickets(statistics.getRefundTickets())
-                .unpaidTickets(statistics.getUnpaidTickets())
                 .revenue(statistics.getRevenue())
+                .averageOrderValue(statistics.getAverageOrderValue())
+                .totalOrders(statistics.getTotalOrders())
+                .completedOrders(statistics.getCompletedOrders())
+                .pendingOrders(statistics.getPendingOrders())
+                .cancelledOrders(statistics.getCancelledOrders())
+                .unpaidOrders(statistics.getUnpaidOrders())
+                .refundedOrders(statistics.getRefundedOrders())
+                .uniqueParticipants(statistics.getParticipants())
+                .ticketsPerParticipant(statistics.getTicketsPerParticipant())
+                .firstSaleDate(statistics.getFirstSaleDate())
+                .lastSaleDate(statistics.getLastSaleDate())
+                .dailySalesVelocity(statistics.getDailySalesVelocity())
                 .build();
     }
 }

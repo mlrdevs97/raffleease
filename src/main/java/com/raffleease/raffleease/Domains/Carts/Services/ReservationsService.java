@@ -9,7 +9,6 @@ import java.util.List;
 
 public interface ReservationsService {
     CartDTO reserve(ReservationRequest request, Long associationId, Long cartId);
-    void release(List<Ticket> tickets);
     void release(Cart cart);
     void release(ReservationRequest request, Long associationId, Long cartId);
 }

@@ -27,6 +27,7 @@ import java.util.List;
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.*;
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.COMPLETED;
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.ACTIVE;
+import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 
 @RequiredArgsConstructor
@@ -38,7 +39,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
     private final TicketsQueryService ticketsQueryService;
     private final OrdersMapper mapper;
     private final RafflesService rafflesService;
-    private final RafflesStatisticsService rafflesStatisticsService;
+    private final RafflesStatisticsService statisticsService;
 
     @Override
     @Transactional
@@ -48,7 +49,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         updateTicketsStatus(order);
         Raffle raffle = order.getRaffle();
         rafflesService.completeRaffleIfAllTicketsSold(raffle);
-        rafflesStatisticsService.setSellStatistics(raffle, order.getOrderItems().stream().count());
+        statisticsService.setCompleteStatistics(raffle, order.getOrderItems().stream().count());
         Payment payment = order.getPayment();
         payment.setPaymentMethod(orderComplete.paymentMethod());
         order.setStatus(COMPLETED);
@@ -63,7 +64,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         throwIfInvalidOrderTransition(order.getStatus(), PENDING, CANCELLED);
         throwIfInvalidRaffleTransition(order.getRaffle(), PENDING, UNPAID, ACTIVE);
         releaseOrderTickets(order);
-        rafflesStatisticsService.setCancelStatistics(order.getRaffle(), order.getOrderItems().stream().count());
+        statisticsService.setCancelStatistics(order.getRaffle(), order.getOrderItems().stream().count());
         order.setStatus(CANCELLED);
         order.setCancelledAt(LocalDateTime.now());
         return mapper.fromOrder(ordersService.save(order));
@@ -76,7 +77,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         throwIfInvalidOrderTransition(order.getStatus(), COMPLETED, REFUNDED);
         releaseOrderTickets(order);
         Raffle raffle = order.getRaffle();
-        rafflesStatisticsService.setRefundStatistics(raffle, order.getOrderItems().stream().count());
+        statisticsService.setRefundStatistics(raffle, order.getOrderItems().stream().count());
         rafflesService.reactivateRaffleIfAllTicketsSold(raffle);
         order.setStatus(REFUNDED);
         order.setRefundedAt(LocalDateTime.now());
@@ -89,7 +90,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         Order order = ordersService.findById(orderId);
         throwIfInvalidOrderTransition(order.getStatus(), PENDING, UNPAID);
         throwIfInvalidRaffleTransition(order.getRaffle(), PENDING, UNPAID, RaffleStatus.COMPLETED);
-        rafflesStatisticsService.setUnpaidStatistics(order.getRaffle(), order.getOrderItems().stream().count());
+        statisticsService.setUnpaidStatistics(order.getRaffle(), order.getOrderItems().stream().count());
         releaseOrderTickets(order);
         order.setStatus(UNPAID);
         order.setUnpaidAt(LocalDateTime.now());
@@ -118,7 +119,10 @@ public class OrdersEditServiceImpl implements OrdersEditService {
 
     private void releaseOrderTickets(Order order) {
         List<Ticket> tickets = getTicketsFromOrder(order);
-        reservationsService.release(tickets);
+        ticketsService.saveAll(tickets.stream().peek(ticket -> {
+            ticket.setStatus(AVAILABLE);
+            ticket.setCustomer(null);
+        }).toList());
     }
 
     private void updateTicketsStatus(Order order) {

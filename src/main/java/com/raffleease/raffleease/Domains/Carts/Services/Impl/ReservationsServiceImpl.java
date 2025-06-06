@@ -7,10 +7,10 @@ import com.raffleease.raffleease.Domains.Carts.Mappers.CartsMapper;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Services.RaffleTicketsAvailabilityService;
 import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
 import com.raffleease.raffleease.Domains.Carts.Services.ReservationsService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatisticsService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
@@ -32,7 +32,7 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.RESER
 @Service
 public class ReservationsServiceImpl implements ReservationsService {
     private final TicketsQueryService ticketsQueryService;
-    private final RaffleTicketsAvailabilityService raffleTicketsAvailabilityService;
+    private final RafflesStatisticsService statisticsService;
     private final TicketsService ticketsService;
     private final AssociationsService associationsService;
     private final RafflesQueryService rafflesQueryService;
@@ -55,16 +55,6 @@ public class ReservationsServiceImpl implements ReservationsService {
     }
 
     /**
-     * Releases tickets without cart manipulation.
-     * Use this when tickets are associated to an order but not a cart.
-     */
-    @Override
-    @Transactional
-    public void release(List<Ticket> tickets) {
-        releaseTickets(tickets);
-    }
-
-    /**
      * Releases ALL tickets from a cart and clears the cart.
      * Use this for complete cart abandonment/expiration.
      */
@@ -72,7 +62,7 @@ public class ReservationsServiceImpl implements ReservationsService {
     @Transactional
     public void release(Cart cart) {
         List<Ticket> cartTickets = List.copyOf(cart.getTickets());
-        releaseTicketsFromCart(cart, cartTickets);
+        releaseInternal(cart, cartTickets);
     }
 
     /**
@@ -86,33 +76,28 @@ public class ReservationsServiceImpl implements ReservationsService {
         List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketIds());
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
-        releaseTicketsFromCart(cart, tickets);
+        releaseInternal(cart, tickets);
     }
 
-    private void releaseTicketsFromCart(Cart cart, List<Ticket> tickets) {
+    private void releaseInternal(Cart cart, List<Ticket> tickets) {
         if (tickets == null || tickets.isEmpty()) {
             return; 
         }
-        
-        checkTicketsBelongToCart(cart, tickets);
-        releaseTickets(tickets);
-        
-        if (cart.getTickets() != null) {
-            cart.getTickets().removeAll(tickets);
-        }
-        cartsPersistenceService.save(cart);
-    }
 
-    private void releaseTickets(List<Ticket> tickets) {
-        if (tickets == null || tickets.isEmpty()) {
-            return;
-        }
-        
+        checkTicketsBelongToCart(cart, tickets);
         ticketsService.saveAll(tickets.stream().peek(ticket -> {
             ticket.setStatus(AVAILABLE);
             ticket.setCustomer(null);
+            ticket.setCart(null);
         }).toList());
+
         increaseRafflesTicketsAvailability(tickets);
+
+        if (cart.getTickets() != null) {
+            cart.getTickets().removeAll(tickets);
+        }
+
+        cartsPersistenceService.save(cart);
     }
 
     private void validateTicketsBelongToAssociationRaffle(List<Ticket> tickets, Association association) {
@@ -162,12 +147,12 @@ public class ReservationsServiceImpl implements ReservationsService {
         Map<Raffle, Long> ticketsByRaffle = tickets.stream().collect(
                 Collectors.groupingBy(Ticket::getRaffle, Collectors.counting())
         );
-        ticketsByRaffle.forEach(raffleTicketsAvailabilityService::reduceAvailableTickets);
+        ticketsByRaffle.forEach(statisticsService::setReservationStatistics);
     }
 
     private void increaseRafflesTicketsAvailability(List<Ticket> tickets) {
         Map<Raffle, Long> ticketsByRaffle = tickets.stream()
                 .collect(Collectors.groupingBy(Ticket::getRaffle, Collectors.counting()));
-        ticketsByRaffle.forEach(raffleTicketsAvailabilityService::increaseAvailableTickets);
+        ticketsByRaffle.forEach(statisticsService::setReleaseStatistics);
     }
 }
