@@ -17,6 +17,7 @@ import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Payments.Services.PaymentsService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatisticsService;
@@ -58,6 +59,7 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         Customer customer = customersService.create(adminOrder.customer());        
         List<Ticket> finalizedTickets = cartLifecycleService.finalizeCart(cart, customer);
         Raffle raffle = rafflesPersistence.findById(adminOrder.raffleId());
+        validateRaffleStatus(raffle);
         statisticsService.setCreateOrderStatistics(raffle, finalizedTickets.stream().count());
         Order order = createOrder(raffle, customer, adminOrder.comment());
         Payment payment = createPayment(order, finalizedTickets);
@@ -158,5 +160,11 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
                 .raffleId(ticket.getRaffle().getId())
                 .customerId(order.getCustomer().getId())
                 .build()).toList();
+    }
+
+    private void validateRaffleStatus(Raffle raffle) {
+        if (raffle.getStatus() != RaffleStatus.ACTIVE) {
+            throw new BusinessException("Cannot create order for " + raffle.getStatus() + " raffle");
+        }
     }
 }
