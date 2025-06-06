@@ -26,7 +26,7 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
     @Override
     public RaffleDTO updateStatus(Long id, StatusUpdate request) {
         Raffle raffle = rafflesPersistence.findById(id);
-        switch (raffle.getStatus()) {
+        switch (request.status()) {
             case ACTIVE -> updateToActive(raffle);
             case PAUSED -> pause(raffle);
             case COMPLETED -> completeRaffle(raffle);
