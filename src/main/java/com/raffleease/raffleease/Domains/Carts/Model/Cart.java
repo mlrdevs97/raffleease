@@ -23,12 +23,7 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 @Setter
 @Builder
 @Entity
-@Table(name = "Carts", uniqueConstraints = {
-    @UniqueConstraint(
-            name = "uk_user_active_cart",
-            columnNames = {"user_id", "status"}
-    )
-})
+@Table(name = "Carts")
 public class Cart {
     @Id
     @GeneratedValue(strategy = IDENTITY)

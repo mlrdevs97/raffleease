@@ -3,6 +3,7 @@ package com.raffleease.raffleease.Domains.Carts.Jobs;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Carts.Services.CartLifecycleService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +24,7 @@ public class CartsCleanupScheduler {
     private Long cutoffSeconds;
 
     @Scheduled(cron = "${spring.application.configs.cron.carts_cleanup}")
+    @Transactional
     public void releaseScheduled() {
         log.info("Starting scheduled cart cleanup process");
         

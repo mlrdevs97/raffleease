@@ -5,12 +5,15 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatistics;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatisticsService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
+import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.math.BigDecimal.ZERO;
 import static java.math.RoundingMode.HALF_UP;
@@ -110,6 +113,22 @@ public class RafflesStatisticsServiceImpl implements RafflesStatisticsService {
         statistics.setAvailableTickets(statistics.getAvailableTickets() + unpaidTickets);
         rafflesPersistence.save(raffle);
     }
+
+    @Override
+    public void increaseRafflesTicketsAvailability(List<Ticket> tickets) {
+        Map<Raffle, Long> ticketsByRaffle = tickets.stream()
+                .collect(Collectors.groupingBy(Ticket::getRaffle, Collectors.counting()));
+        ticketsByRaffle.forEach(this::setReleaseStatistics);
+    }
+
+    @Override
+    public void reduceRaffleTicketsAvailability(List<Ticket> tickets) {
+        Map<Raffle, Long> ticketsByRaffle = tickets.stream().collect(
+                Collectors.groupingBy(Ticket::getRaffle, Collectors.counting())
+        );
+        ticketsByRaffle.forEach(this::setReservationStatistics);
+    }
+
 
     private BigDecimal calculateAmount(BigDecimal ticketPrice, long numTickets) {
         return ticketPrice.multiply(BigDecimal.valueOf(numTickets));

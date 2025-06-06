@@ -5,6 +5,7 @@ import com.raffleease.raffleease.Domains.Associations.Services.AssociationsServi
 import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
 import com.raffleease.raffleease.Domains.Carts.Mappers.CartsMapper;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
+import com.raffleease.raffleease.Domains.Carts.Services.CartLifecycleService;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
@@ -21,23 +22,22 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
-import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.RESERVED;
 
 @RequiredArgsConstructor
 @Service
 public class ReservationsServiceImpl implements ReservationsService {
     private final TicketsQueryService ticketsQueryService;
-    private final RafflesStatisticsService statisticsService;
-    private final TicketsService ticketsService;
     private final AssociationsService associationsService;
     private final RafflesQueryService rafflesQueryService;
+    private final CartLifecycleService cartLifecycleService;
     private final CartsPersistenceService cartsPersistenceService;
     private final CartsMapper cartsMapper;
+    private final TicketsService ticketsService;
+    private final RafflesStatisticsService statisticsService;
 
     @Override
     @Transactional
@@ -47,22 +47,10 @@ public class ReservationsServiceImpl implements ReservationsService {
         validateTicketsBelongToAssociationRaffle(tickets, association);
         validateTicketsAvailability(tickets);
         Cart cart = cartsPersistenceService.findById(cartId);
-        reserveTickets(tickets, cart);
-        reduceRaffleTicketsAvailability(tickets);
+        reserveTickets(cart, tickets);
         cart.getTickets().addAll(tickets);
         cartsPersistenceService.save(cart);
         return cartsMapper.fromCart(cartsPersistenceService.save(cart));
-    }
-
-    /**
-     * Releases ALL tickets from a cart and clears the cart.
-     * Use this for complete cart abandonment/expiration.
-     */
-    @Override
-    @Transactional
-    public void release(Cart cart) {
-        List<Ticket> cartTickets = List.copyOf(cart.getTickets());
-        releaseInternal(cart, cartTickets);
     }
 
     /**
@@ -76,28 +64,8 @@ public class ReservationsServiceImpl implements ReservationsService {
         List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketIds());
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
-        releaseInternal(cart, tickets);
-    }
-
-    private void releaseInternal(Cart cart, List<Ticket> tickets) {
-        if (tickets == null || tickets.isEmpty()) {
-            return; 
-        }
-
-        checkTicketsBelongToCart(cart, tickets);
-        ticketsService.saveAll(tickets.stream().peek(ticket -> {
-            ticket.setStatus(AVAILABLE);
-            ticket.setCustomer(null);
-            ticket.setCart(null);
-        }).toList());
-
-        increaseRafflesTicketsAvailability(tickets);
-
-        if (cart.getTickets() != null) {
-            cart.getTickets().removeAll(tickets);
-        }
-
-        cartsPersistenceService.save(cart);
+        validateTicketsBelongToCart(cart, tickets);
+        cartLifecycleService.releaseCart(cart);
     }
 
     private void validateTicketsBelongToAssociationRaffle(List<Ticket> tickets, Association association) {
@@ -117,7 +85,7 @@ public class ReservationsServiceImpl implements ReservationsService {
         }
     }
 
-    private void checkTicketsBelongToCart(Cart cart, List<Ticket> tickets) {
+    private void validateTicketsBelongToCart(Cart cart, List<Ticket> tickets) {
         if (cart.getTickets() == null || cart.getTickets().isEmpty()) {
             throw new BusinessException("Cart has no tickets to release");
         }
@@ -136,23 +104,8 @@ public class ReservationsServiceImpl implements ReservationsService {
         }
     }
 
-    private void reserveTickets(List<Ticket> tickets, Cart cart) {
-        tickets.forEach(ticket -> {
-            ticket.setStatus(RESERVED);
-            ticket.setCart(cart);
-        });
-    }
-
-    private void reduceRaffleTicketsAvailability(List<Ticket> tickets) {
-        Map<Raffle, Long> ticketsByRaffle = tickets.stream().collect(
-                Collectors.groupingBy(Ticket::getRaffle, Collectors.counting())
-        );
-        ticketsByRaffle.forEach(statisticsService::setReservationStatistics);
-    }
-
-    private void increaseRafflesTicketsAvailability(List<Ticket> tickets) {
-        Map<Raffle, Long> ticketsByRaffle = tickets.stream()
-                .collect(Collectors.groupingBy(Ticket::getRaffle, Collectors.counting()));
-        ticketsByRaffle.forEach(statisticsService::setReleaseStatistics);
+    private void reserveTickets(Cart cart, List<Ticket> tickets) {
+        ticketsService.reserveTickets(cart, tickets);
+        statisticsService.reduceRaffleTicketsAvailability(tickets);
     }
 }

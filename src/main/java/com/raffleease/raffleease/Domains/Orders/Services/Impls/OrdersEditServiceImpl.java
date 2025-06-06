@@ -119,15 +119,12 @@ public class OrdersEditServiceImpl implements OrdersEditService {
 
     private void releaseOrderTickets(Order order) {
         List<Ticket> tickets = getTicketsFromOrder(order);
-        ticketsService.saveAll(tickets.stream().peek(ticket -> {
-            ticket.setStatus(AVAILABLE);
-            ticket.setCustomer(null);
-        }).toList());
+        ticketsService.releaseTickets(tickets);
     }
 
     private void updateTicketsStatus(Order order) {
         List<Ticket> tickets = getTicketsFromOrder(order);
-        ticketsService.saveAll(tickets.stream().peek(ticket -> ticket.setStatus(SOLD)).toList());
+        ticketsService.updateStatus(tickets, SOLD);
     }
 
     private List<Ticket> getTicketsFromOrder(Order order) {

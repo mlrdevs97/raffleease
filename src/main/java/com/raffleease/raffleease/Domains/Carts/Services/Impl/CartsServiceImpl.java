@@ -13,19 +13,20 @@ import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.Optional;
 
 import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.ACTIVE;
-import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class CartsServiceImpl implements CartsService {
@@ -36,10 +37,14 @@ public class CartsServiceImpl implements CartsService {
     private final CartsPersistenceService cartsPersistenceService;
 
     @Override
+    @Transactional
     public CartDTO create() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = usersService.findByIdentifier(auth.getName());
         closeUserActiveCart(user);
+
+        log.info("Creating new cart for user: {}", user.getId());
+
         return mapper.fromCart(save(Cart.builder()
                 .status(ACTIVE)
                 .user(user)
@@ -66,11 +71,6 @@ public class CartsServiceImpl implements CartsService {
     public Cart save(Cart cart) {
         try {
             return repository.save(cart);
-        } catch (DataIntegrityViolationException ex) {
-            if (ex.getMessage().contains("uk_user_active_cart")) {
-                throw new BusinessException("User already has an active cart.");
-            }
-            throw new DatabaseException("Database error occurred while saving cart: " + ex.getMessage());
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while saving cart: " + ex.getMessage());
         }
@@ -79,9 +79,14 @@ public class CartsServiceImpl implements CartsService {
     private void closeUserActiveCart(User user) {
         Optional<Cart> existingCart = repository.findByUserAndStatus(user, ACTIVE);
         if (existingCart.isEmpty()) {
+            log.info("No existing cart for user found");
             return;
         }
         Cart cart = existingCart.get();
+
+        log.info("Already existing cart found for user. Cart Id: {}", cart.getId());
+
         cartLifecycleService.releaseCart(cart);
+        repository.flush();
     }
 }
