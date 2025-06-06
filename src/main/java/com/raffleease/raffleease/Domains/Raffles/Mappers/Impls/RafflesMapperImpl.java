@@ -64,7 +64,7 @@ public class RafflesMapperImpl implements RafflesMapper {
                 .cancelledOrders(statistics.getCancelledOrders())
                 .unpaidOrders(statistics.getUnpaidOrders())
                 .refundedOrders(statistics.getRefundedOrders())
-                .uniqueParticipants(statistics.getParticipants())
+                .participants(statistics.getParticipants())
                 .ticketsPerParticipant(statistics.getTicketsPerParticipant())
                 .firstSaleDate(statistics.getFirstSaleDate())
                 .lastSaleDate(statistics.getLastSaleDate())

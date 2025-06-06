@@ -54,6 +54,7 @@ public class OrdersMapperImpl implements OrdersMapper {
                 .id(raffle.getId())
                 .title(raffle.getTitle())
                 .imageURL(raffle.getImages().get(0).getUrl())
+                .status(raffle.getStatus())
                 .build();
     }
 }
