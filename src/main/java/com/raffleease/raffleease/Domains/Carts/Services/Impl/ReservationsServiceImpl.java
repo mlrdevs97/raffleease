@@ -65,7 +65,10 @@ public class ReservationsServiceImpl implements ReservationsService {
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
         validateTicketsBelongToCart(cart, tickets);
-        cartLifecycleService.releaseCart(cart);
+        ticketsService.releaseTickets(tickets);
+        statisticsService.increaseRafflesTicketsAvailability(tickets);
+        cart.getTickets().removeAll(tickets);
+        cartsPersistenceService.save(cart);
     }
 
     private void validateTicketsBelongToAssociationRaffle(List<Ticket> tickets, Association association) {
