@@ -4,7 +4,6 @@ import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAcc
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageUpload;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesDeleteService;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesCreateService;
-import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
 import jakarta.validation.Valid;
@@ -19,7 +18,6 @@ import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 @RestController
 @RequestMapping("/v1/associations/{associationId}/images")
 public class PendingImagesController {
-    private final ImagesService imagesService;
     private final ImagesCreateService imagesCreateService;
     private final ImagesDeleteService imagesDeleteService;
 

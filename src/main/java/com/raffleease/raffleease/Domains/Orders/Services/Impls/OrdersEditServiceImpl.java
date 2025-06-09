@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Domains.Orders.Services.Impls;
 
-import com.raffleease.raffleease.Domains.Carts.Services.ReservationsService;
 import com.raffleease.raffleease.Domains.Orders.DTOs.*;
 import com.raffleease.raffleease.Domains.Orders.Mappers.OrdersMapper;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
@@ -25,16 +24,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.*;
-import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.COMPLETED;
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.ACTIVE;
-import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 
 @RequiredArgsConstructor
 @Service
 public class OrdersEditServiceImpl implements OrdersEditService {
     private final OrdersService ordersService;
-    private final ReservationsService reservationsService;
     private final TicketsService ticketsService;
     private final TicketsQueryService ticketsQueryService;
     private final OrdersMapper mapper;

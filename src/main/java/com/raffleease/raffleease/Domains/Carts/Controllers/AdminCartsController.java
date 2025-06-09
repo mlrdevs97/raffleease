@@ -8,7 +8,6 @@ import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
 import com.raffleease.raffleease.Domains.Carts.Services.ReservationsService;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

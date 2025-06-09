@@ -4,8 +4,6 @@ import com.raffleease.raffleease.Domains.Orders.DTOs.OrderDTO;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderSearchFilters;
 import com.raffleease.raffleease.Domains.Orders.Mappers.OrdersMapper;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
-import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
-import com.raffleease.raffleease.Domains.Orders.Repository.OrderItemsRepository;
 import com.raffleease.raffleease.Domains.Orders.Repository.OrdersRepository;
 import com.raffleease.raffleease.Domains.Orders.Repository.OrdersSearchRepository;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
@@ -16,8 +14,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @Service

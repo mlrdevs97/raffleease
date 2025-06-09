@@ -4,8 +4,6 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public interface RafflesStatisticsService {
     void setReservationStatistics(Raffle raffle, long reductionQuantity);

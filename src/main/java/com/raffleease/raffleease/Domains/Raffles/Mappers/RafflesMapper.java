@@ -1,7 +1,5 @@
 package com.raffleease.raffleease.Domains.Raffles.Mappers;
 
-import com.raffleease.raffleease.Domains.Associations.Model.Association;
-import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 

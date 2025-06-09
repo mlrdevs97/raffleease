@@ -5,7 +5,6 @@ import com.raffleease.raffleease.Domains.Associations.Services.AssociationsServi
 import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
 import com.raffleease.raffleease.Domains.Carts.Mappers.CartsMapper;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
-import com.raffleease.raffleease.Domains.Carts.Services.CartLifecycleService;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
@@ -33,7 +32,6 @@ public class ReservationsServiceImpl implements ReservationsService {
     private final TicketsQueryService ticketsQueryService;
     private final AssociationsService associationsService;
     private final RafflesQueryService rafflesQueryService;
-    private final CartLifecycleService cartLifecycleService;
     private final CartsPersistenceService cartsPersistenceService;
     private final CartsMapper cartsMapper;
     private final TicketsService ticketsService;
