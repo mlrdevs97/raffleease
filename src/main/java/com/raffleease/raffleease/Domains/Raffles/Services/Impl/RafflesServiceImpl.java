@@ -32,7 +32,7 @@ import static java.math.BigDecimal.ZERO;
 @Service
 public class RafflesServiceImpl implements RafflesService {
     private final RafflesPersistenceService rafflesPersistence;
-    private final TicketsService ticketsCreateService;
+    private final TicketsService ticketsService;
     private final RafflesMapper rafflesMapper;
     private final AssociationsService associationsService;
     private final ImagesAssociateService imagesAssociateService;
@@ -47,7 +47,7 @@ public class RafflesServiceImpl implements RafflesService {
         Raffle raffle = rafflesPersistence.save(newRaffle);
         List<Image> images = imagesAssociateService.associateImagesToRaffleOnCreate(raffle, raffleData.images());
         raffle.getImages().addAll(images);
-        List<Ticket> tickets = ticketsCreateService.create(raffle, raffleData.ticketsInfo());
+        List<Ticket> tickets = ticketsService.create(raffle, raffleData.ticketsInfo());
         raffle.getTickets().addAll(tickets);
         return rafflesMapper.fromRaffle(rafflesPersistence.save(raffle));
     }
