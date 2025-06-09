@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -96,6 +97,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
         return wrapError(new IllegalArgumentException("Invalid request payload."), BAD_REQUEST, ErrorCodes.INVALID_REQUEST);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiResponse> handleHttpMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
+        String message = "Content type '" + ex.getContentType() + "' is not supported. Supported media types are: " + ex.getSupportedMediaTypes();
+        return wrapError(new IllegalArgumentException(message), UNSUPPORTED_MEDIA_TYPE, ErrorCodes.INVALID_REQUEST);
     }
 
     @ExceptionHandler(EncryptionException.class)
