@@ -2,7 +2,7 @@ package com.raffleease.raffleease.Infraestructure.Security;
 
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensQueryService;
 import com.raffleease.raffleease.Domains.Tokens.Services.TokensValidateService;
-import com.raffleease.raffleease.Domains.Users.Model.CostumUserDetails;
+import com.raffleease.raffleease.Domains.Users.Model.CustomUserDetails;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
@@ -75,7 +75,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        UserDetails userDetails = CostumUserDetails.builder()
+        UserDetails userDetails = CustomUserDetails.builder()
                 .user(user)
                 .identifier(user.getEmail())
                 .build();
