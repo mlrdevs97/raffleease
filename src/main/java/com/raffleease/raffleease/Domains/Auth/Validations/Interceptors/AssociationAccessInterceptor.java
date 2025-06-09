@@ -17,6 +17,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Map;
 
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 import static org.springframework.web.servlet.HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE;
 
 @RequiredArgsConstructor
@@ -43,6 +44,11 @@ public class AssociationAccessInterceptor implements HandlerInterceptor {
 
             Association association = associationsService.findById(associationId);
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) {
+                response.setStatus(SC_UNAUTHORIZED);
+                return false;
+            }
+            
             String identifier = auth.getName();
             User user = usersService.findByIdentifier(identifier);
             membershipsService.validateIsMember(association, user);
