@@ -6,16 +6,26 @@ import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembershi
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatistics;
+import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
+import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Model.UserRole;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Test data builder following the Builder pattern for creating test entities.
  * Provides sensible defaults and allows customization of specific fields.
  */
 public class TestDataBuilder {
+
+    // Counter for generating unique image identifiers
+    private static final AtomicInteger IMAGE_COUNTER = new AtomicInteger(1);
 
     public static UserBuilder user() {
         return new UserBuilder();
@@ -35,6 +45,10 @@ public class TestDataBuilder {
 
     public static ImageBuilder image() {
         return new ImageBuilder();
+    }
+
+    public static RaffleBuilder raffle() {
+        return new RaffleBuilder();
     }
 
     public static class UserBuilder {
@@ -249,12 +263,19 @@ public class TestDataBuilder {
 
     public static class ImageBuilder {
         private String fileName = "test-image.jpg";
-        private String filePath = "/test/path/test-image.jpg";
+        private String filePath;
         private String contentType = "image/jpeg";
-        private String url = "http://localhost/test/images/1";
+        private String url;
         private Integer imageOrder = 1;
         private Raffle raffle;
         private Association association;
+
+        public ImageBuilder() {
+            // Generate unique values by default
+            int imageNumber = IMAGE_COUNTER.getAndIncrement();
+            this.filePath = "/test/path/" + this.fileName;
+            this.url = "http://localhost/test/images/" + imageNumber;
+        }
 
         public ImageBuilder fileName(String fileName) {
             this.fileName = fileName;
@@ -317,6 +338,98 @@ public class TestDataBuilder {
                     .imageOrder(imageOrder)
                     .raffle(raffle)
                     .association(association)
+                    .build();
+        }
+    }
+
+    public static class RaffleBuilder {
+        private String title = "Test Raffle";
+        private String description = "A test raffle for integration testing";
+        private RaffleStatus status = RaffleStatus.PENDING;
+        private BigDecimal ticketPrice = BigDecimal.valueOf(10.00);
+        private Long totalTickets = 50L;
+        private Long firstTicketNumber = 1L;
+        private LocalDateTime startDate = null;
+        private LocalDateTime endDate = LocalDateTime.now().plusDays(7);
+        private Association association;
+        private List<Image> images = new ArrayList<>();
+        private List<Ticket> tickets = new ArrayList<>();
+        private RaffleStatistics statistics;
+
+        public RaffleBuilder title(String title) {
+            this.title = title;
+            return this;
+        }
+
+        public RaffleBuilder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public RaffleBuilder status(RaffleStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public RaffleBuilder ticketPrice(BigDecimal ticketPrice) {
+            this.ticketPrice = ticketPrice;
+            return this;
+        }
+
+        public RaffleBuilder totalTickets(Long totalTickets) {
+            this.totalTickets = totalTickets;
+            return this;
+        }
+
+        public RaffleBuilder firstTicketNumber(Long firstTicketNumber) {
+            this.firstTicketNumber = firstTicketNumber;
+            return this;
+        }
+
+        public RaffleBuilder startDate(LocalDateTime startDate) {
+            this.startDate = startDate;
+            return this;
+        }
+
+        public RaffleBuilder endDate(LocalDateTime endDate) {
+            this.endDate = endDate;
+            return this;
+        }
+
+        public RaffleBuilder association(Association association) {
+            this.association = association;
+            return this;
+        }
+
+        public RaffleBuilder images(List<Image> images) {
+            this.images = images;
+            return this;
+        }
+
+        public RaffleBuilder tickets(List<Ticket> tickets) {
+            this.tickets = tickets;
+            return this;
+        }
+
+        public RaffleBuilder statistics(RaffleStatistics statistics) {
+            this.statistics = statistics;
+            return this;
+        }
+
+        public Raffle build() {
+            return Raffle.builder()
+                    .title(title)
+                    .description(description)
+                    .status(status)
+                    .ticketPrice(ticketPrice)
+                    .totalTickets(totalTickets)
+                    .firstTicketNumber(firstTicketNumber)
+                    .startDate(startDate)
+                    .endDate(endDate)
+                    .association(association)
+                    .images(images)
+                    .tickets(tickets)
+                    .statistics(statistics)
                     .build();
         }
     }
