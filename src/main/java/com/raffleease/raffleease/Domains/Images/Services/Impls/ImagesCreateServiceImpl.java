@@ -14,17 +14,14 @@ import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
 import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.FileStorageException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ImagesCreateServiceImpl implements ImagesCreateService {
@@ -43,7 +40,7 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
     @Transactional
     public ImageResponse create(Long associationId, ImageUpload uploadRequest) {
         String baseURL = host + "/v1/associations/" + associationId + "/images/";
-        return processImagesCreation(associationId, uploadRequest, 0, baseURL);
+        return processImagesCreation(associationId, uploadRequest, 0, baseURL, null);
     }
 
     @Override
@@ -52,39 +49,36 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
         Raffle raffle = rafflesPersistenceService.findById(raffleId);
         int currentImagesCount = raffle.getImages().size();
         String baseURL = host + "/v1/associations/" + associationId + "/raffles/" + raffleId + "/images/";
-        return processImagesCreation(associationId, uploadRequest, currentImagesCount, baseURL);
+        return processImagesCreation(associationId, uploadRequest, currentImagesCount, baseURL, raffle);
     }
 
-    private ImageResponse processImagesCreation(Long associationId, ImageUpload uploadRequest, int currentImagesCount, String baseURL) {
+    private ImageResponse processImagesCreation(Long associationId, ImageUpload uploadRequest, int currentImagesCount, String baseURL, Raffle raffle) {
         Association association = associationsService.findById(associationId);
         List<MultipartFile> files = uploadRequest.files();
-        int existingImagesCount = repository.countPendingImagesByAssociation(association);
-        int totalImagesCount = existingImagesCount + currentImagesCount;
+        int pendingImagesCount = repository.countPendingImagesByAssociation(association);
+        int totalImagesCount = pendingImagesCount + currentImagesCount;
         imageValidator.validateTotalImagesNumber(files.size(), totalImagesCount);
-        List<Image> images = mapAndSaveFiles(association, files);
+        List<Image> images = mapAndSaveFiles(association, files, raffle);
 
         for(int i = 0; i < images.size(); i++) {
             MultipartFile file = files.get(i);
             Image image = images.get(i);
 
-            try {
-                String storedPath = fileStorageService.save(file, String.valueOf(association.getId()), String.valueOf(image.getId()));
-                image.setFilePath(storedPath);
-                image.setUrl(baseURL + image.getId());
-                image.setImageOrder(totalImagesCount + i + 1);
-            } catch (FileStorageException ex) {
-                log.error("Failed to process file: " + file.getOriginalFilename(), ex);
-            }
+            String storedPath = fileStorageService.save(file, String.valueOf(association.getId()), String.valueOf(image.getId()));
+            image.setFilePath(storedPath);
+            image.setUrl(baseURL + image.getId());
+            image.setImageOrder(totalImagesCount + i + 1);
         }
         List<ImageDTO> mappedImages = mapper.fromImagesList(imagesService.saveAll(images));
         return new ImageResponse(mappedImages);
     }
 
-    private List<Image> mapAndSaveFiles(Association association, List<MultipartFile> files) {
+    private List<Image> mapAndSaveFiles(Association association, List<MultipartFile> files, Raffle raffle) {
         return imagesService.saveAll(files.stream().map(file -> Image.builder()
                 .fileName(file.getOriginalFilename())
                 .contentType(file.getContentType())
                 .association(association)
+                .raffle(raffle)
                 .build()).toList());
     }
 }
