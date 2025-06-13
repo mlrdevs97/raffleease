@@ -62,10 +62,6 @@ public class RafflesEditServiceImpl implements RafflesEditService {
             editTotalTickets(raffle, raffleEdit.totalTickets());
         }
 
-        if (raffleEdit.price() != null) {
-            raffle.setTicketPrice(raffleEdit.ticketPrice());
-        }
-
         raffle.setUpdatedAt(LocalDateTime.now());
         Raffle savedRaffle = rafflesPersistence.save(raffle);
         return rafflesMapper.fromRaffle(savedRaffle);
@@ -95,7 +91,7 @@ public class RafflesEditServiceImpl implements RafflesEditService {
         raffle.setTotalTickets(editTotal);
 
         long ticketDifference = editTotal - oldTotal;
-        if (ticketDifference > 0) {
+        if (ticketDifference <= 0) {
             return;
         }
 
