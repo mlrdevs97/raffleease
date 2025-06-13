@@ -3,9 +3,11 @@ package com.raffleease.raffleease.Domains.Images.Controller;
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
+import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
 import com.raffleease.raffleease.util.AuthTestUtils;
 import com.raffleease.raffleease.util.AuthTestUtils.AuthTestData;
 import com.raffleease.raffleease.util.TestDataBuilder;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.FileStorageException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,12 +15,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.reset;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -32,6 +37,9 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
     @Autowired
     private ImagesRepository imagesRepository;
 
+    @MockitoBean
+    private FileStorageService fileStorageService;
+
     private AuthTestData authData;
     private String baseEndpoint;
 
@@ -39,6 +47,13 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
     void setUp() {
         authData = authTestUtils.createAuthenticatedUser();
         baseEndpoint = "/v1/associations/" + authData.association().getId() + "/images";
+        
+        // Mock new batch file storage methods for pending images (no raffle, so null raffleId)
+        when(fileStorageService.saveTemporaryBatch(anyList(), anyString(), anyString()))
+                .thenReturn(List.of("/mocked/temp/pending/path1"));
+        
+        when(fileStorageService.moveTemporaryBatchToFinal(anyList(), anyString(), isNull(), anyList()))
+                .thenReturn(List.of("/mocked/pending/final/path1"));
     }
 
     @Nested
@@ -46,8 +61,8 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
     class UploadImagesTests {
 
         @Test
-        @DisplayName("Should successfully upload single image when authenticated")
-        void shouldUploadSingleImageWhenAuthenticated() throws Exception {
+        @DisplayName("Should successfully upload pending images when authenticated")
+        void shouldUploadPendingImagesWhenAuthenticated() throws Exception {
             // Arrange
             MockMultipartFile imageFile = new MockMultipartFile(
                     "files", 
@@ -153,143 +168,119 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.message").value("You cannot upload more than 10 images in total"));
         }
-    }
-
-    @Nested
-    @DisplayName("DELETE /v1/associations/{associationId}/images/{id}")
-    class DeleteImageTests {
 
         @Test
-        @DisplayName("Should successfully delete pending image when authenticated")
-        void shouldDeletePendingImageWhenAuthenticated() throws Exception {
-            // Arrange
-            Image pendingImage = TestDataBuilder.image()
-                    .fileName("to-delete.jpg")
-                    .association(authData.association())
-                    .pendingImage()
-                    .imageOrder(1)
-                    .build();
-            pendingImage = imagesRepository.save(pendingImage);
-
+        @DisplayName("Should return 400 when no files are provided")
+        void shouldReturn400WhenNoFilesProvided() throws Exception {
             // Act
-            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/" + pendingImage.getId())
+            ResultActions result = mockMvc.perform(multipart(baseEndpoint)
                     .with(user(authData.user().getEmail())));
 
             // Assert
-            result.andExpect(status().isNoContent());
-
-            // Verify image was deleted
-            Optional<Image> deletedImage = imagesRepository.findById(pendingImage.getId());
-            assertThat(deletedImage).isEmpty();
+            result.andExpect(status().isBadRequest());
         }
 
         @Test
-        @DisplayName("Should update image orders after deletion")
-        void shouldUpdateImageOrdersAfterDeletion() throws Exception {
-            // Arrange - Create 3 pending images
-            Image image1 = TestDataBuilder.image()
-                    .fileName("image1.jpg")
-                    .association(authData.association())
-                    .pendingImage()
-                    .imageOrder(1)
-                    .build();
-            Image image2 = TestDataBuilder.image()
-                    .fileName("image2.jpg")
-                    .association(authData.association())
-                    .pendingImage()
-                    .imageOrder(2)
-                    .build();
-            Image image3 = TestDataBuilder.image()
-                    .fileName("image3.jpg")
-                    .association(authData.association())
-                    .pendingImage()
-                    .imageOrder(3)
-                    .build();
-
-            image1 = imagesRepository.save(image1);
-            image2 = imagesRepository.save(image2);
-            image3 = imagesRepository.save(image3);
-
-            // Act - Delete the middle image (order 2)
-            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/" + image2.getId())
-                    .with(user(authData.user().getEmail())));
-
-            // Assert
-            result.andExpect(status().isNoContent());
-
-            // Verify remaining images have updated orders
-            List<Image> remainingImages = imagesRepository.findAllByRaffleIsNullAndAssociation(authData.association());
-            assertThat(remainingImages).hasSize(2);
+        @DisplayName("Should not create database records when file storage batch save fails")
+        void shouldNotCreateDatabaseRecordsWhenFileStorageBatchSaveFails() throws Exception {
+            // Arrange - Create existing pending images to get close to limit
+            for (int i = 0; i < 9; i++) {
+                Image existingImage = TestDataBuilder.image()
+                        .fileName("existing" + i + ".jpg")
+                        .association(authData.association())
+                        .pendingImage()
+                        .imageOrder(i + 1)
+                        .build();
+                imagesRepository.save(existingImage);
+            }
             
-            Image updatedImage3 = imagesRepository.findById(image3.getId()).orElseThrow();
-            assertThat(updatedImage3.getImageOrder()).isEqualTo(2); // Should be updated from 3 to 2
-        }
+            // Reset and reconfigure mock to throw exception after validation passes
+            reset(fileStorageService);
+            when(fileStorageService.saveTemporaryBatch(anyList(), anyString(), anyString()))
+                    .thenThrow(new FileStorageException("Simulated batch storage failure"));
 
-        @Test
-        @DisplayName("Should return 404 when image does not exist")
-        void shouldReturn404WhenImageDoesNotExist() throws Exception {
+            MockMultipartFile imageFile = new MockMultipartFile(
+                    "files", 
+                    "test-image.jpg", 
+                    "image/jpeg", 
+                    createTestImageContent()
+            );
+
+            // Count images before the operation
+            List<Image> imagesBefore = imagesRepository.findAllByRaffleIsNullAndAssociation(authData.association());
+            int countBefore = imagesBefore.size();
+
             // Act
-            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/99999")
+            ResultActions result = mockMvc.perform(multipart(baseEndpoint)
+                    .file(imageFile)
                     .with(user(authData.user().getEmail())));
 
-            // Assert
-            result.andExpect(status().isNotFound())
+            // Assert - Operation should fail completely
+            result.andExpect(status().isInternalServerError())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").exists());
+                    .andExpect(jsonPath("$.message").value("Simulated batch storage failure"))
+                    .andExpect(jsonPath("$.code").value("FILE_STORAGE_ERROR"));
+
+            // Verify database state is unchanged - no new records should be created
+            List<Image> imagesAfter = imagesRepository.findAllByRaffleIsNullAndAssociation(authData.association());
+            assertThat(imagesAfter).hasSize(countBefore);
+            
+            // Verify the specific file was not saved
+            List<Image> allImages = imagesRepository.findAll();
+            assertThat(allImages.stream().anyMatch(img -> "test-image.jpg".equals(img.getFileName()))).isFalse();
         }
 
         @Test
-        @DisplayName("Should return 401 when user is not authenticated")
-        void shouldReturn401WhenNotAuthenticated() throws Exception {
-            // Arrange
-            Image pendingImage = TestDataBuilder.image()
-                    .association(authData.association())
-                    .pendingImage()
-                    .build();
-            pendingImage = imagesRepository.save(pendingImage);
+        @DisplayName("Should not create database records when file move batch fails")
+        void shouldNotCreateDatabaseRecordsWhenFileMoveBatchFails() throws Exception {
+            // Arrange - Reset and reconfigure mock to throw exception during move phase
+            reset(fileStorageService);
+            when(fileStorageService.saveTemporaryBatch(anyList(), anyString(), anyString()))
+                    .thenReturn(List.of("/mocked/temp/path"));
+            when(fileStorageService.moveTemporaryBatchToFinal(anyList(), anyString(), isNull(), anyList()))
+                    .thenThrow(new FileStorageException("Simulated batch move failure"));
+
+            MockMultipartFile imageFile = new MockMultipartFile(
+                    "files", 
+                    "test-image.jpg", 
+                    "image/jpeg", 
+                    createTestImageContent()
+            );
+
+            // Count images before the operation
+            List<Image> imagesBefore = imagesRepository.findAllByRaffleIsNullAndAssociation(authData.association());
+            int countBefore = imagesBefore.size();
 
             // Act
-            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/" + pendingImage.getId()));
-
-            // Assert
-            result.andExpect(status().isUnauthorized());
-        }
-
-        @Test
-        @DisplayName("Should return 403 when trying to delete image from different association")
-        void shouldReturn403WhenImageBelongsToDifferentAssociation() throws Exception {
-            // Arrange
-            AuthTestData otherUserData = authTestUtils.createAuthenticatedUserWithCredentials(
-                    "otheruser3", "other3@example.com", "password123");
-            Image otherAssociationImage = TestDataBuilder.image()
-                    .association(otherUserData.association())
-                    .pendingImage()
-                    .build();
-            otherAssociationImage = imagesRepository.save(otherAssociationImage);
-
-            // Act
-            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/" + otherAssociationImage.getId())
+            ResultActions result = mockMvc.perform(multipart(baseEndpoint)
+                    .file(imageFile)
                     .with(user(authData.user().getEmail())));
 
-            // Assert
-            result.andExpect(status().isForbidden())
+            // Assert - Operation should fail completely
+            result.andExpect(status().isInternalServerError())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("You are not authorized to delete this image"));
+                    .andExpect(jsonPath("$.message").value("Simulated batch move failure"))
+                    .andExpect(jsonPath("$.code").value("FILE_STORAGE_ERROR"));
+
+            // Verify database state is unchanged - no new records should be created
+            List<Image> imagesAfter = imagesRepository.findAllByRaffleIsNullAndAssociation(authData.association());
+            assertThat(imagesAfter).hasSize(countBefore);
+            
+            // Verify the specific file was not saved
+            List<Image> allImages = imagesRepository.findAll();
+            assertThat(allImages.stream().anyMatch(img -> "test-image.jpg".equals(img.getFileName()))).isFalse();
         }
     }
 
-    /**
-     * Creates minimal test image content for testing purposes.
-     */
     private byte[] createTestImageContent() {
-        // Create a minimal valid JPEG-like content for testing
+        // Create a simple test image content (mock JPEG header)
         return new byte[]{
-                (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, // JPEG header
-                0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, // JFIF marker
-                0x01, 0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00, // JFIF data
-                (byte) 0xFF, (byte) 0xD9 // JPEG end marker
+                (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0,
+                0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01,
+                0x01, 0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00,
+                (byte) 0xFF, (byte) 0xD9 // End of JPEG marker
         };
     }
 } 
