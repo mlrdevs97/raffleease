@@ -31,39 +31,35 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
 
     @Override
     public List<Image> associateImagesToRaffleOnCreate(Raffle raffle, List<ImageDTO> imageDTOs) {
-        // Step 1: Perform validations
+        // 1: Perform validations
         List<Long> imageIds = imageDTOs.stream().map(ImageDTO::id).toList();
         List<Integer> imageOrders = imageDTOs.stream().map(ImageDTO::imageOrder).toList();
         imageValidator.validateNoDuplicates(imageIds, "Duplicate image IDs found in request");
         imageValidator.validateNoDuplicates(imageOrders, "Duplicate image orders detected");
 
-        // Step 2: Find existing images and separate valid from missing
+        // 2: Find existing images and separate valid from missing
         List<Image> existingImages = repository.findAllById(imageIds);
         List<Long> existingImageIds = existingImages.stream().map(Image::getId).toList();
         List<Long> missingImageIds = imageIds.stream()
                 .filter(id -> !existingImageIds.contains(id))
                 .toList();
 
-        // Step 3: Clean up any missing pending images that might exist
+        // 3: Clean up missing pending images
         if (!missingImageIds.isEmpty()) {
             removePendingImages(missingImageIds);
         }
 
-        // Step 4: Filter DTOs to only include existing images
+        // 4: Validate existing images
+        imageValidator.validateAtLeastOneImage(existingImages);
+        imageValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
+        imageValidator.validateAllArePending(existingImages);
+
+        // 5: Filter DTOs to only include existing images
         List<ImageDTO> validImageDTOs = imageDTOs.stream()
                 .filter(dto -> existingImageIds.contains(dto.id()))
                 .toList();
 
-        // Step 5: Validate that we have at least one valid image for raffle creation
-        if (existingImages.isEmpty()) {
-            throw new BusinessException("A raffle must have at least one image.");
-        }
-
-        // Step 6: Validate existing images
-        imageValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
-        imageValidator.validateAllArePending(existingImages);
-
-        // Step 7: Process and link all existing images in the request with correct order
+        // 6: Process and link all existing images in the request with correct order
         Map<Long, Integer> orderMap = validImageDTOs.stream()
                 .collect(Collectors.toMap(ImageDTO::id, ImageDTO::imageOrder));
 
@@ -85,34 +81,30 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
 
     @Override
     public List<Image> associateImagesToRaffleOnEdit(Raffle raffle, List<ImageDTO> imageDTOs) {
-        // Step 1: Perform validations
+        // 1: Perform validations
         List<Long> imageIds = imageDTOs.stream().map(ImageDTO::id).toList();
         List<Integer> imageOrders = imageDTOs.stream().map(ImageDTO::imageOrder).toList();
         imageValidator.validateNoDuplicates(imageIds, "Duplicate image IDs found in request");
         imageValidator.validateNoDuplicates(imageOrders, "Duplicate image orders detected");
 
-        // Step 2: Find existing images and separate valid from missing
+        // 2: Find existing images and separate valid from missing
         List<Image> existingImages = repository.findAllById(imageIds);
         List<Long> existingImageIds = existingImages.stream().map(Image::getId).toList();
         List<Long> missingImageIds = imageIds.stream()
                 .filter(id -> !existingImageIds.contains(id))
                 .toList();
 
-        // Step 3: Validate that the raffle will have at least one image after the edit
-        if (existingImages.isEmpty()) {
-            throw new BusinessException("A raffle must have at least one image.");
-        }
-
-        // Step 4: Validate existing images (do this before making any changes)
-        imageValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
-        imageValidator.validateImagesArePendingOrBelongToRaffle(raffle, existingImages);
-
-        // Step 5: Clean up any missing pending images that might exist
+        // 3: Clean up missing pending images
         if (!missingImageIds.isEmpty()) {
             removePendingImages(missingImageIds);
         }
 
-        // Step 6: Remove any existing raffle images that are no longer in the request
+        // 4: Validate existing images (do this before making any changes)
+        imageValidator.validateAtLeastOneImage(existingImages);
+        imageValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
+        imageValidator.validateImagesArePendingOrBelongToRaffle(raffle, existingImages);
+
+        // 5: Remove any existing raffle images that are no longer in the request
         List<Long> currentRaffleImageIds = raffle.getImages().stream()
                 .map(Image::getId)
                 .toList();
@@ -125,13 +117,17 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
             raffle.getImages().removeIf(image -> imagesToRemoveFromRaffle.contains(image.getId()));
         }
 
-        // Step 7: Process and link all images in the request with correct order
-        Map<Long, Integer> imageOrderMap = imageDTOs.stream()
+        // 6: Filter DTOs to only include existing images
+        List<ImageDTO> validImageDTOs = imageDTOs.stream()
+                .filter(dto -> existingImageIds.contains(dto.id()))
+                .toList();
+
+        // 7: Process and link all images in the request with correct order
+        Map<Long, Integer> imageOrderMap = validImageDTOs.stream()
                 .filter(dto -> existingImageIds.contains(dto.id()))
                 .collect(Collectors.toMap(ImageDTO::id, ImageDTO::imageOrder));
 
         for (Image image : existingImages) {
-            // Only move files if the image was still pending
             if (image.getRaffle() == null) {
                 Path finalPath = fileStorageService.moveFileToRaffle(
                         String.valueOf(raffle.getAssociation().getId()),

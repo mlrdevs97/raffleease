@@ -7,7 +7,6 @@ import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -31,23 +30,9 @@ public class ImageValidatorImpl implements ImageValidator {
     }
 
     @Override
-    public void validateConsecutiveOrders(List<Integer> orders) {
-        if (!areConsecutive(orders)) {
-            throw new IllegalArgumentException("Image orders must be consecutive starting from 1");
-        }
-    }
-
-    @Override
     public void validateTotalImagesNumber(long uploadingImagesCount, long currentImagesCount) {
         if (currentImagesCount + uploadingImagesCount > Constants.MAX_IMAGES) {
             throw new BusinessException("You cannot upload more than 10 images in total");
-        }
-    }
-
-    @Override
-    public void validateAllImagesExist(List<Long> requestedIds, List<Image> foundImages) {
-        if (requestedIds.size() > foundImages.size()) {
-            throw new NotFoundException("One or more images were not found");
         }
     }
 
@@ -68,6 +53,13 @@ public class ImageValidatorImpl implements ImageValidator {
         boolean anyLinked = images.stream().anyMatch(img -> img.getRaffle() != null);
         if (anyLinked) {
             throw new BusinessException("One or more images are already linked to a raffle.");
+        }
+    }
+
+    @Override
+    public void validateAtLeastOneImage(List<Image> existingImages) {
+        if (existingImages.isEmpty()) {
+            throw new BusinessException("A raffle must have at least one image.");
         }
     }
 
