@@ -16,14 +16,16 @@ public interface RafflesRepository extends JpaRepository<Raffle, Long>, RafflesS
 
     @Query("""
     SELECT r FROM Raffle r
-    JOIN r.statistics s
-    WHERE r.status <> :status
-      AND (
-            s.availableTickets = 0 OR
-            s.soldTickets = r.totalTickets OR
-            r.endDate <= CURRENT_TIMESTAMP
-          )
+    WHERE r.status = :status
+    AND r.endDate <= CURRENT_TIMESTAMP
     """)
     List<Raffle> findAllEligibleForCompletion(@Param("status") RaffleStatus status);
     List<Raffle> findAllByAssociation(Association association);
+
+    @Query("""
+    SELECT r FROM Raffle r
+    WHERE r.status = :status
+    AND r.startDate <= CURRENT_TIMESTAMP
+    """)
+    List<Raffle> findAllPendingRafflesToActivate(@Param("status") RaffleStatus status);
 }
