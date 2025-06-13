@@ -1,4 +1,4 @@
-package com.raffleease.raffleease.Infraestructure.Security;
+package com.raffleease.raffleease.Common.Security.Security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Common.Responses.ErrorResponse;
