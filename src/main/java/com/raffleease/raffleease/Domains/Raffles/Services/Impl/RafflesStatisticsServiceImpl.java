@@ -139,6 +139,8 @@ public class RafflesStatisticsServiceImpl implements RafflesStatisticsService {
         if (statistics.getParticipants() > 0) {
             BigDecimal preciseResult = new BigDecimal(unavailableTickets).divide(new BigDecimal(statistics.getParticipants()), 2, HALF_UP);
             statistics.setTicketsPerParticipant(preciseResult);
+        } else {
+            statistics.setTicketsPerParticipant(ZERO);
         }
     }
 }
