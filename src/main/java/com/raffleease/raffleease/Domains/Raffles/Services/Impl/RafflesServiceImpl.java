@@ -40,16 +40,24 @@ public class RafflesServiceImpl implements RafflesService {
     @Override
     @Transactional
     public RaffleDTO create(Long associationId, RaffleCreate raffleData) {
+        // 1. Create new raffle
         Association association = associationsService.findById(associationId);
         Raffle newRaffle = createNewRaffle(raffleData, association);
+        // 2. Create statistics
         RaffleStatistics statistics = createNewStatistics(newRaffle, raffleData.ticketsInfo().amount());
         newRaffle.setStatistics(statistics);
-        Raffle raffle = rafflesPersistence.save(newRaffle);
-        List<Image> images = imagesAssociateService.associateImagesToRaffleOnCreate(raffle, raffleData.images());
-        raffle.getImages().addAll(images);
-        List<Ticket> tickets = ticketsService.create(raffle, raffleData.ticketsInfo());
-        raffle.getTickets().addAll(tickets);
-        return rafflesMapper.fromRaffle(rafflesPersistence.save(raffle));
+        // 3. Associate images without paths/URLs
+        List<Image> images = imagesAssociateService.associateImagesToRaffleOnCreate(newRaffle, raffleData.images());
+        newRaffle.getImages().addAll(images);
+        // 4. Create tickets
+        List<Ticket> tickets = ticketsService.create(newRaffle, raffleData.ticketsInfo());
+        newRaffle.getTickets().addAll(tickets);
+        // 5. Save the raffle
+        Raffle savedRaffle = rafflesPersistence.save(newRaffle);
+        // 6. Finalize the image paths and URLs with the saved raffle's ID
+        imagesAssociateService.finalizeImagePathsAndUrls(savedRaffle, images);
+        
+        return rafflesMapper.fromRaffle(savedRaffle);
     }
 
     @Override

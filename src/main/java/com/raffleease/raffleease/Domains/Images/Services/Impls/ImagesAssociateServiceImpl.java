@@ -64,15 +64,8 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
                 .collect(Collectors.toMap(ImageDTO::id, ImageDTO::imageOrder));
 
         for (Image image : existingImages) {
-            Path finalPath = fileStorageService.moveFileToRaffle(
-                    String.valueOf(raffle.getAssociation().getId()),
-                    String.valueOf(raffle.getId()),
-                    String.valueOf(image.getId()),
-                    image.getFilePath()
-            );
+            // For new raffles, we'll set the URL and path after the raffle is saved
             image.setImageOrder(orderMap.get(image.getId()));
-            image.setFilePath(finalPath.toString());
-            image.setUrl(host + "/v1/associations/" + raffle.getAssociation().getId() + "/raffles/" + raffle.getId() + "/images/" + image.getId());
             image.setRaffle(raffle);
         }
         
@@ -152,5 +145,18 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
     private void removePendingImages(List<Long> missingImageIds) {
         List<Image> pendingImages = repository.findAllById(missingImageIds);
         deleteService.deleteAll(pendingImages);
+    }
+
+    public void finalizeImagePathsAndUrls(Raffle raffle, List<Image> images) {
+        for (Image image : images) {
+            Path finalPath = fileStorageService.moveFileToRaffle(
+                    String.valueOf(raffle.getAssociation().getId()),
+                    String.valueOf(raffle.getId()),
+                    String.valueOf(image.getId()),
+                    image.getFilePath()
+            );
+            image.setFilePath(finalPath.toString());
+            image.setUrl(host + "/v1/associations/" + raffle.getAssociation().getId() + "/raffles/" + raffle.getId() + "/images/" + image.getId());
+        }
     }
 }
