@@ -38,11 +38,14 @@ public class RafflesSearchRepositoryImpl implements RafflesSearchRepository {
                     case "title":
                         sortPath = raffle.get("title");
                         break;
-                    case "startDate":
+                    case "startdate":
                         sortPath = raffle.get("startDate");
                         break;
-                    case "endDate":
+                    case "enddate":
                         sortPath = raffle.get("endDate");
+                        break;
+                    case "createdat":
+                        sortPath = raffle.get("createdAt");
                         break;
                     default:
                         sortPath = raffle.get("createdAt");
