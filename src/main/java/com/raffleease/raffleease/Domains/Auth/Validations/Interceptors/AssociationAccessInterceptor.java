@@ -17,6 +17,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Map;
 
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 import static org.springframework.web.servlet.HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE;
 
@@ -27,31 +28,46 @@ public class AssociationAccessInterceptor implements HandlerInterceptor {
     private final UsersService usersService;
     private final AssociationsMembershipService membershipsService;
 
-        @Override
-        public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-            if (!(handler instanceof HandlerMethod method)) return true;
-            if (!method.getBeanType().isAnnotationPresent(ValidateAssociationAccess.class)) return true;
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        if (!(handler instanceof HandlerMethod method)) return true;
+        if (!method.getBeanType().isAnnotationPresent(ValidateAssociationAccess.class)) return true;
 
-            Map<String, String> pathVariables = (Map<String, String>) request.getAttribute(URI_TEMPLATE_VARIABLES_ATTRIBUTE);
-            String associationIdStr = pathVariables.get("associationId");
+        // 1. Check authentication
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            response.setStatus(SC_UNAUTHORIZED);
+            return false;
+        }
 
-            Long associationId;
-            try {
-                associationId = Long.parseLong(associationIdStr);
-            } catch (NumberFormatException ex) {
-                throw new IllegalArgumentException("Invalid association id provided");
-            }
+        // 2. Get association ID from path variables
+        Map<String, String> pathVariables = (Map<String, String>) request.getAttribute(URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+        String associationIdStr = pathVariables.get("associationId");
+        if (associationIdStr == null) {
+            response.setStatus(SC_FORBIDDEN);
+            return false;
+        }
 
+        // 3. Parse association ID
+        Long associationId;
+        try {
+            associationId = Long.parseLong(associationIdStr);
+        } catch (NumberFormatException ex) {
+            response.setStatus(SC_FORBIDDEN);
+            return false;
+        }
+
+        // 4. Get user and validate access
+        String identifier = auth.getName();
+        User user = usersService.findByIdentifier(identifier);
+        
+        try {
             Association association = associationsService.findById(associationId);
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth == null || !auth.isAuthenticated()) {
-                response.setStatus(SC_UNAUTHORIZED);
-                return false;
-            }
-            
-            String identifier = auth.getName();
-            User user = usersService.findByIdentifier(identifier);
             membershipsService.validateIsMember(association, user);
             return true;
+        } catch (Exception ex) {
+            response.setStatus(SC_FORBIDDEN);
+            return false;
         }
+    }
 }
