@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.ACTIVE;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
 
 @RequiredArgsConstructor
@@ -44,11 +45,11 @@ public class ReservationsServiceImpl implements ReservationsService {
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
         validateTicketsAvailability(tickets);
-        Cart cart = cartsPersistenceService.findById(cartId);
+        Cart cart = fetchCart(cartId);
         reserveTickets(cart, tickets);
         cart.getTickets().addAll(tickets);
-        cartsPersistenceService.save(cart);
-        return cartsMapper.fromCart(cartsPersistenceService.save(cart));
+        Cart savedCart = cartsPersistenceService.save(cart);
+        return cartsMapper.fromCart(savedCart);
     }
 
     /**
@@ -58,7 +59,7 @@ public class ReservationsServiceImpl implements ReservationsService {
     @Override
     @Transactional
     public void release(ReservationRequest request, Long associationId, Long cartId) {
-        Cart cart = cartsPersistenceService.findById(cartId);
+        Cart cart = fetchCart(cartId);
         List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketIds());
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
@@ -108,5 +109,13 @@ public class ReservationsServiceImpl implements ReservationsService {
     private void reserveTickets(Cart cart, List<Ticket> tickets) {
         ticketsService.reserveTickets(cart, tickets);
         statisticsService.reduceRaffleTicketsAvailability(tickets);
+    }
+
+    private Cart fetchCart(Long cartId) {
+        Cart cart = cartsPersistenceService.findById(cartId);
+        if (cart.getStatus() != ACTIVE) {
+            throw new BusinessException("Cannot reserve tickets for a closed cart");
+        }
+        return cart;
     }
 }
