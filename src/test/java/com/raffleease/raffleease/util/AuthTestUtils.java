@@ -47,20 +47,23 @@ public class AuthTestUtils {
      * @return AuthTestData containing all related entities
      */
     public AuthTestData createAuthenticatedUser(boolean userEnabled, AssociationRole role) {
+        // Generate unique identifier for this test instance
+        String uniqueId = String.valueOf(System.currentTimeMillis());
+        
         // Create and persist association with address
         Association association = TestDataBuilder.association()
-                .name("Test Auth Association")
-                .email("auth-test@example.com")
-                .phoneNumber("+1234567890")
+                .name("Test Auth Association " + uniqueId)
+                .email("auth-test-" + uniqueId + "@example.com")
+                .phoneNumber("+1234" + String.format("%06d", Math.abs(uniqueId.hashCode() % 1000000)))
                 .build();
         association = associationsRepository.save(association);
 
         // Create and persist user with encoded password
         String encodedPassword = passwordEncoder.encode(DEFAULT_TEST_PASSWORD);
         User user = TestDataBuilder.user()
-                .userName("authtestuser")
-                .email("authtest@example.com")
-                .phoneNumber("+1987654321")
+                .userName("authtestuser" + uniqueId)
+                .email("authtest" + uniqueId + "@example.com")
+                .phoneNumber("+1987" + String.format("%06d", Math.abs((uniqueId + "user").hashCode() % 1000000)))
                 .password(encodedPassword)
                 .enabled(userEnabled)
                 .build();
@@ -98,19 +101,20 @@ public class AuthTestUtils {
      * @return AuthTestData containing all related entities
      */
     public AuthTestData createAuthenticatedUserWithCredentials(String username, String email, String password) {
-        // Create and persist association
+        // Create and persist association with unique name based on username
         Association association = TestDataBuilder.association()
-                .name("Custom Auth Association")
-                .email("custom-auth@example.com")
-                .phoneNumber("+1555666777")
+                .name("Custom Auth Association " + username)
+                .email("custom-auth-" + username + "@example.com")
+                .phoneNumber("+1555" + String.format("%06d", Math.abs(username.hashCode() % 1000000)))
                 .build();
         association = associationsRepository.save(association);
 
-        // Create and persist user with custom credentials
+        // Create and persist user with custom credentials and unique phone number
         String encodedPassword = passwordEncoder.encode(password);
         User user = TestDataBuilder.user()
                 .userName(username)
                 .email(email)
+                .phoneNumber("+1987" + String.format("%06d", Math.abs((username + "phone").hashCode() % 1000000)))
                 .password(encodedPassword)
                 .enabled(true)
                 .build();
