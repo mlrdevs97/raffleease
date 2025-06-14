@@ -48,7 +48,7 @@ public class AdminCartsController {
         return ResponseEntity.ok(
                 ResponseFactory.success(
                         cartsService.getUserCart(),
-                        "Active uiser cart retrieved successfully"
+                        "Active user cart retrieved successfully"
                 )
         );
     }

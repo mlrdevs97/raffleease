@@ -33,6 +33,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.ACTIVE;
 import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.PENDING;
 
 @RequiredArgsConstructor
@@ -80,7 +81,7 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
     }
 
     private void validateCartStatus(Cart cart) {
-        if (cart.getStatus() != CartStatus.ACTIVE) {
+        if (cart.getStatus() != ACTIVE) {
             throw new BusinessException("Cannot create order for a closed cart");
         }
     }
