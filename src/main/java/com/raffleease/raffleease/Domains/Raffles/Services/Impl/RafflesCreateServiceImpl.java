@@ -9,28 +9,23 @@ import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatistics;
-import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
-import com.raffleease.raffleease.Domains.Raffles.Services.RafflesService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesCreateService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason.ALL_TICKETS_SOLD;
-import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.*;
-import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
+import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDING;
 import static java.math.BigDecimal.ZERO;
 
 @RequiredArgsConstructor
 @Service
-public class RafflesServiceImpl implements RafflesService {
+public class RafflesCreateServiceImpl implements RafflesCreateService {
     private final RafflesPersistenceService rafflesPersistence;
     private final TicketsService ticketsService;
     private final RafflesMapper rafflesMapper;
@@ -56,38 +51,8 @@ public class RafflesServiceImpl implements RafflesService {
         Raffle savedRaffle = rafflesPersistence.save(newRaffle);
         // 6. Finalize the image paths and URLs with the saved raffle's ID
         imagesAssociateService.finalizeImagePathsAndUrls(savedRaffle, images);
-        
+
         return rafflesMapper.fromRaffle(savedRaffle);
-    }
-
-    @Override
-    public void delete(Long id) {
-        Raffle raffle = rafflesPersistence.findById(id);
-        if (!raffle.getStatus().equals(RaffleStatus.PENDING)) {
-            throw new BusinessException("Only raffles in 'PENDING' state can be deleted.");
-        }
-        rafflesPersistence.delete(raffle);
-    }
-
-    @Override
-    public void completeRaffleIfAllTicketsSold(Raffle raffle) {
-        boolean allTicketsSold = raffle.getTickets().stream().allMatch(ticket -> ticket.getStatus().equals(SOLD));
-        if (allTicketsSold) {
-            raffle.setStatus(COMPLETED);
-            raffle.setCompletedAt(LocalDateTime.now());
-            raffle.setCompletionReason(ALL_TICKETS_SOLD);
-        }
-        rafflesPersistence.save(raffle);
-    }
-
-    @Override
-    public void reactivateRaffleIfAllTicketsSold(Raffle raffle) {
-        if (raffle.getStatus().equals(COMPLETED) && raffle.getCompletionReason().equals(ALL_TICKETS_SOLD)) {
-            raffle.setStatus(ACTIVE);
-            raffle.setCreatedAt(null);
-            raffle.setCompletionReason(null);
-        }
-        rafflesPersistence.save(raffle);
     }
 
     private Raffle createNewRaffle(RaffleCreate raffleData, Association association) {

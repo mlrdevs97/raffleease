@@ -14,8 +14,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import static com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason.ALL_TICKETS_SOLD;
 import static com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason.MANUALLY_COMPLETED;
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.*;
+import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 
 @RequiredArgsConstructor
 @Service
@@ -34,6 +36,36 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
             default -> throw new BusinessException("Unsupported status transition.");
         }
         return mapper.fromRaffle(rafflesPersistence.save(raffle));
+    }
+
+    @Override
+    public void delete(Long id) {
+        Raffle raffle = rafflesPersistence.findById(id);
+        if (!raffle.getStatus().equals(RaffleStatus.PENDING)) {
+            throw new BusinessException("Only raffles in 'PENDING' state can be deleted.");
+        }
+        rafflesPersistence.delete(raffle);
+    }
+
+    @Override
+    public void completeRaffleIfAllTicketsSold(Raffle raffle) {
+        boolean allTicketsSold = raffle.getTickets().stream().allMatch(ticket -> ticket.getStatus().equals(SOLD));
+        if (allTicketsSold) {
+            raffle.setStatus(COMPLETED);
+            raffle.setCompletedAt(LocalDateTime.now());
+            raffle.setCompletionReason(ALL_TICKETS_SOLD);
+        }
+        rafflesPersistence.save(raffle);
+    }
+
+    @Override
+    public void reactivateRaffleIfAllTicketsSold(Raffle raffle) {
+        if (raffle.getStatus().equals(COMPLETED) && raffle.getCompletionReason().equals(ALL_TICKETS_SOLD)) {
+            raffle.setStatus(ACTIVE);
+            raffle.setCreatedAt(null);
+            raffle.setCompletionReason(null);
+        }
+        rafflesPersistence.save(raffle);
     }
 
     private void updateToActive(Raffle raffle) {
