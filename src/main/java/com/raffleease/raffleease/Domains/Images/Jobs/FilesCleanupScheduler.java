@@ -38,12 +38,22 @@ public class FilesCleanupScheduler {
     @Value("${spring.storage.images.base_path}")
     private String basePath;
 
+    @Scheduled(cron = "${spring.application.configs.cron.images_cleanup}")
+    public void scheduledCleanup() {
+        log.info("Starting scheduled filesystem cleanup");
+        try {
+            performFullCleanup();
+        } catch (Exception e) {
+            log.error("Error during scheduled filesystem cleanup", e);
+        }
+    }
+
     /**
      * Cleans up temporary files older than the specified duration
      * @param olderThan Duration after which temporary files should be cleaned up
      * @return Number of files cleaned up
      */
-    public int cleanupOldTemporaryFiles(Duration olderThan) {
+    private int cleanupOldTemporaryFiles(Duration olderThan) {
         log.info("Starting cleanup of temporary files older than {}", olderThan);
         int cleanedUp = 0;
         
@@ -68,7 +78,7 @@ public class FilesCleanupScheduler {
      * Cleans up orphaned files that exist on disk but have no corresponding database entry
      * @return Number of orphaned files cleaned up
      */
-    public int cleanupOrphanedFiles() {
+    private int cleanupOrphanedFiles() {
         log.info("Starting cleanup of orphaned files from filesystem");
         int cleanedUp = 0;
         
@@ -90,7 +100,7 @@ public class FilesCleanupScheduler {
      * Performs a full cleanup including both old temporary files and orphaned files
      * @return Total number of files cleaned up
      */
-    public int performFullCleanup() {
+    private int performFullCleanup() {
         log.info("Starting full filesystem cleanup");
         
         int tempFilesCleanedUp = cleanupOldTemporaryFiles(Duration.ofHours(24));
@@ -100,16 +110,6 @@ public class FilesCleanupScheduler {
         log.info("Full filesystem cleanup completed. Total files cleaned up: {}", totalCleanedUp);
         
         return totalCleanedUp;
-    }
-
-    @Scheduled(cron = "0 30 2 * * *")
-    public void scheduledCleanup() {
-        log.info("Starting scheduled filesystem cleanup");
-        try {
-            performFullCleanup();
-        } catch (Exception e) {
-            log.error("Error during scheduled filesystem cleanup", e);
-        }
     }
 
     /**
