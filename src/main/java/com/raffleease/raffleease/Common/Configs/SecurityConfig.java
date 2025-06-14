@@ -1,8 +1,8 @@
 package com.raffleease.raffleease.Common.Configs;
 
-import com.raffleease.raffleease.Common.Security.Security.CustomAccessDeniedHandler;
-import com.raffleease.raffleease.Common.Security.Security.CustomAuthenticationEntryPoint;
-import com.raffleease.raffleease.Common.Security.Security.JwtAuthenticationFilter;
+import com.raffleease.raffleease.Common.Security.CustomAccessDeniedHandler;
+import com.raffleease.raffleease.Common.Security.CustomAuthenticationEntryPoint;
+import com.raffleease.raffleease.Common.Security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
