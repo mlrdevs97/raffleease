@@ -57,10 +57,10 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         Cart cart = cartsPersistence.findById(adminOrder.cartId());
         List<Ticket> requestedTickets = ticketsQueryService.findAllById(adminOrder.ticketIds());
         validateRequest(requestedTickets, cart, association);
-        Customer customer = customersService.create(adminOrder.customer());        
-        List<Ticket> finalizedTickets = cartLifecycleService.finalizeCart(cart, customer);
         Raffle raffle = rafflesPersistence.findById(adminOrder.raffleId());
         validateRaffleStatus(raffle);
+        Customer customer = customersService.create(adminOrder.customer());        
+        List<Ticket> finalizedTickets = cartLifecycleService.finalizeCart(cart, customer);
         statisticsService.setCreateOrderStatistics(raffle, finalizedTickets.stream().count());
         Order order = createOrder(raffle, customer, adminOrder.comment());
         Payment payment = createPayment(order, finalizedTickets);
