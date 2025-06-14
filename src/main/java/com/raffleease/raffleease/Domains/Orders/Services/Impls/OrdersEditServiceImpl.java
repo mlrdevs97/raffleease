@@ -58,7 +58,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
     public OrderDTO cancel(Long orderId) {
         Order order = ordersPersistenceService.findById(orderId);
         throwIfInvalidOrderTransition(order.getStatus(), PENDING, CANCELLED);
-        throwIfInvalidRaffleTransition(order.getRaffle(), PENDING, UNPAID, ACTIVE);
+        throwIfInvalidRaffleTransition(order.getRaffle(), PENDING, CANCELLED, ACTIVE);
         releaseOrderTickets(order);
         statisticsService.setCancelStatistics(order.getRaffle(), order.getOrderItems().stream().count());
         order.setStatus(CANCELLED);
