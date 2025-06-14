@@ -10,6 +10,7 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatistics;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesEditService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatusService;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
@@ -21,15 +22,13 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason.ALL_TICKETS_SOLD;
-import static com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason.END_DATE_REACHED;
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.ACTIVE;
-import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.COMPLETED;
 
 @RequiredArgsConstructor
 @Service
 public class RafflesEditServiceImpl implements RafflesEditService {
     private final RafflesPersistenceService rafflesPersistence;
+    private final RafflesStatusService rafflesStatusService;
     private final TicketsService ticketsCreateService;
     private final ImagesAssociateService imagesAssociateService;
     private final RafflesMapper rafflesMapper;
@@ -69,9 +68,9 @@ public class RafflesEditServiceImpl implements RafflesEditService {
 
     private void editEndDate(Raffle raffle, LocalDateTime endDate) {
         raffle.setEndDate(endDate);
-        if (raffle.getStatus().equals(COMPLETED) && raffle.getCompletionReason().equals(END_DATE_REACHED) ) {
-            reactivateRaffle(raffle);
-        }
+        raffle.setStatus(ACTIVE);
+        raffle.setCompletionReason(null);
+        raffle.setCompletedAt(null);
     }
 
     private void addNewImages(Raffle raffle, List<ImageDTO> imageDTOs) {
@@ -97,10 +96,7 @@ public class RafflesEditServiceImpl implements RafflesEditService {
 
         statistics.setAvailableTickets(statistics.getAvailableTickets() + ticketDifference);
         createAdditionalTickets(raffle, oldTotal, ticketDifference);
-
-        if (raffle.getStatus().equals(COMPLETED) && raffle.getCompletionReason().equals(ALL_TICKETS_SOLD)) {
-            reactivateRaffle(raffle);
-        }
+        rafflesStatusService.updateStatusAfterAvailableTicketsIncrease(raffle);
     }
 
     private void createAdditionalTickets(Raffle raffle, long oldTotal, long amount) {
@@ -114,11 +110,5 @@ public class RafflesEditServiceImpl implements RafflesEditService {
 
         List<Ticket> newTickets = ticketsCreateService.create(raffle, request);
         raffle.getTickets().addAll(newTickets);
-    }
-
-    private void reactivateRaffle(Raffle raffle) {
-        raffle.setStatus(ACTIVE);
-        raffle.setCompletionReason(null);
-        raffle.setCompletedAt(null);
     }
 }

@@ -663,6 +663,50 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
         }
 
         @Test
+        @DisplayName("Should not reactivate completed raffle when increasing tickets if end date is in the past")
+        void shouldNotReactivateRaffleWhenIncreasingTicketsIfEndDateIsInPast() throws Exception {
+            // Arrange - Setup raffle completed due to all tickets sold with past end date
+            setupRaffleWithTickets(testRaffle, 5L, 1L);
+            sellTickets(testRaffle, 5); // Sell all tickets
+            testRaffle.setStatus(RaffleStatus.COMPLETED);
+            testRaffle.setCompletionReason(CompletionReason.ALL_TICKETS_SOLD);
+            testRaffle.setCompletedAt(LocalDateTime.now().minusHours(1));
+            testRaffle.setEndDate(LocalDateTime.now().minusDays(1)); // Past end date
+            rafflesRepository.save(testRaffle);
+
+            Long newTotal = 10L; // Increase total tickets
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, null, null, null, newTotal
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.status").value("COMPLETED"));
+
+            // Verify raffle was NOT reactivated (remains completed)
+            Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(updatedRaffle.getStatus()).isEqualTo(RaffleStatus.COMPLETED);
+            assertThat(updatedRaffle.getCompletionReason()).isEqualTo(CompletionReason.END_DATE_REACHED); // Should be updated to END_DATE_REACHED
+            assertThat(updatedRaffle.getCompletedAt()).isNotNull();
+            assertThat(updatedRaffle.getTotalTickets()).isEqualTo(10L); // Tickets should still be increased
+            
+            // Verify additional tickets were created
+            List<Ticket> allTickets = ticketsRepository.findAllByRaffle(updatedRaffle);
+            assertThat(allTickets).hasSize(10);
+            
+            // Verify statistics were updated
+            assertThat(updatedRaffle.getStatistics().getAvailableTickets()).isEqualTo(5L); // 5 new available
+            assertThat(updatedRaffle.getStatistics().getSoldTickets()).isEqualTo(5L); // 5 still sold
+        }
+
+        @Test
         @DisplayName("Should successfully perform combined edit of multiple fields")
         void shouldPerformCombinedEditOfMultipleFields() throws Exception {
             // Arrange

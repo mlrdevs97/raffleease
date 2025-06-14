@@ -8,5 +8,5 @@ public interface RafflesStatusService {
     RaffleDTO updateStatus(Long id, StatusUpdate request);
     void delete(Long id);
     void completeRaffleIfAllTicketsSold(Raffle raffle);
-    void reactivateRaffleIfAllTicketsSold(Raffle raffle);
+    void updateStatusAfterAvailableTicketsIncrease(Raffle raffle);
 }

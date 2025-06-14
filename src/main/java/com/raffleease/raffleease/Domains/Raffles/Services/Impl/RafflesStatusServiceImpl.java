@@ -3,6 +3,7 @@ package com.raffleease.raffleease.Domains.Raffles.Services.Impl;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.StatusUpdate;
 import com.raffleease.raffleease.Domains.Raffles.Mappers.RafflesMapper;
+import com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
@@ -14,8 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import static com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason.ALL_TICKETS_SOLD;
-import static com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason.MANUALLY_COMPLETED;
+import static com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason.*;
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.*;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 
@@ -59,11 +59,16 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
     }
 
     @Override
-    public void reactivateRaffleIfAllTicketsSold(Raffle raffle) {
-        if (raffle.getStatus().equals(COMPLETED) && raffle.getCompletionReason().equals(ALL_TICKETS_SOLD)) {
+    public void updateStatusAfterAvailableTicketsIncrease(Raffle raffle) {
+        if (raffle.getEndDate().isAfter(LocalDateTime.now()) &&
+                raffle.getStatus().equals(COMPLETED) &&
+                raffle.getCompletionReason().equals(ALL_TICKETS_SOLD)
+        ) {
             raffle.setStatus(ACTIVE);
-            raffle.setCreatedAt(null);
+            raffle.setCompletedAt(null);
             raffle.setCompletionReason(null);
+        } else if (raffle.getEndDate().isBefore(LocalDateTime.now())) {
+            raffle.setCompletionReason(END_DATE_REACHED);
         }
         rafflesPersistence.save(raffle);
     }

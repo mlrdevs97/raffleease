@@ -74,7 +74,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         releaseOrderTickets(order);
         Raffle raffle = order.getRaffle();
         statisticsService.setRefundStatistics(raffle, order.getOrderItems().stream().count());
-        rafflesStatusService.reactivateRaffleIfAllTicketsSold(raffle);
+        rafflesStatusService.updateStatusAfterAvailableTicketsIncrease(raffle);
         order.setStatus(REFUNDED);
         order.setRefundedAt(LocalDateTime.now());
         return mapper.fromOrder(ordersPersistenceService.save(order));
