@@ -11,7 +11,6 @@ import com.raffleease.raffleease.Domains.Raffles.DTOs.OrderRaffleSummary;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -50,10 +49,15 @@ public class OrdersMapperImpl implements OrdersMapper {
     }
 
     private OrderRaffleSummary buildRaffleSummary(Raffle raffle) {
+        String imageUrl = "";
+        if (raffle.getImages() != null && !raffle.getImages().isEmpty()) {
+            imageUrl = raffle.getImages().get(0).getUrl();
+        }
+        
         return OrderRaffleSummary.builder()
                 .id(raffle.getId())
                 .title(raffle.getTitle())
-                .imageURL(raffle.getImages().get(0).getUrl())
+                .imageURL(imageUrl)
                 .status(raffle.getStatus())
                 .build();
     }
