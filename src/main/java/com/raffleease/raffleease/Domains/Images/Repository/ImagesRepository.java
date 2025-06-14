@@ -20,4 +20,7 @@ public interface ImagesRepository extends JpaRepository<Image, Long> {
     List<Image> findAllByRaffleIsNullAndAssociation(Association association);
     List<Image> findAllByRaffleIsNullAndAssociationAndImageOrderGreaterThan(Association association, int deletedImageOrder);
     List<Image> findAllByRaffle(Raffle raffle);
+    
+    @Query("SELECT i.filePath FROM Image i WHERE i.filePath IS NOT NULL")
+    List<String> findAllFilePaths();
 }
