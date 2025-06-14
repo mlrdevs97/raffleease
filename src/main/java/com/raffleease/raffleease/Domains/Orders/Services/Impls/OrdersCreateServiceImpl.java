@@ -73,9 +73,16 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
 
     private void validateRequest(List<Ticket> requestedTickets, Cart cart, Association association) {
         List<Ticket> cartTickets = ticketsQueryService.findAllByCart(cart);
+        validateCartStatus(cart);
         validateAllTicketsBelongToAssociationRaffle(requestedTickets, association);
         validateAllTicketsBelongToCart(cartTickets, requestedTickets);
         validateAllCartTicketsIncludedInRequest(cartTickets, requestedTickets);
+    }
+
+    private void validateCartStatus(Cart cart) {
+        if (cart.getStatus() != CartStatus.ACTIVE) {
+            throw new BusinessException("Cannot create order for a closed cart");
+        }
     }
 
     private void validateAllTicketsBelongToCart(List<Ticket> cartTickets, List<Ticket> requestedTickets) {
