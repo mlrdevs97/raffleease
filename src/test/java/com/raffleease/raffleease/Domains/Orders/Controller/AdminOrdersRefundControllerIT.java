@@ -381,7 +381,7 @@ class AdminOrdersRefundControllerIT extends AbstractIntegrationTest {
             Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
             assertThat(updatedRaffle.getStatus()).isEqualTo(ACTIVE);
             assertThat(updatedRaffle.getCompletionReason()).isNull();
-            assertThat(updatedRaffle.getCompletedAt()).isNotNull();
+            assertThat(updatedRaffle.getCompletedAt()).isNull();
         }
 
         @Test

@@ -146,8 +146,7 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
     }
 
     private void createTestTickets() {
-        // Create tickets for each customer in different raffles
-        for (int i = 0; i < testCustomers.size(); i++) {
+        for (int i = 0; i < 5; i++) { // Changed from 4 to 5 to include Bob Wilson
             Customer customer = testCustomers.get(i);
             Raffle raffle = testRaffles.get(i % testRaffles.size()); // Distribute across raffles
             
@@ -180,8 +179,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
                     .andExpect(content().contentType("application/json"))
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.message").value("Customers retrieved successfully"))
-                    .andExpect(jsonPath("$.data.content", hasSize(4)))
-                    .andExpect(jsonPath("$.data.totalElements").value(4))
+                    .andExpect(jsonPath("$.data.content", hasSize(5)))
+                    .andExpect(jsonPath("$.data.totalElements").value(5))
                     .andExpect(jsonPath("$.data.totalPages").value(1))
                     .andExpect(jsonPath("$.data.first").value(true))
                     .andExpect(jsonPath("$.data.last").value(true));
@@ -194,12 +193,13 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
             ResultActions result = mockMvc.perform(get(searchEndpoint)
                     .with(user(authData.user().getEmail())));
 
-            // Assert - Verify ordering (most recent first) - only 4 customers returned
+            // Assert - Verify ordering (most recent first) - now 5 customers returned
             result.andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.content[0].fullName").value("Alice Brown"))
-                    .andExpect(jsonPath("$.data.content[1].fullName").value("John Johnson"))
-                    .andExpect(jsonPath("$.data.content[2].fullName").value("Jane Smith"))
-                    .andExpect(jsonPath("$.data.content[3].fullName").value("John Doe"));
+                    .andExpect(jsonPath("$.data.content[0].fullName").value("Bob Wilson")) // Bob Wilson is now index 4, so most recent
+                    .andExpect(jsonPath("$.data.content[1].fullName").value("Alice Brown"))
+                    .andExpect(jsonPath("$.data.content[2].fullName").value("John Johnson"))
+                    .andExpect(jsonPath("$.data.content[3].fullName").value("Jane Smith"))
+                    .andExpect(jsonPath("$.data.content[4].fullName").value("John Doe"));
         }
 
         @Test
@@ -549,7 +549,7 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
             // Assert
             result.andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content", hasSize(3)))
-                    .andExpect(jsonPath("$.data.totalElements").value(4))
+                    .andExpect(jsonPath("$.data.totalElements").value(5))
                     .andExpect(jsonPath("$.data.totalPages").value(2))
                     .andExpect(jsonPath("$.data.number").value(0))
                     .andExpect(jsonPath("$.data.size").value(3))
@@ -568,8 +568,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
 
             // Assert
             result.andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.content", hasSize(1)))
-                    .andExpect(jsonPath("$.data.totalElements").value(4))
+                    .andExpect(jsonPath("$.data.content", hasSize(2)))
+                    .andExpect(jsonPath("$.data.totalElements").value(5))
                     .andExpect(jsonPath("$.data.totalPages").value(2))
                     .andExpect(jsonPath("$.data.number").value(1))
                     .andExpect(jsonPath("$.data.size").value(3))
@@ -589,7 +589,7 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
             // Assert
             result.andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content", hasSize(0)))
-                    .andExpect(jsonPath("$.data.totalElements").value(4))
+                    .andExpect(jsonPath("$.data.totalElements").value(5))
                     .andExpect(jsonPath("$.data.totalPages").value(2))
                     .andExpect(jsonPath("$.data.number").value(10));
         }
@@ -630,8 +630,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
 
             // Assert - Empty strings should be treated as no filter
             result.andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.content", hasSize(4)))
-                    .andExpect(jsonPath("$.data.totalElements").value(4));
+                    .andExpect(jsonPath("$.data.content", hasSize(5)))
+                    .andExpect(jsonPath("$.data.totalElements").value(5));
         }
 
         @Test
@@ -646,8 +646,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
 
             // Assert - Whitespace should be trimmed and treated as no filter
             result.andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.content", hasSize(4)))
-                    .andExpect(jsonPath("$.data.totalElements").value(4));
+                    .andExpect(jsonPath("$.data.content", hasSize(5)))
+                    .andExpect(jsonPath("$.data.totalElements").value(5));
         }
 
         @Test
@@ -755,8 +755,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
             // Assert
             result.andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.pageable").exists())
-                    .andExpect(jsonPath("$.data.totalElements").value(4))
-                    .andExpect(jsonPath("$.data.totalPages").value(2))
+                    .andExpect(jsonPath("$.data.totalElements").value(5))
+                    .andExpect(jsonPath("$.data.totalPages").value(3))
                     .andExpect(jsonPath("$.data.size").value(2))
                     .andExpect(jsonPath("$.data.number").value(0))
                     .andExpect(jsonPath("$.data.numberOfElements").value(2))
