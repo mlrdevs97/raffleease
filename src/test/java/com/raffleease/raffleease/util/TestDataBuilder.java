@@ -9,6 +9,8 @@ import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatistics;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
+import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
+import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Model.UserRole;
 
@@ -53,6 +55,10 @@ public class TestDataBuilder {
 
     public static RaffleStatisticsBuilder statistics() {
         return new RaffleStatisticsBuilder();
+    }
+
+    public static TicketBuilder ticket() {
+        return new TicketBuilder();
     }
 
     public static class UserBuilder {
@@ -579,6 +585,58 @@ public class TestDataBuilder {
                     .dailySalesVelocity(dailySalesVelocity)
                     .firstSaleDate(firstSaleDate)
                     .lastSaleDate(lastSaleDate)
+                    .build();
+        }
+    }
+
+    public static class TicketBuilder {
+        private String ticketNumber = "TICKET-001";
+        private TicketStatus status = TicketStatus.AVAILABLE;
+        private Raffle raffle;
+        private Customer customer;
+
+        public TicketBuilder ticketNumber(String ticketNumber) {
+            this.ticketNumber = ticketNumber;
+            return this;
+        }
+
+        public TicketBuilder status(TicketStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public TicketBuilder raffle(Raffle raffle) {
+            this.raffle = raffle;
+            return this;
+        }
+
+        public TicketBuilder customer(Customer customer) {
+            this.customer = customer;
+            return this;
+        }
+
+        public TicketBuilder available() {
+            this.status = TicketStatus.AVAILABLE;
+            this.customer = null;
+            return this;
+        }
+
+        public TicketBuilder reserved() {
+            this.status = TicketStatus.RESERVED;
+            return this;
+        }
+
+        public TicketBuilder sold() {
+            this.status = TicketStatus.SOLD;
+            return this;
+        }
+
+        public Ticket build() {
+            return Ticket.builder()
+                    .ticketNumber(ticketNumber)
+                    .status(status)
+                    .raffle(raffle)
+                    .customer(customer)
                     .build();
         }
     }
