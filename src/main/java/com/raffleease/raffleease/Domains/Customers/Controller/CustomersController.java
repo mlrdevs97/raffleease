@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Customers.Controller;
 
+import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAccess;
 import com.raffleease.raffleease.Domains.Customers.DTO.CustomerSearchFilters;
 import com.raffleease.raffleease.Domains.Customers.Services.CustomersService;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/v1/associations/{associationId}/customers")
@@ -16,7 +18,7 @@ public class CustomersController {
     private final CustomersService customersService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse> get(
+    public ResponseEntity<ApiResponse> search (
             @PathVariable Long associationId,
             CustomerSearchFilters searchFilters,
             Pageable pageable
