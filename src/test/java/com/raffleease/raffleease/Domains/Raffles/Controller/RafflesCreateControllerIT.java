@@ -8,7 +8,6 @@ import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
@@ -22,7 +21,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -32,16 +30,18 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.PENDING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @DisplayName("Raffles Controller Integration Tests")
-class RafflesControllerIT extends AbstractIntegrationTest {
+class RafflesCreateControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     private AuthTestUtils authTestUtils;
@@ -69,7 +69,7 @@ class RafflesControllerIT extends AbstractIntegrationTest {
         authData = authTestUtils.createAuthenticatedUser();
         baseEndpoint = "/v1/associations/" + authData.association().getId() + "/raffles";
         
-        // Mock file storage service to avoid actual file operations
+        // Mock file storage service to avoid actual file operations during raffle creation
         when(fileStorageService.moveFileToRaffle(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(Paths.get("/mocked/raffle/image/path"));
     }
@@ -87,14 +87,14 @@ class RafflesControllerIT extends AbstractIntegrationTest {
 
             // Act
             ResultActions result = mockMvc.perform(post(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(raffleCreate))
                     .with(user(authData.user().getEmail())));
 
             // Assert
             result.andExpect(status().isCreated())
                     .andExpect(header().exists("Location"))
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(content().contentType(APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.message").value("New raffle created successfully"))
                     .andExpect(jsonPath("$.data.id").exists())
@@ -114,7 +114,7 @@ class RafflesControllerIT extends AbstractIntegrationTest {
             Raffle savedRaffle = savedRaffles.get(0);
             assertThat(savedRaffle.getTitle()).isEqualTo(raffleCreate.title());
             assertThat(savedRaffle.getDescription()).isEqualTo(raffleCreate.description());
-            assertThat(savedRaffle.getStatus()).isEqualTo(RaffleStatus.PENDING);
+            assertThat(savedRaffle.getStatus()).isEqualTo(PENDING);
             assertThat(savedRaffle.getAssociation().getId()).isEqualTo(authData.association().getId());
             assertThat(savedRaffle.getStatistics()).isNotNull();
 
@@ -144,7 +144,7 @@ class RafflesControllerIT extends AbstractIntegrationTest {
 
             // Act
             ResultActions result = mockMvc.perform(post(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(raffleCreate))
                     .with(user(authData.user().getEmail())));
 
@@ -174,7 +174,7 @@ class RafflesControllerIT extends AbstractIntegrationTest {
 
             // Act
             ResultActions result = mockMvc.perform(post(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(raffleCreate))
                     .with(user(authData.user().getEmail())));
 
@@ -196,7 +196,7 @@ class RafflesControllerIT extends AbstractIntegrationTest {
 
             // Act
             ResultActions result = mockMvc.perform(post(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(raffleCreate)));
 
             // Assert
@@ -214,7 +214,7 @@ class RafflesControllerIT extends AbstractIntegrationTest {
 
             // Act
             ResultActions result = mockMvc.perform(post(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(raffleCreate))
                     .with(user(otherUserData.user().getEmail())));
 
@@ -238,13 +238,13 @@ class RafflesControllerIT extends AbstractIntegrationTest {
 
             // Act
             ResultActions result = mockMvc.perform(post(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(invalidRaffleJson)
                     .with(user(authData.user().getEmail())));
 
             // Assert
             result.andExpect(status().isBadRequest())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(content().contentType(APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false));
         }
 
@@ -266,7 +266,7 @@ class RafflesControllerIT extends AbstractIntegrationTest {
 
             // Act
             ResultActions result = mockMvc.perform(post(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(raffleCreate))
                     .with(user(authData.user().getEmail())));
 
@@ -293,7 +293,7 @@ class RafflesControllerIT extends AbstractIntegrationTest {
 
             // Act
             ResultActions result = mockMvc.perform(post(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(raffleCreate))
                     .with(user(authData.user().getEmail())));
 
@@ -331,11 +331,11 @@ class RafflesControllerIT extends AbstractIntegrationTest {
 
             // Act
             ResultActions result = mockMvc.perform(post(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(raffleCreate))
                     .with(user(authData.user().getEmail())));
 
-            // Assert
+            // Assert - Should still fail because validation runs on existing images
             result.andExpect(status().isForbidden())
                     .andExpect(jsonPath("$.success").value(false));
         }
@@ -347,7 +347,7 @@ class RafflesControllerIT extends AbstractIntegrationTest {
             // Create an existing raffle
             Raffle existingRaffle = TestDataBuilder.raffle()
                     .association(authData.association())
-                    .status(RaffleStatus.PENDING)
+                    .status(PENDING)
                     .build();
             existingRaffle = rafflesRepository.save(existingRaffle);
 
@@ -375,11 +375,11 @@ class RafflesControllerIT extends AbstractIntegrationTest {
 
             // Act
             ResultActions result = mockMvc.perform(post(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(raffleCreate))
                     .with(user(authData.user().getEmail())));
 
-            // Assert
+            // Assert - Should still fail because validation runs on existing images
             result.andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.success").value(false));
         }
@@ -418,7 +418,7 @@ class RafflesControllerIT extends AbstractIntegrationTest {
 
             // Act
             ResultActions result = mockMvc.perform(post(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(raffleCreate))
                     .with(user(authData.user().getEmail())));
 
@@ -457,13 +457,163 @@ class RafflesControllerIT extends AbstractIntegrationTest {
 
             // Act
             ResultActions result = mockMvc.perform(post(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(raffleCreate))
                     .with(user(authData.user().getEmail())));
 
             // Assert
             result.andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.success").value(false));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when some requested images are missing and no valid images remain")
+        void shouldReturn400WhenSomeRequestedImagesAreMissingAndNoValidImagesRemain() throws Exception {
+            // Arrange - Create 2 pending images but reference 3 in the request (1 missing)
+            List<Image> pendingImages = createPendingImagesForAssociation(2);
+            
+            List<ImageDTO> imageDTOs = new ArrayList<>();
+            // Add existing images
+            imageDTOs.addAll(convertToImageDTOs(pendingImages));
+            // Add non-existent image
+            imageDTOs.add(new ImageDTO(99999L, "non-existent.jpg", "/path", "image/jpeg", "http://example.com", 3));
+
+            RaffleCreate raffleCreate = new RaffleCreate(
+                    "Mixed Images Raffle",
+                    "Has both existing and missing images",
+                    null,
+                    LocalDateTime.now().plusDays(7),
+                    imageDTOs,
+                    new TicketsCreate(10L, BigDecimal.valueOf(5.00), 1L)
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should succeed with only the existing images (2 valid images remain)
+            result.andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.images", hasSize(2))); // Only 2 existing images
+
+            // Verify database state - only existing images were associated
+            List<Raffle> savedRaffles = rafflesRepository.findAll();
+            assertThat(savedRaffles).hasSize(1);
+            
+            Raffle savedRaffle = savedRaffles.get(0);
+            List<Image> raffleImages = imagesRepository.findAllByRaffle(savedRaffle);
+            assertThat(raffleImages).hasSize(2); // Only existing images were associated
+            
+            // Verify no pending images remain
+            List<Image> remainingPendingImages = imagesRepository.findAllByRaffleIsNullAndAssociation(authData.association());
+            assertThat(remainingPendingImages).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should return 400 when all requested images are missing")
+        void shouldReturn400WhenAllRequestedImagesAreMissing() throws Exception {
+            // Arrange - Request only non-existent images
+            List<ImageDTO> imageDTOs = List.of(
+                    new ImageDTO(99998L, "missing1.jpg", "/path", "image/jpeg", "http://example.com", 1),
+                    new ImageDTO(99999L, "missing2.jpg", "/path", "image/jpeg", "http://example.com", 2)
+            );
+
+            RaffleCreate raffleCreate = new RaffleCreate(
+                    "No Valid Images Raffle",
+                    "All requested images are missing",
+                    null,
+                    LocalDateTime.now().plusDays(7),
+                    imageDTOs,
+                    new TicketsCreate(10L, BigDecimal.valueOf(5.00), 1L)
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should fail because raffles must have at least one image
+            result.andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("A raffle must have at least one image."));
+
+            // Verify no raffle was created
+            List<Raffle> savedRaffles = rafflesRepository.findAll();
+            assertThat(savedRaffles).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should return 400 when no images are provided in request")
+        void shouldReturn400WhenNoImagesProvidedInRequest() throws Exception {
+            // Arrange - Request with empty images list
+            RaffleCreate raffleCreate = new RaffleCreate(
+                    "No Images Raffle",
+                    "Has no images in request",
+                    null,
+                    LocalDateTime.now().plusDays(7),
+                    List.of(), // Empty images list
+                    new TicketsCreate(10L, BigDecimal.valueOf(5.00), 1L)
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should fail because raffles must have at least one image
+            result.andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors.images").value("INVALID_LENGTH"));
+
+            // Verify no raffle was created
+            List<Raffle> savedRaffles = rafflesRepository.findAll();
+            assertThat(savedRaffles).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should succeed when some images are missing but at least one valid image remains")
+        void shouldSucceedWhenSomeImagesAreMissingButValidImagesRemain() throws Exception {
+            // Arrange - Create 1 pending image and reference 2 in request (1 valid, 1 missing)
+            List<Image> pendingImages = createPendingImagesForAssociation(1);
+            
+            List<ImageDTO> imageDTOs = new ArrayList<>();
+            // Add existing image
+            imageDTOs.addAll(convertToImageDTOs(pendingImages));
+            // Add non-existent image
+            imageDTOs.add(new ImageDTO(99999L, "non-existent.jpg", "/path", "image/jpeg", "http://example.com", 2));
+
+            RaffleCreate raffleCreate = new RaffleCreate(
+                    "Mixed Images Raffle",
+                    "Has one valid and one missing image",
+                    null,
+                    LocalDateTime.now().plusDays(7),
+                    imageDTOs,
+                    new TicketsCreate(10L, BigDecimal.valueOf(5.00), 1L)
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should succeed because there's at least one valid image
+            result.andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.images", hasSize(1))); // Only 1 valid image
+
+            // Verify database state
+            List<Raffle> savedRaffles = rafflesRepository.findAll();
+            assertThat(savedRaffles).hasSize(1);
+            
+            Raffle savedRaffle = savedRaffles.get(0);
+            List<Image> raffleImages = imagesRepository.findAllByRaffle(savedRaffle);
+            assertThat(raffleImages).hasSize(1); // Only the valid image was associated
         }
     }
 
@@ -547,8 +697,6 @@ class RafflesControllerIT extends AbstractIntegrationTest {
             assertThat(ticket.getCustomer()).isNull();
             assertThat(ticket.getCart()).isNull();
         }
-        
-        log.info("=== TICKET VERIFICATION COMPLETED ===");
     }
 
     private void verifyInitialStatistics(Raffle raffle, Long expectedAvailableTickets) {
