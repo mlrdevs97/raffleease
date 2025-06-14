@@ -62,13 +62,13 @@ public class CustomersSearchRepositoryImpl implements CustomersSearchRepository 
 
         predicates.add(cb.equal(associationJoin.get("id"), associationId));
 
-        if (searchFilters.fullName() != null) {
+        if (searchFilters.fullName() != null && !searchFilters.fullName().isBlank()) {
             predicates.add(cb.like(cb.lower(customerJoin.get("fullName")), "%" + searchFilters.fullName().toLowerCase() + "%"));
         }
-        if (searchFilters.email() != null) {
+        if (searchFilters.email() != null && !searchFilters.email().isBlank()) {
             predicates.add(cb.like(cb.lower(customerJoin.get("email")), "%" + searchFilters.email().toLowerCase() + "%"));
         }
-        if (searchFilters.phoneNumber() != null) {
+        if (searchFilters.phoneNumber() != null && !searchFilters.phoneNumber().isBlank()) {
             predicates.add(cb.like(customerJoin.get("phoneNumber"), "%" + searchFilters.phoneNumber() + "%"));
         }
 

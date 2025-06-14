@@ -6,10 +6,7 @@ import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.StatusUpdate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleSearchFilters;
-import com.raffleease.raffleease.Domains.Raffles.Services.RafflesEditService;
-import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
-import com.raffleease.raffleease.Domains.Raffles.Services.RafflesService;
-import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatusService;
+import com.raffleease.raffleease.Domains.Raffles.Services.*;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
 import jakarta.validation.Valid;
@@ -26,7 +23,7 @@ import java.net.URI;
 @RestController
 @RequestMapping("/v1/associations/{associationId}/raffles")
 public class RafflesController {
-    private final RafflesService rafflesService;
+    private final RafflesCreateService rafflesCreateService;
     private final RafflesEditService rafflesEditService;
     private final RafflesStatusService rafflesStatusService;
     private final RafflesQueryService rafflesQueryService;
@@ -36,7 +33,7 @@ public class RafflesController {
             @PathVariable Long associationId,
             @RequestBody @Valid RaffleCreate raffleData
     ) {
-        RaffleDTO createdRaffle = rafflesService.create(associationId, raffleData);
+        RaffleDTO createdRaffle = rafflesCreateService.create(associationId, raffleData);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -100,7 +97,7 @@ public class RafflesController {
     public ResponseEntity<Void> delete(
             @PathVariable Long id
     ) {
-        rafflesService.delete(id);
+        rafflesStatusService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

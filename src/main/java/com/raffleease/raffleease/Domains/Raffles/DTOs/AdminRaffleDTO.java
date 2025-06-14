@@ -4,10 +4,6 @@ import java.math.BigDecimal;
 
 import com.raffleease.raffleease.Domains.Associations.DTO.AssociationDTO;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-
 import java.time.LocalDateTime;
 import java.util.List;
 

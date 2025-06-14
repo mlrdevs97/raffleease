@@ -18,6 +18,7 @@ spring:
     configs:
       cron:
         raffles_completion: ${RAFFLES_COMPLETION_CRON}
+        raffles_activation: ${RAFFLES_ACTIVATION_CRON}
         images_cleanup: ${IMAGES_CLEANUP_CRON}
         carts_cleanup: ${CARTS_CLEANUP_CRON}
       cleanup:

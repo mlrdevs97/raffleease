@@ -1,6 +1,5 @@
 package com.raffleease.raffleease.Domains.Carts.Services.Impl;
 
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
 import com.raffleease.raffleease.Domains.Carts.Mappers.CartsMapper;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
@@ -15,7 +14,6 @@ import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;

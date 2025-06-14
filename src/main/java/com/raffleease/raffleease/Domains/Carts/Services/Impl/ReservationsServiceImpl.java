@@ -5,7 +5,6 @@ import com.raffleease.raffleease.Domains.Associations.Services.AssociationsServi
 import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
 import com.raffleease.raffleease.Domains.Carts.Mappers.CartsMapper;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
-import com.raffleease.raffleease.Domains.Carts.Services.CartLifecycleService;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
@@ -25,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.ACTIVE;
 import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.AVAILABLE;
 
 @RequiredArgsConstructor
@@ -33,7 +33,6 @@ public class ReservationsServiceImpl implements ReservationsService {
     private final TicketsQueryService ticketsQueryService;
     private final AssociationsService associationsService;
     private final RafflesQueryService rafflesQueryService;
-    private final CartLifecycleService cartLifecycleService;
     private final CartsPersistenceService cartsPersistenceService;
     private final CartsMapper cartsMapper;
     private final TicketsService ticketsService;
@@ -46,11 +45,11 @@ public class ReservationsServiceImpl implements ReservationsService {
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
         validateTicketsAvailability(tickets);
-        Cart cart = cartsPersistenceService.findById(cartId);
+        Cart cart = fetchCart(cartId);
         reserveTickets(cart, tickets);
         cart.getTickets().addAll(tickets);
-        cartsPersistenceService.save(cart);
-        return cartsMapper.fromCart(cartsPersistenceService.save(cart));
+        Cart savedCart = cartsPersistenceService.save(cart);
+        return cartsMapper.fromCart(savedCart);
     }
 
     /**
@@ -60,7 +59,7 @@ public class ReservationsServiceImpl implements ReservationsService {
     @Override
     @Transactional
     public void release(ReservationRequest request, Long associationId, Long cartId) {
-        Cart cart = cartsPersistenceService.findById(cartId);
+        Cart cart = fetchCart(cartId);
         List<Ticket> tickets = ticketsQueryService.findAllById(request.ticketIds());
         Association association = associationsService.findById(associationId);
         validateTicketsBelongToAssociationRaffle(tickets, association);
@@ -110,5 +109,13 @@ public class ReservationsServiceImpl implements ReservationsService {
     private void reserveTickets(Cart cart, List<Ticket> tickets) {
         ticketsService.reserveTickets(cart, tickets);
         statisticsService.reduceRaffleTicketsAvailability(tickets);
+    }
+
+    private Cart fetchCart(Long cartId) {
+        Cart cart = cartsPersistenceService.findById(cartId);
+        if (cart.getStatus() != ACTIVE) {
+            throw new BusinessException("Cannot reserve tickets for a closed cart");
+        }
+        return cart;
     }
 }

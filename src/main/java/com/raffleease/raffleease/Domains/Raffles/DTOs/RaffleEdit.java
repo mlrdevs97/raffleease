@@ -29,8 +29,5 @@ public record RaffleEdit(
         BigDecimal ticketPrice,
 
         @Positive
-        Long totalTickets,
-
-        @Positive
-        BigDecimal price
+        Long totalTickets
 ) { }

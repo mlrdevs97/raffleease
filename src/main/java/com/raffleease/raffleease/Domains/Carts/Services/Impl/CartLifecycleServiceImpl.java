@@ -3,7 +3,6 @@ package com.raffleease.raffleease.Domains.Carts.Services.Impl;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Carts.Services.CartLifecycleService;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
-import com.raffleease.raffleease.Domains.Carts.Services.ReservationsService;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatisticsService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
@@ -12,13 +11,10 @@ import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 import static com.raffleease.raffleease.Domains.Carts.Model.CartStatus.CLOSED;
-import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 
 @Slf4j
 @RequiredArgsConstructor

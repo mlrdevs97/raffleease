@@ -1,8 +1,8 @@
 package com.raffleease.raffleease.Common.Configs;
 
-import com.raffleease.raffleease.Infraestructure.Security.CustomAccessDeniedHandler;
-import com.raffleease.raffleease.Infraestructure.Security.CustomAuthenticationEntryPoint;
-import com.raffleease.raffleease.Infraestructure.Security.JwtAuthenticationFilter;
+import com.raffleease.raffleease.Common.Security.CustomAccessDeniedHandler;
+import com.raffleease.raffleease.Common.Security.CustomAuthenticationEntryPoint;
+import com.raffleease.raffleease.Common.Security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -45,9 +45,7 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/v1/auth/login",
                                         "/v1/auth/register",
-                                        "/v1/auth/verify",
-                                        "/v1/associations/*/images/*",
-                                        "/v1/associations/*/raffles/*/images/*"
+                                        "/v1/auth/verify"
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )

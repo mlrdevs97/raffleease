@@ -20,8 +20,6 @@ public class Customer {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
-    private String stripeId;
-    private CustomerSourceType sourceType;
 
     @Column(nullable = false)
     private String fullName;

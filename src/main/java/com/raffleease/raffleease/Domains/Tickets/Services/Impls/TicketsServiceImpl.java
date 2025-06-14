@@ -3,7 +3,6 @@ package com.raffleease.raffleease.Domains.Tickets.Services.Impls;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatisticsService;
 import com.raffleease.raffleease.Domains.Tickets.DTO.TicketsCreate;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -26,7 +24,6 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.*;
 @Service
 public class TicketsServiceImpl implements TicketsService {
     private final TicketsRepository repository;
-    private final RafflesStatisticsService statisticsService;
 
     @Override
     public List<Ticket> create(Raffle raffle, TicketsCreate request) {
