@@ -51,6 +51,10 @@ public class TestDataBuilder {
         return new RaffleBuilder();
     }
 
+    public static RaffleStatisticsBuilder statistics() {
+        return new RaffleStatisticsBuilder();
+    }
+
     public static class UserBuilder {
         private String firstName = "John";
         private String lastName = "Doe";
@@ -417,7 +421,12 @@ public class TestDataBuilder {
         }
 
         public Raffle build() {
-            return Raffle.builder()
+            // Initialize statistics if not explicitly set
+            if (statistics == null) {
+                statistics = createDefaultStatistics(totalTickets);
+            }
+            
+            Raffle raffle = Raffle.builder()
                     .title(title)
                     .description(description)
                     .status(status)
@@ -430,6 +439,146 @@ public class TestDataBuilder {
                     .images(images)
                     .tickets(tickets)
                     .statistics(statistics)
+                    .build();
+                    
+            // Set the bidirectional relationship
+            if (statistics != null) {
+                statistics.setRaffle(raffle);
+            }
+            
+            return raffle;
+        }
+        
+        private RaffleStatistics createDefaultStatistics(Long totalTickets) {
+            return RaffleStatistics.builder()
+                    .availableTickets(totalTickets)
+                    .soldTickets(0L)
+                    .revenue(BigDecimal.ZERO)
+                    .averageOrderValue(BigDecimal.ZERO)
+                    .totalOrders(0L)
+                    .completedOrders(0L)
+                    .pendingOrders(0L)
+                    .cancelledOrders(0L)
+                    .unpaidOrders(0L)
+                    .refundedOrders(0L)
+                    .participants(0L)
+                    .ticketsPerParticipant(BigDecimal.ZERO)
+                    .firstSaleDate(null)
+                    .lastSaleDate(null)
+                    .dailySalesVelocity(BigDecimal.ZERO)
+                    .build();
+        }
+    }
+
+    public static class RaffleStatisticsBuilder {
+        private Long availableTickets = 0L;
+        private Long participants = 0L;
+        private BigDecimal ticketsPerParticipant = BigDecimal.ZERO;
+        private Long totalOrders = 0L;
+        private Long pendingOrders = 0L;
+        private Long completedOrders = 0L;
+        private Long cancelledOrders = 0L;
+        private Long unpaidOrders = 0L;
+        private Long refundedOrders = 0L;
+        private Long soldTickets = 0L;
+        private BigDecimal revenue = BigDecimal.ZERO;
+        private BigDecimal averageOrderValue = BigDecimal.ZERO;
+        private BigDecimal dailySalesVelocity = BigDecimal.ZERO;
+        private LocalDateTime firstSaleDate;
+        private LocalDateTime lastSaleDate;
+
+        public RaffleStatisticsBuilder availableTickets(Long availableTickets) {
+            this.availableTickets = availableTickets;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder participants(Long participants) {
+            this.participants = participants;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder ticketsPerParticipant(BigDecimal ticketsPerParticipant) {
+            this.ticketsPerParticipant = ticketsPerParticipant;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder totalOrders(Long totalOrders) {
+            this.totalOrders = totalOrders;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder pendingOrders(Long pendingOrders) {
+            this.pendingOrders = pendingOrders;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder completedOrders(Long completedOrders) {
+            this.completedOrders = completedOrders;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder cancelledOrders(Long cancelledOrders) {
+            this.cancelledOrders = cancelledOrders;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder unpaidOrders(Long unpaidOrders) {
+            this.unpaidOrders = unpaidOrders;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder refundedOrders(Long refundedOrders) {
+            this.refundedOrders = refundedOrders;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder soldTickets(Long soldTickets) {
+            this.soldTickets = soldTickets;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder revenue(BigDecimal revenue) {
+            this.revenue = revenue;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder averageOrderValue(BigDecimal averageOrderValue) {
+            this.averageOrderValue = averageOrderValue;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder dailySalesVelocity(BigDecimal dailySalesVelocity) {
+            this.dailySalesVelocity = dailySalesVelocity;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder firstSaleDate(LocalDateTime firstSaleDate) {
+            this.firstSaleDate = firstSaleDate;
+            return this;
+        }
+
+        public RaffleStatisticsBuilder lastSaleDate(LocalDateTime lastSaleDate) {
+            this.lastSaleDate = lastSaleDate;
+            return this;
+        }
+
+        public RaffleStatistics build() {
+            return RaffleStatistics.builder()
+                    .availableTickets(availableTickets)
+                    .participants(participants)
+                    .ticketsPerParticipant(ticketsPerParticipant)
+                    .totalOrders(totalOrders)
+                    .pendingOrders(pendingOrders)
+                    .completedOrders(completedOrders)
+                    .cancelledOrders(cancelledOrders)
+                    .unpaidOrders(unpaidOrders)
+                    .refundedOrders(refundedOrders)
+                    .soldTickets(soldTickets)
+                    .revenue(revenue)
+                    .averageOrderValue(averageOrderValue)
+                    .dailySalesVelocity(dailySalesVelocity)
+                    .firstSaleDate(firstSaleDate)
+                    .lastSaleDate(lastSaleDate)
                     .build();
         }
     }
