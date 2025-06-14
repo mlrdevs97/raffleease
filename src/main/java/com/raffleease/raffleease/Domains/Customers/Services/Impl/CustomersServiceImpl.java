@@ -18,9 +18,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
-import static com.raffleease.raffleease.Domains.Customers.Model.CustomerSourceType.ADMIN;
-import static com.raffleease.raffleease.Domains.Customers.Model.CustomerSourceType.STRIPE;
-
 @RequiredArgsConstructor
 @Service
 public class CustomersServiceImpl implements CustomersService {
@@ -31,11 +28,9 @@ public class CustomersServiceImpl implements CustomersService {
     @Override
     public Customer create(String stripeId, String fullName, String email, String phoneNumber) {
         return save(Customer.builder()
-                .stripeId(stripeId)
                 .fullName(fullName)
                 .email(email)
                 .phoneNumber(phoneNumber)
-                .sourceType(STRIPE)
                 .build());
     }
 
@@ -49,7 +44,6 @@ public class CustomersServiceImpl implements CustomersService {
                 .fullName(data.fullName())
                 .email(data.email())
                 .phoneNumber(phoneNumber)
-                .sourceType(ADMIN)
                 .build());
     }
 

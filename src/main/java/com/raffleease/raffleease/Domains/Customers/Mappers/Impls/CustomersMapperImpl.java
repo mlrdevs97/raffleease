@@ -13,8 +13,6 @@ public class CustomersMapperImpl implements CustomersMapper {
     @Override
     public CustomerDTO fromCustomer(Customer customer) {
         return CustomerDTO.builder()
-                .stripeId(customer.getStripeId())
-                .sourceType(customer.getSourceType())
                 .fullName(customer.getFullName())
                 .email(customer.getEmail())
                 .phoneNumber(customer.getPhoneNumber())
