@@ -5,13 +5,13 @@ import com.raffleease.raffleease.Domains.Orders.Mappers.OrdersMapper;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderStatus;
-import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
+import com.raffleease.raffleease.Domains.Orders.Services.OrdersPersistenceService;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersEditService;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatisticsService;
-import com.raffleease.raffleease.Domains.Raffles.Services.RafflesService;
+import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatusService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
@@ -30,74 +30,81 @@ import static com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus.SOLD;
 @RequiredArgsConstructor
 @Service
 public class OrdersEditServiceImpl implements OrdersEditService {
-    private final OrdersService ordersService;
+    private final OrdersPersistenceService ordersPersistenceService;
     private final TicketsService ticketsService;
     private final TicketsQueryService ticketsQueryService;
     private final OrdersMapper mapper;
-    private final RafflesService rafflesService;
+    private final RafflesStatusService rafflesStatusService;
     private final RafflesStatisticsService statisticsService;
 
     @Override
     @Transactional
     public OrderDTO complete(Long orderId, OrderComplete orderComplete) {
-        Order order = ordersService.findById(orderId);
+        Order order = ordersPersistenceService.findById(orderId);
         throwIfInvalidOrderTransition(order.getStatus(), PENDING, COMPLETED);
         updateTicketsStatus(order);
         Raffle raffle = order.getRaffle();
-        rafflesService.completeRaffleIfAllTicketsSold(raffle);
+        rafflesStatusService.completeRaffleIfAllTicketsSold(raffle);
         statisticsService.setCompleteStatistics(raffle, order.getOrderItems().stream().count());
         Payment payment = order.getPayment();
         payment.setPaymentMethod(orderComplete.paymentMethod());
         order.setStatus(COMPLETED);
         order.setCompletedAt(LocalDateTime.now());
-        return mapper.fromOrder(ordersService.save(order));
+        return mapper.fromOrder(ordersPersistenceService.save(order));
     }
 
     @Override
     @Transactional
     public OrderDTO cancel(Long orderId) {
-        Order order = ordersService.findById(orderId);
+        Order order = ordersPersistenceService.findById(orderId);
         throwIfInvalidOrderTransition(order.getStatus(), PENDING, CANCELLED);
         throwIfInvalidRaffleTransition(order.getRaffle(), PENDING, UNPAID, ACTIVE);
         releaseOrderTickets(order);
         statisticsService.setCancelStatistics(order.getRaffle(), order.getOrderItems().stream().count());
         order.setStatus(CANCELLED);
         order.setCancelledAt(LocalDateTime.now());
-        return mapper.fromOrder(ordersService.save(order));
+        return mapper.fromOrder(ordersPersistenceService.save(order));
     }
 
     @Override
     @Transactional
     public OrderDTO refund(Long orderId) {
-        Order order = ordersService.findById(orderId);
+        Order order = ordersPersistenceService.findById(orderId);
         throwIfInvalidOrderTransition(order.getStatus(), COMPLETED, REFUNDED);
         releaseOrderTickets(order);
         Raffle raffle = order.getRaffle();
         statisticsService.setRefundStatistics(raffle, order.getOrderItems().stream().count());
-        rafflesService.reactivateRaffleIfAllTicketsSold(raffle);
+        rafflesStatusService.reactivateRaffleIfAllTicketsSold(raffle);
         order.setStatus(REFUNDED);
         order.setRefundedAt(LocalDateTime.now());
-        return mapper.fromOrder(ordersService.save(order));
+        return mapper.fromOrder(ordersPersistenceService.save(order));
     }
 
     @Override
     @Transactional
     public OrderDTO setUnpaid(Long orderId) {
-        Order order = ordersService.findById(orderId);
+        Order order = ordersPersistenceService.findById(orderId);
         throwIfInvalidOrderTransition(order.getStatus(), PENDING, UNPAID);
         throwIfInvalidRaffleTransition(order.getRaffle(), PENDING, UNPAID, RaffleStatus.COMPLETED);
         statisticsService.setUnpaidStatistics(order.getRaffle(), order.getOrderItems().stream().count());
         releaseOrderTickets(order);
         order.setStatus(UNPAID);
         order.setUnpaidAt(LocalDateTime.now());
-        return mapper.fromOrder(ordersService.save(order));
+        return mapper.fromOrder(ordersPersistenceService.save(order));
     }
 
     @Override
     public OrderDTO addComment(Long orderId, CommentRequest request) {
-        Order order = ordersService.findById(orderId);
+        Order order = ordersPersistenceService.findById(orderId);
         order.setComment(request.comment());
-        return mapper.fromOrder(ordersService.save(order));
+        return mapper.fromOrder(ordersPersistenceService.save(order));
+    }
+
+    @Override
+    public void deleteComment(Long orderId) {
+        Order order = ordersPersistenceService.findById(orderId);
+        order.setComment(null);
+        ordersPersistenceService.save(order);
     }
 
     private void throwIfInvalidOrderTransition(OrderStatus oldStatus, OrderStatus expectedStatus, OrderStatus newStatus) {

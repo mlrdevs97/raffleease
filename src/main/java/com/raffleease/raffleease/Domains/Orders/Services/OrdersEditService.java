@@ -8,4 +8,5 @@ public interface OrdersEditService {
     OrderDTO refund(Long orderId);
     OrderDTO setUnpaid(Long orderId);
     OrderDTO addComment(Long orderId, CommentRequest request);
+    void deleteComment(Long orderId);
 }

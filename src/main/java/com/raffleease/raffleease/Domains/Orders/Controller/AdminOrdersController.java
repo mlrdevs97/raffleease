@@ -4,9 +4,9 @@ import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAcc
 import com.raffleease.raffleease.Domains.Orders.DTOs.*;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersCreateService;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersEditService;
-import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
+import com.raffleease.raffleease.Domains.Orders.Services.OrdersQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +21,7 @@ import java.net.URI;
 @RestController
 @RequestMapping("/v1/associations/{associationId}/orders")
 public class AdminOrdersController {
-    private final OrdersService ordersService;
+    private final OrdersQueryService ordersQueryService;
     private final OrdersCreateService ordersCreateService;
     private final OrdersEditService ordersEditService;
 
@@ -53,7 +53,7 @@ public class AdminOrdersController {
             Pageable pageable
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                ordersService.search(filters, associationId, pageable),
+                ordersQueryService.search(filters, associationId, pageable),
                 "Orders retrieved successfully")
         );
     }
@@ -63,7 +63,7 @@ public class AdminOrdersController {
             @PathVariable Long orderId
     ) {
         return ResponseEntity.ok(ResponseFactory.success(
-                ordersService.get(orderId),
+                ordersQueryService.get(orderId),
                 "Order retrieved successfully"
         ));
     }
@@ -135,7 +135,7 @@ public class AdminOrdersController {
     public ResponseEntity<ApiResponse> removeComment(
             @PathVariable Long orderId
     ) {
-        ordersService.deleteComment(orderId);
+        ordersEditService.deleteComment(orderId);
         return ResponseEntity.noContent().build();
     }
 }

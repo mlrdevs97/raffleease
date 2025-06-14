@@ -3,6 +3,7 @@ package com.raffleease.raffleease.Domains.Orders.Services.Impls;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
+import com.raffleease.raffleease.Domains.Carts.Model.CartStatus;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
 import com.raffleease.raffleease.Domains.Carts.Services.CartLifecycleService;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
@@ -13,7 +14,7 @@ import com.raffleease.raffleease.Domains.Orders.Mappers.OrdersMapper;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersCreateService;
-import com.raffleease.raffleease.Domains.Orders.Services.OrdersService;
+import com.raffleease.raffleease.Domains.Orders.Services.OrdersPersistenceService;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Payments.Services.PaymentsService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
@@ -37,7 +38,7 @@ import static com.raffleease.raffleease.Domains.Orders.Model.OrderStatus.PENDING
 @RequiredArgsConstructor
 @Service
 public class OrdersCreateServiceImpl implements OrdersCreateService {
-    private final OrdersService ordersService;
+    private final OrdersPersistenceService ordersPersistenceService;
     private final RafflesQueryService rafflesQueryService;
     private final RafflesPersistenceService rafflesPersistence;
     private final RafflesStatisticsService statisticsService;
@@ -66,7 +67,7 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         List<OrderItem> orderItems = createOrderItems(order, finalizedTickets);
         order.setPayment(payment);
         order.getOrderItems().addAll(orderItems);
-        order = ordersService.save(order);
+        order = ordersPersistenceService.save(order);
         return mapper.fromOrder(order);
     }
 
@@ -141,7 +142,7 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
     }
 
     private Order createOrder(Raffle raffle, Customer customer, String comment) {
-        return ordersService.save(Order.builder()
+        return ordersPersistenceService.save(Order.builder()
                 .raffle(raffle)
                 .status(PENDING)
                 .orderReference(generateOrderReference())
