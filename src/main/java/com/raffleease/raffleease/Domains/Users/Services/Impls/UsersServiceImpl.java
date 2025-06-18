@@ -11,6 +11,8 @@ import com.raffleease.raffleease.Common.Utils.ConstraintViolationParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -57,6 +59,13 @@ public class UsersServiceImpl implements UsersService {
             return false;
         }
     }
+
+     @Override
+     public User getAuthenticatedUser() {
+         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+         String identifier = auth.getName();
+         return findByIdentifier(identifier);
+     }
 
     private User buildUser(RegisterUserData data, String encodedPassword) {
         String phoneNumber = Objects.nonNull(data.phoneNumber())

@@ -57,9 +57,7 @@ public class CartsServiceImpl implements CartsService {
 
     @Override
     public CartDTO getUserCart() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String identifier = auth.getName();
-        User user = usersService.findByIdentifier(identifier);
+        User user = usersService.getAuthenticatedUser();
         Cart cart = repository.findByUserAndStatus(user, ACTIVE)
                 .orElseThrow(() -> new NotFoundException("Active cart not found for user with id <" + user.getId() + ">"));
         return mapper.fromCart(cart);
