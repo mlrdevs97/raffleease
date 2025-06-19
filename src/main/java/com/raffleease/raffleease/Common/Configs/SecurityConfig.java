@@ -45,7 +45,8 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/v1/auth/login",
                                         "/v1/auth/register",
-                                        "/v1/auth/verify"
+                                        "/v1/auth/verify",
+                                        "/public/v1"
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )

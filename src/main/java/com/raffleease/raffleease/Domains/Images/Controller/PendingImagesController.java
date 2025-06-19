@@ -6,10 +6,8 @@ import com.raffleease.raffleease.Domains.Images.Services.ImagesCreateService;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesDeleteService;
-import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +18,6 @@ import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 @RestController
 @RequestMapping("/v1/associations/{associationId}/images")
 public class PendingImagesController {
-    private final ImagesService imagesService;
     private final ImagesDeleteService deleteService;
     private final ImagesCreateService createService;
 
@@ -35,13 +32,6 @@ public class PendingImagesController {
                         "New images created successfully"
                 )
         );
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Resource> get(
-            @PathVariable Long id
-    ) {
-        return ResponseEntity.ok().body(imagesService.getFile(id));
     }
 
     @DeleteMapping("/{id}")
