@@ -62,6 +62,12 @@ public class UsersServiceImpl implements UsersService {
     }
 
     @Override
+    public User updatePassword(User user, String encodedPassword) {
+        user.setPassword(encodedPassword);
+        return save(user);
+    }
+
+    @Override
     public UserResponse getUserById(Long userId) {
         User user = findById(userId);
         return toUserResponse(user);
@@ -81,6 +87,13 @@ public class UsersServiceImpl implements UsersService {
     public User findByIdentifier(String identifier) {
         return repository.findByIdentifier(identifier).orElseThrow(
                 () -> new NotFoundException("User not found with identifier: " + identifier)
+        );
+    }
+
+    @Override
+    public User getUserByEmail(String email) {
+        return repository.findByEmail(email).orElseThrow(
+                () -> new NotFoundException("User not found with email: " + email)
         );
     }
 
