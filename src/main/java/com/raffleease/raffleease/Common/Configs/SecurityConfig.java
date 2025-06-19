@@ -46,7 +46,7 @@ public class SecurityConfig {
                                         "/v1/auth/login",
                                         "/v1/auth/register",
                                         "/v1/auth/verify",
-                                        "/public/v1"
+                                        "/public/v1/**"
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )
