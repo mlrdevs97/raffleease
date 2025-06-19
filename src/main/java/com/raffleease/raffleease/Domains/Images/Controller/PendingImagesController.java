@@ -20,7 +20,7 @@ import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 @RequestMapping("/v1/associations/{associationId}/images")
 public class PendingImagesController {
     private final ImagesService imagesService;
-    private final ImagesCreateService imagesCreateService;
+    private final ImagesCreateService createService;
 
     @PostMapping(consumes = MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> upload(
@@ -29,7 +29,7 @@ public class PendingImagesController {
     ) {
         return ResponseEntity.ok(
                 ResponseFactory.success(
-                        imagesCreateService.create(associationId, imageUpload),
+                        createService.create(associationId, imageUpload),
                         "New images created successfully"
                 )
         );

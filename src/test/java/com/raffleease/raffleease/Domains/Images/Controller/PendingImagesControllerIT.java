@@ -70,6 +70,300 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
     }
 
     @Nested
+    @DisplayName("GET /v1/associations/{associationId}/images/{id}")
+    class GetImageTests {
+
+        @Test
+        @DisplayName("Should successfully get pending image file when authenticated and authorized")
+        void shouldGetPendingImageFileWhenAuthenticatedAndAuthorized() throws Exception {
+            // Arrange
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .filePath("/test/path/pending-image.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            when(fileStorageService.load("/test/path/pending-image.jpg"))
+                    .thenReturn(new org.springframework.core.io.ByteArrayResource("pending image content".getBytes()));
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/" + testImage.getId())
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().bytes("pending image content".getBytes()));
+        }
+
+        @Test
+        @DisplayName("Should return 401 when user is not authenticated")
+        void shouldReturn401WhenNotAuthenticated() throws Exception {
+            // Arrange
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/" + testImage.getId()));
+
+            // Assert
+            result.andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when user doesn't belong to association")
+        void shouldReturn403WhenUserDoesntBelongToAssociation() throws Exception {
+            // Arrange
+            AuthTestData otherUserData = authTestUtils.createAuthenticatedUserWithCredentials(
+                    "otheruser", "other@example.com", "password123");
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/" + testImage.getId())
+                    .with(user(otherUserData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should return 404 when image doesn't exist")
+        void shouldReturn404WhenImageDoesntExist() throws Exception {
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/99999")
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("Should return 404 when pending image is marked for deletion")
+        void shouldReturn404WhenPendingImageIsMarkedForDeletion() throws Exception {
+            // Arrange
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.MARKED_FOR_DELETION)
+                    .fileName("deleted-pending-image.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/" + testImage.getId())
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("Should successfully get active image file through pending endpoint")
+        void shouldGetActiveImageFileThroughPendingEndpoint() throws Exception {
+            // Arrange - Test that active images can also be retrieved through this endpoint
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("active-image.jpg")
+                    .filePath("/test/path/active-image.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            when(fileStorageService.load("/test/path/active-image.jpg"))
+                    .thenReturn(new org.springframework.core.io.ByteArrayResource("active image content".getBytes()));
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/" + testImage.getId())
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().bytes("active image content".getBytes()));
+        }
+    }
+
+    @Nested
+    @DisplayName("DELETE /v1/associations/{associationId}/images/{id}")
+    class DeleteImageTests {
+
+        @Test
+        @DisplayName("Should successfully soft delete pending image when authenticated and authorized")
+        void shouldSoftDeletePendingImageWhenAuthenticatedAndAuthorized() throws Exception {
+            // Arrange
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            // Act
+            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/" + testImage.getId())
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isNoContent());
+
+            // Verify image status is updated to MARKED_FOR_DELETION
+            Image updatedImage = imagesRepository.findById(testImage.getId()).orElseThrow();
+            assertThat(updatedImage.getStatus()).isEqualTo(ImageStatus.MARKED_FOR_DELETION);
+        }
+
+        @Test
+        @DisplayName("Should return 401 when user is not authenticated")
+        void shouldReturn401WhenNotAuthenticated() throws Exception {
+            // Arrange
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            // Act
+            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/" + testImage.getId()));
+
+            // Assert
+            result.andExpect(status().isUnauthorized());
+
+            // Verify image status is unchanged
+            Image unchangedImage = imagesRepository.findById(testImage.getId()).orElseThrow();
+            assertThat(unchangedImage.getStatus()).isEqualTo(ImageStatus.PENDING);
+        }
+
+        @Test
+        @DisplayName("Should return 403 when user doesn't belong to association")
+        void shouldReturn403WhenUserDoesntBelongToAssociation() throws Exception {
+            // Arrange
+            AuthTestData otherUserData = authTestUtils.createAuthenticatedUserWithCredentials(
+                    "otheruser", "other@example.com", "password123");
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            // Act
+            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/" + testImage.getId())
+                    .with(user(otherUserData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden());
+
+            // Verify image status is unchanged
+            Image unchangedImage = imagesRepository.findById(testImage.getId()).orElseThrow();
+            assertThat(unchangedImage.getStatus()).isEqualTo(ImageStatus.PENDING);
+        }
+
+        @Test
+        @DisplayName("Should return 404 when image doesn't exist")
+        void shouldReturn404WhenImageDoesntExist() throws Exception {
+            // Act
+            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/99999")
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("Should successfully soft delete active image through pending endpoint")
+        void shouldSoftDeleteActiveImageThroughPendingEndpoint() throws Exception {
+            // Arrange - Test that active images can also be soft deleted through this endpoint
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("active-image.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            // Act
+            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/" + testImage.getId())
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isNoContent());
+
+            // Verify image status is updated to MARKED_FOR_DELETION
+            Image updatedImage = imagesRepository.findById(testImage.getId()).orElseThrow();
+            assertThat(updatedImage.getStatus()).isEqualTo(ImageStatus.MARKED_FOR_DELETION);
+        }
+
+        @Test
+        @DisplayName("Should prevent access to soft deleted pending image via GET endpoint")
+        void shouldPreventAccessToSoftDeletedPendingImageViaGetEndpoint() throws Exception {
+            // Arrange
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            // Act - First soft delete the image
+            mockMvc.perform(delete(baseEndpoint + "/" + testImage.getId())
+                    .with(user(authData.user().getEmail())))
+                    .andExpect(status().isNoContent());
+
+            // Act - Then try to get the soft deleted image
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/" + testImage.getId())
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should return 404 for soft deleted image
+            result.andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("Should prevent multiple soft deletes on same image")
+        void shouldPreventMultipleSoftDeletesOnSameImage() throws Exception {
+            // Arrange
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            // Act - First soft delete (should succeed)
+            mockMvc.perform(delete(baseEndpoint + "/" + testImage.getId())
+                    .with(user(authData.user().getEmail())))
+                    .andExpect(status().isNoContent());
+
+            // Act - Second soft delete attempt (should still work but image already marked)
+            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/" + testImage.getId())
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should still return success (idempotent operation)
+            result.andExpect(status().isNoContent());
+
+            // Verify image status remains MARKED_FOR_DELETION
+            Image updatedImage = imagesRepository.findById(testImage.getId()).orElseThrow();
+            assertThat(updatedImage.getStatus()).isEqualTo(ImageStatus.MARKED_FOR_DELETION);
+        }
+    }
+
+    @Nested
     @DisplayName("POST /v1/associations/{associationId}/images")
     class UploadImagesTests {
 
