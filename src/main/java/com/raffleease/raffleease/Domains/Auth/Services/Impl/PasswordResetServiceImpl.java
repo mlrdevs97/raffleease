@@ -3,6 +3,7 @@ package com.raffleease.raffleease.Domains.Auth.Services.Impl;
 import com.raffleease.raffleease.Common.Configs.CorsProperties;
 import com.raffleease.raffleease.Domains.Auth.DTOs.ForgotPasswordRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.ResetPasswordRequest;
+import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
 import com.raffleease.raffleease.Domains.Auth.Model.PasswordResetToken;
 import com.raffleease.raffleease.Domains.Auth.Repository.PasswordResetTokenRepository;
 import com.raffleease.raffleease.Domains.Auth.Services.PasswordResetService;
@@ -11,6 +12,7 @@ import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.EmailVerificationException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthenticationException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -113,5 +115,33 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             log.info(ex.toString());
             throw new DatabaseException("Database error occurred while saving password reset token");
         }
+    }
+
+    /**
+     * Edit password for an authenticated user
+     *
+     * @param request The request containing current password, new password, and confirmation
+     * @throws AuthenticationException If the current password is incorrect
+     */
+    @Transactional
+    @Override
+    public void editPassword(EditPasswordRequest request) {
+        User authenticatedUser = usersService.getAuthenticatedUser();
+        
+        // Verify current password
+        if (!passwordEncoder.matches(request.currentPassword(), authenticatedUser.getPassword())) {
+            throw new AuthenticationException("Current password is incorrect");
+        }
+        
+        // Check if new password is different from current password
+        if (passwordEncoder.matches(request.password(), authenticatedUser.getPassword())) {
+            throw new AuthenticationException("New password must be different from current password");
+        }
+        
+        // Update password
+        String encodedNewPassword = passwordEncoder.encode(request.password());
+        usersService.updatePassword(authenticatedUser, encodedNewPassword);
+        
+        log.info("Password updated successfully for user: {}", authenticatedUser.getUserName());
     }
 } 

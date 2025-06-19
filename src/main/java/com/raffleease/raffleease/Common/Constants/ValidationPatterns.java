@@ -19,14 +19,5 @@ public final class ValidationPatterns {
     // Email pattern (basic)
     public static final String EMAIL_PATTERN = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
     
-    // Common validation messages
-    public static final class Messages {
-        public static final String PHONE_PREFIX_MESSAGE = "Phone prefix must start with + followed by 1-3 digits";
-        public static final String PHONE_NATIONAL_NUMBER_MESSAGE = "National number must contain 1-14 digits only";
-        public static final String PASSWORD_MESSAGE = "Password must be 8-32 characters with at least one uppercase, lowercase, digit and special character";
-        public static final String ZIP_CODE_MESSAGE = "ZIP code must be in format 12345 or 12345-6789, or empty";
-        public static final String EMAIL_MESSAGE = "Please provide a valid email address";
-    }
-    
     private ValidationPatterns() {}
 } 

@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Common.Validations;
 
 import com.raffleease.raffleease.Common.Models.CreateUserData;
 import com.raffleease.raffleease.Domains.Auth.DTOs.ResetPasswordRequest;
+import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
@@ -20,6 +21,9 @@ public class PasswordMatchesValidator implements ConstraintValidator<PasswordMat
         } else if (request instanceof ResetPasswordRequest resetRequest) {
             password = resetRequest.password();
             confirmPassword = resetRequest.confirmPassword();
+        } else if (request instanceof EditPasswordRequest editRequest) {
+            password = editRequest.password();
+            confirmPassword = editRequest.confirmPassword();
         } else {
             return true;
         }

@@ -10,9 +10,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import static com.raffleease.raffleease.Common.Constants.ValidationPatterns.PASSWORD_PATTERN;
-import static com.raffleease.raffleease.Common.Constants.ValidationPatterns.Messages.PASSWORD_MESSAGE;
 import static com.raffleease.raffleease.Common.Utils.SanitizeUtils.trim;
-import static com.raffleease.raffleease.Common.Utils.SanitizeUtils.trimAndLower;
 
 /**
  * Base user data model containing common fields for user registration and creation.
@@ -22,7 +20,7 @@ import static com.raffleease.raffleease.Common.Utils.SanitizeUtils.trimAndLower;
 @PasswordMatches
 public class CreateUserData extends BaseUserData {
     @NotBlank
-    @Pattern(regexp = PASSWORD_PATTERN, message = PASSWORD_MESSAGE)
+    @Pattern(regexp = PASSWORD_PATTERN)
     private final String password;
 
     @NotBlank

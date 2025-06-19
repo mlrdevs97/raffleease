@@ -14,11 +14,11 @@ import static com.raffleease.raffleease.Common.Constants.ValidationPatterns.*;
 @Builder
 public record PhoneNumber(
         @NotBlank
-        @Pattern(regexp = PHONE_PREFIX_PATTERN, message = Messages.PHONE_PREFIX_MESSAGE)
+        @Pattern(regexp = PHONE_PREFIX_PATTERN)
         String prefix,
 
         @NotBlank
-        @Pattern(regexp = PHONE_NATIONAL_NUMBER_PATTERN, message = Messages.PHONE_NATIONAL_NUMBER_MESSAGE)
+        @Pattern(regexp = PHONE_NATIONAL_NUMBER_PATTERN)
         String nationalNumber
 ) {
     public PhoneNumber {

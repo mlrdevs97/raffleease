@@ -7,9 +7,9 @@ import jakarta.validation.constraints.Pattern;
 import static com.raffleease.raffleease.Common.Constants.ValidationPatterns.PASSWORD_PATTERN;
 
 @PasswordMatches
-public record ResetPasswordRequest(
-        @NotBlank
-        String token,
+public record EditPasswordRequest(
+        @NotBlank(message = "Current password is required")
+        String currentPassword,
         
         @NotBlank
         @Pattern(regexp = PASSWORD_PATTERN)
