@@ -5,6 +5,7 @@ import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatistics;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
@@ -278,7 +279,9 @@ public class TestDataBuilder {
         private String url;
         private Integer imageOrder = 1;
         private Raffle raffle;
+        private User user;
         private Association association;
+        private ImageStatus status = ImageStatus.PENDING;
 
         public ImageBuilder() {
             // Generate unique values by default
@@ -317,13 +320,34 @@ public class TestDataBuilder {
             return this;
         }
 
+        public ImageBuilder user(User user) {
+            this.user = user;
+            return this;
+        }
+
         public ImageBuilder association(Association association) {
             this.association = association;
             return this;
         }
 
+        public ImageBuilder status(ImageStatus status) {
+            this.status = status;
+            return this;
+        }
+
         public ImageBuilder pendingImage() {
             this.raffle = null;
+            this.status = ImageStatus.PENDING;
+            return this;
+        }
+
+        public ImageBuilder activeImage() {
+            this.status = ImageStatus.ACTIVE;
+            return this;
+        }
+
+        public ImageBuilder markedForDeletion() {
+            this.status = ImageStatus.MARKED_FOR_DELETION;
             return this;
         }
 
@@ -347,7 +371,9 @@ public class TestDataBuilder {
                     .url(url)
                     .imageOrder(imageOrder)
                     .raffle(raffle)
+                    .user(user)
                     .association(association)
+                    .status(status)
                     .build();
         }
     }

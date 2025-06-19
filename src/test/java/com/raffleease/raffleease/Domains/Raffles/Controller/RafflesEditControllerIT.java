@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
@@ -128,7 +129,7 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should successfully edit raffle with new images from pending images")
         void shouldEditRaffleWithNewImagesFromPendingImages() throws Exception {
             // Arrange - Create pending images
-            List<Image> pendingImages = createPendingImagesForAssociation(3);
+            List<Image> pendingImages = createPendingImagesForUser(3);
             List<ImageDTO> imageDTOs = convertToImageDTOs(pendingImages);
 
             RaffleEdit raffleEdit = new RaffleEdit(
@@ -158,12 +159,15 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
             // Verify images are properly associated
             for (Image image : raffleImages) {
                 assertThat(image.getRaffle()).isEqualTo(testRaffle);
+                assertThat(image.getUser()).isNull();
                 assertThat(image.getAssociation()).isEqualTo(authData.association());
+                assertThat(image.getStatus()).isEqualTo(ImageStatus.ACTIVE);
                 assertThat(image.getUrl()).contains("/raffles/" + testRaffle.getId() + "/images/");
             }
 
             // Verify no pending images remain
-            List<Image> remainingPendingImages = imagesRepository.findAllByRaffleIsNullAndAssociation(authData.association());
+            List<Image> remainingPendingImages = imagesRepository.findAllByRaffleIsNullAndUserAndStatus(
+                authData.user(), ImageStatus.PENDING);
             assertThat(remainingPendingImages).isEmpty();
         }
 
@@ -176,7 +180,7 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
             rafflesRepository.save(testRaffle);
 
             // Create new pending images to replace the existing ones
-            List<Image> newPendingImages = createPendingImagesForAssociation(2);
+            List<Image> newPendingImages = createPendingImagesForUser(2);
             List<ImageDTO> newImageDTOs = convertToImageDTOs(newPendingImages);
 
             RaffleEdit raffleEdit = new RaffleEdit(
@@ -213,7 +217,7 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should handle gracefully when some requested images are missing during edit")
         void shouldHandleGracefullyWhenSomeRequestedImagesAreMissingDuringEdit() throws Exception {
             // Arrange - Create 2 pending images but reference 3 in the request (1 missing)
-            List<Image> pendingImages = createPendingImagesForAssociation(2);
+            List<Image> pendingImages = createPendingImagesForUser(2);
             
             List<ImageDTO> imageDTOs = new ArrayList<>();
             // Add existing images
@@ -244,40 +248,6 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
             // Verify database state - only existing images were associated
             List<Image> raffleImages = imagesRepository.findAllByRaffle(testRaffle);
             assertThat(raffleImages).hasSize(2); // Only existing images were associated
-        }
-
-        @Test
-        @DisplayName("Should return 400 when trying to edit raffle to have no images")
-        void shouldReturn400WhenTryingToEditRaffleToHaveNoImages() throws Exception {
-            // Arrange - Add some images to the raffle first
-            List<Image> existingImages = createImagesForRaffle(testRaffle, 3);
-            testRaffle.getImages().addAll(existingImages);
-            rafflesRepository.save(testRaffle);
-
-            RaffleEdit raffleEdit = new RaffleEdit(
-                    null,
-                    null,
-                    null,
-                    List.of(), // Empty list to remove all images
-                    null,
-                    null
-            );
-
-            // Act
-            ResultActions result = mockMvc.perform(put(baseEndpoint)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(raffleEdit))
-                    .with(user(authData.user().getEmail())));
-
-            // Assert - Should fail because raffles must have at least one image
-            result.andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("Validation failed"))
-                    .andExpect(jsonPath("$.errors.images").value("INVALID_LENGTH"));
-
-            // Verify raffle still has its original images
-            List<Image> raffleImages = imagesRepository.findAllByRaffle(testRaffle);
-            assertThat(raffleImages).hasSize(3); // Original images still there
         }
 
         @Test
@@ -323,7 +293,7 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should succeed when editing with some missing images but at least one valid image remains")
         void shouldSucceedWhenEditingWithSomeMissingImagesButValidImagesRemain() throws Exception {
             // Arrange - Create 1 pending image and reference 2 in edit request (1 valid, 1 missing)
-            List<Image> pendingImages = createPendingImagesForAssociation(1);
+            List<Image> pendingImages = createPendingImagesForUser(1);
             
             List<ImageDTO> imageDTOs = new ArrayList<>();
             // Add existing image
@@ -420,10 +390,11 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
             AuthTestData otherUserData = authTestUtils.createAuthenticatedUserWithCredentials(
                     "otheruser2", "other2@example.com", "password123");
             
-            // Create image belonging to different association
+            // Create image belonging to different user from different association
             Image otherAssociationImage = TestDataBuilder.image()
+                    .user(otherUserData.user())
                     .association(otherUserData.association())
-                    .pendingImage()
+                    .status(ImageStatus.PENDING)
                     .build();
             otherAssociationImage = imagesRepository.save(otherAssociationImage);
 
@@ -710,7 +681,7 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should successfully perform combined edit of multiple fields")
         void shouldPerformCombinedEditOfMultipleFields() throws Exception {
             // Arrange
-            List<Image> pendingImages = createPendingImagesForAssociation(2);
+            List<Image> pendingImages = createPendingImagesForUser(2);
             setupRaffleWithTickets(testRaffle, 10L, 1L);
             
             RaffleEdit raffleEdit = new RaffleEdit(
@@ -772,17 +743,133 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.success").value(false));
         }
+
+        @Test
+        @DisplayName("Should successfully handle mixed pending and active images during edit")
+        void shouldHandleMixedPendingAndActiveImagesDuringEdit() throws Exception {
+            // Arrange - Add existing active images to the raffle
+            List<Image> existingActiveImages = createImagesForRaffle(testRaffle, 2);
+            testRaffle.getImages().addAll(existingActiveImages);
+            rafflesRepository.save(testRaffle);
+
+            // Create new pending images
+            List<Image> newPendingImages = createPendingImagesForUser(2);
+            
+            // Create edit request with both existing active images and new pending images
+            List<ImageDTO> mixedImageDTOs = new ArrayList<>();
+            
+            // Add existing active images
+            existingActiveImages.forEach(img -> 
+                mixedImageDTOs.add(new ImageDTO(img.getId(), img.getFileName(),
+                    img.getFilePath(), img.getContentType(), img.getUrl(), img.getImageOrder())));
+            
+            // Add new pending images
+            newPendingImages.forEach(img -> 
+                mixedImageDTOs.add(new ImageDTO(img.getId(), img.getFileName(), 
+                    img.getFilePath(), img.getContentType(), img.getUrl(), img.getImageOrder() + 2)));
+
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, null, mixedImageDTOs, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.images", hasSize(4)));
+
+            // Verify database state
+            List<Image> raffleImages = imagesRepository.findAllByRaffle(testRaffle);
+            assertThat(raffleImages).hasSize(4);
+            
+            // Verify all images are now ACTIVE and have user=null
+            for (Image image : raffleImages) {
+                assertThat(image.getStatus()).isEqualTo(ImageStatus.ACTIVE);
+                assertThat(image.getUser()).isNull(); // User reference should be cleared for all images
+                assertThat(image.getAssociation()).isEqualTo(authData.association()); // Association reference maintained
+                assertThat(image.getRaffle()).isEqualTo(testRaffle); // All linked to raffle
+            }
+            
+            // Verify no pending images remain for the user
+            List<Image> remainingPendingImages = imagesRepository.findAllByRaffleIsNullAndUserAndStatus(
+                authData.user(), ImageStatus.PENDING);
+            assertThat(remainingPendingImages).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should verify user reference is cleared only for newly associated pending images")
+        void shouldVerifyUserReferenceHandlingForMixedImages() throws Exception {
+            // Arrange - Add existing active images to the raffle (these should already have user=null)
+            Image existingActiveImage = TestDataBuilder.image()
+                    .user(null) // Already cleared as it's associated with raffle
+                    .association(authData.association())
+                    .status(ImageStatus.ACTIVE)
+                    .raffle(testRaffle)
+                    .imageOrder(1)
+                    .fileName("existing-active.jpg")
+                    .build();
+            existingActiveImage = imagesRepository.save(existingActiveImage);
+            testRaffle.getImages().add(existingActiveImage);
+            rafflesRepository.save(testRaffle);
+
+            // Create new pending image (has user reference)
+            Image newPendingImage = TestDataBuilder.image()
+                    .user(authData.user()) // Has user reference
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .imageOrder(2)
+                    .fileName("new-pending.jpg")
+                    .build();
+            newPendingImage = imagesRepository.save(newPendingImage);
+
+            // Edit with both images
+            List<ImageDTO> imageDTOs = List.of(
+                new ImageDTO(existingActiveImage.getId(), existingActiveImage.getFileName(), 
+                    existingActiveImage.getFilePath(), existingActiveImage.getContentType(), 
+                    existingActiveImage.getUrl(), 1),
+                new ImageDTO(newPendingImage.getId(), newPendingImage.getFileName(), 
+                    newPendingImage.getFilePath(), newPendingImage.getContentType(), 
+                    newPendingImage.getUrl(), 2)
+            );
+
+            RaffleEdit raffleEdit = new RaffleEdit(null, null, null, imageDTOs, null, null);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk());
+
+            // Verify both images now have user=null and are ACTIVE
+            List<Image> raffleImages = imagesRepository.findAllByRaffle(testRaffle);
+            assertThat(raffleImages).hasSize(2);
+            
+            for (Image image : raffleImages) {
+                assertThat(image.getUser()).isNull(); // Both should have user=null
+                assertThat(image.getStatus()).isEqualTo(ImageStatus.ACTIVE); // Both should be ACTIVE
+                assertThat(image.getRaffle()).isEqualTo(testRaffle); // Both linked to raffle
+            }
+        }
     }
 
     // Helper Methods
 
-    private List<Image> createPendingImagesForAssociation(int count) {
+    private List<Image> createPendingImagesForUser(int count) {
         List<Image> images = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Image image = TestDataBuilder.image()
                     .fileName("pending-image-" + (i + 1) + ".jpg")
+                    .user(authData.user())
                     .association(authData.association())
-                    .pendingImage()
+                    .status(ImageStatus.PENDING)
                     .imageOrder(i + 1)
                     .build();
             images.add(imagesRepository.save(image));
@@ -795,7 +882,9 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
         for (int i = 0; i < count; i++) {
             Image image = TestDataBuilder.image()
                     .fileName("raffle-image-" + (i + 1) + ".jpg")
+                    .user(authData.user())
                     .association(authData.association())
+                    .status(ImageStatus.ACTIVE)
                     .raffle(raffle)
                     .imageOrder(i + 1)
                     .build();

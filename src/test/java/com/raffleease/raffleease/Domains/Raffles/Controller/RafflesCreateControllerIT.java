@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
@@ -82,7 +83,7 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should successfully create raffle with pending images and generate tickets")
         void shouldCreateRaffleWithPendingImagesAndGenerateTickets() throws Exception {
             // Arrange
-            List<Image> pendingImages = createPendingImagesForAssociation(3);
+            List<Image> pendingImages = createPendingImagesForUser(3);
             RaffleCreate raffleCreate = createValidRaffleCreate(pendingImages, 1L, 50L);
 
             // Act
@@ -132,7 +133,7 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should create raffle with immediate start when startDate is null")
         void shouldCreateRaffleWithImmediateStartWhenStartDateIsNull() throws Exception {
             // Arrange
-            List<Image> pendingImages = createPendingImagesForAssociation(2);
+            List<Image> pendingImages = createPendingImagesForUser(2);
             RaffleCreate raffleCreate = new RaffleCreate(
                     "Immediate Start Raffle",
                     "This raffle starts immediately",
@@ -162,7 +163,7 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         void shouldCreateRaffleWithScheduledStartWhenStartDateProvided() throws Exception {
             // Arrange
             LocalDateTime futureStart = LocalDateTime.now().plusDays(2);
-            List<Image> pendingImages = createPendingImagesForAssociation(2);
+            List<Image> pendingImages = createPendingImagesForUser(2);
             RaffleCreate raffleCreate = new RaffleCreate(
                     "Scheduled Start Raffle",
                     "This raffle has a scheduled start date",
@@ -191,7 +192,7 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 401 when user is not authenticated")
         void shouldReturn401WhenNotAuthenticated() throws Exception {
             // Arrange
-            List<Image> pendingImages = createPendingImagesForAssociation(2);
+            List<Image> pendingImages = createPendingImagesForUser(2);
             RaffleCreate raffleCreate = createValidRaffleCreate(pendingImages, 1L, 20L);
 
             // Act
@@ -209,7 +210,7 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
             // Arrange
             AuthTestData otherUserData = authTestUtils.createAuthenticatedUserWithCredentials(
                     "otheruser", "other@example.com", "password123");
-            List<Image> pendingImages = createPendingImagesForAssociation(2);
+            List<Image> pendingImages = createPendingImagesForUser(2);
             RaffleCreate raffleCreate = createValidRaffleCreate(pendingImages, 1L, 20L);
 
             // Act
@@ -252,7 +253,7 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when endDate is in the past")
         void shouldReturn400WhenEndDateIsInThePast() throws Exception {
             // Arrange
-            List<Image> pendingImages = createPendingImagesForAssociation(2);
+            List<Image> pendingImages = createPendingImagesForUser(2);
             LocalDateTime pastDate = LocalDateTime.now().minusDays(1);
             
             RaffleCreate raffleCreate = new RaffleCreate(
@@ -278,7 +279,7 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when startDate is after endDate")
         void shouldReturn400WhenStartDateIsAfterEndDate() throws Exception {
             // Arrange
-            List<Image> pendingImages = createPendingImagesForAssociation(2);
+            List<Image> pendingImages = createPendingImagesForUser(2);
             LocalDateTime startDate = LocalDateTime.now().plusDays(5);
             LocalDateTime endDate = LocalDateTime.now().plusDays(3); // ← Before start date
             
@@ -308,10 +309,11 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
             AuthTestData otherUserData = authTestUtils.createAuthenticatedUserWithCredentials(
                     "otheruser2", "other2@example.com", "password123");
             
-            // Create images belonging to different association
+            // Create images belonging to different user from different association
             Image otherAssociationImage = TestDataBuilder.image()
+                    .user(otherUserData.user())
                     .association(otherUserData.association())
-                    .pendingImage()
+                    .status(ImageStatus.PENDING)
                     .build();
             otherAssociationImage = imagesRepository.save(otherAssociationImage);
 
@@ -351,9 +353,11 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
                     .build();
             existingRaffle = rafflesRepository.save(existingRaffle);
 
-            // Create image already associated to raffle
+            // Create image already associated to raffle (status ACTIVE)
             Image associatedImage = TestDataBuilder.image()
+                    .user(authData.user())
                     .association(authData.association())
+                    .status(ImageStatus.ACTIVE)
                     .raffle(existingRaffle)
                     .imageOrder(1)
                     .build();
@@ -389,8 +393,9 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         void shouldReturn400WhenImagesHaveDuplicateIds() throws Exception {
             // Arrange
             Image pendingImage = TestDataBuilder.image()
+                    .user(authData.user())
                     .association(authData.association())
-                    .pendingImage()
+                    .status(ImageStatus.PENDING)
                     .build();
             pendingImage = imagesRepository.save(pendingImage);
 
@@ -431,7 +436,7 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when images have duplicate orders")
         void shouldReturn400WhenImagesHaveDuplicateOrders() throws Exception {
             // Arrange
-            List<Image> pendingImages = createPendingImagesForAssociation(2);
+            List<Image> pendingImages = createPendingImagesForUser(2);
 
             RaffleCreate raffleCreate = new RaffleCreate(
                     "Duplicate Image Orders Raffle",
@@ -470,7 +475,7 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when some requested images are missing and no valid images remain")
         void shouldReturn400WhenSomeRequestedImagesAreMissingAndNoValidImagesRemain() throws Exception {
             // Arrange - Create 2 pending images but reference 3 in the request (1 missing)
-            List<Image> pendingImages = createPendingImagesForAssociation(2);
+            List<Image> pendingImages = createPendingImagesForUser(2);
             
             List<ImageDTO> imageDTOs = new ArrayList<>();
             // Add existing images
@@ -507,7 +512,8 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
             assertThat(raffleImages).hasSize(2); // Only existing images were associated
             
             // Verify no pending images remain
-            List<Image> remainingPendingImages = imagesRepository.findAllByRaffleIsNullAndAssociation(authData.association());
+            List<Image> remainingPendingImages = imagesRepository.findAllByRaffleIsNullAndUserAndStatus(
+                authData.user(), ImageStatus.PENDING);
             assertThat(remainingPendingImages).isEmpty();
         }
 
@@ -579,7 +585,7 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should succeed when some images are missing but at least one valid image remains")
         void shouldSucceedWhenSomeImagesAreMissingButValidImagesRemain() throws Exception {
             // Arrange - Create 1 pending image and reference 2 in request (1 valid, 1 missing)
-            List<Image> pendingImages = createPendingImagesForAssociation(1);
+            List<Image> pendingImages = createPendingImagesForUser(1);
             
             List<ImageDTO> imageDTOs = new ArrayList<>();
             // Add existing image
@@ -615,17 +621,49 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
             List<Image> raffleImages = imagesRepository.findAllByRaffle(savedRaffle);
             assertThat(raffleImages).hasSize(1); // Only the valid image was associated
         }
+
+        @Test
+        @DisplayName("Should verify images have user reference cleared and association reference maintained after raffle creation")
+        void shouldVerifyImageReferencesAfterRaffleCreation() throws Exception {
+            // Arrange
+            List<Image> pendingImages = createPendingImagesForUser(2);
+            RaffleCreate raffleCreate = createValidRaffleCreate(pendingImages, 1L, 20L);
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isCreated());
+
+            // Verify database state - images should have user=null and association maintained
+            List<Raffle> savedRaffles = rafflesRepository.findAll();
+            assertThat(savedRaffles).hasSize(1);
+            
+            Raffle savedRaffle = savedRaffles.get(0);
+            List<Image> raffleImages = imagesRepository.findAllByRaffle(savedRaffle);
+            assertThat(raffleImages).hasSize(2);
+            
+            for (Image image : raffleImages) {
+                assertThat(image.getUser()).isNull();
+                assertThat(image.getAssociation()).isEqualTo(authData.association());
+                assertThat(image.getRaffle()).isEqualTo(savedRaffle);
+                assertThat(image.getStatus()).isEqualTo(ImageStatus.ACTIVE);
+            }
+        }
     }
 
     // Helper Methods
-
-    private List<Image> createPendingImagesForAssociation(int count) {
+    private List<Image> createPendingImagesForUser(int count) {
         List<Image> images = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Image image = TestDataBuilder.image()
                     .fileName("pending-image-" + (i + 1) + ".jpg")
+                    .user(authData.user())
                     .association(authData.association())
-                    .pendingImage()
+                    .status(ImageStatus.PENDING)
                     .imageOrder(i + 1)
                     .build();
             images.add(imagesRepository.save(image));
@@ -664,13 +702,15 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         
         for (Image raffleImage : raffleImages) {
             assertThat(raffleImage.getRaffle()).isEqualTo(raffle);
+            assertThat(raffleImage.getUser()).isNull();
             assertThat(raffleImage.getAssociation()).isEqualTo(authData.association());
+            assertThat(raffleImage.getStatus()).isEqualTo(ImageStatus.ACTIVE);
             assertThat(raffleImage.getUrl()).contains("/raffles/" + raffle.getId() + "/images/");
             assertThat(raffleImage.getImageOrder()).isGreaterThan(0);
         }
         
-        // Verify no pending images remain for this association
-        List<Image> remainingPendingImages = imagesRepository.findAllByRaffleIsNullAndAssociation(authData.association());
+        // Verify no pending images remain for this user
+        List<Image> remainingPendingImages = imagesRepository.findAllByRaffleIsNullAndUserAndStatus(authData.user(), ImageStatus.PENDING);
         assertThat(remainingPendingImages).isEmpty();
     }
 

@@ -2,14 +2,17 @@ package com.raffleease.raffleease.Domains.Images.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesAssociateService;
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesDeleteService;
 import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
+import com.raffleease.raffleease.Domains.Users.Model.User;
+import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,10 +21,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.raffleease.raffleease.Domains.Images.Model.ImageStatus.ACTIVE;
+import static com.raffleease.raffleease.Domains.Images.Model.ImageStatus.PENDING;
+
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ImagesAssociateServiceImpl implements ImagesAssociateService {
     private final ImagesDeleteService deleteService;
+    private final UsersService usersService;
     private final FileStorageService fileStorageService;
     private final ImagesRepository repository;
     private final ImageValidator imageValidator;
@@ -51,7 +59,9 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
 
         // 4: Validate existing images
         imageValidator.validateAtLeastOneImage(existingImages);
+        User user = usersService.getAuthenticatedUser();
         imageValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
+        imageValidator.validatePendingImagesBelongToUser(user, existingImages);
         imageValidator.validateAllArePending(existingImages);
 
         // 5: Filter DTOs to only include existing images
@@ -67,6 +77,8 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
             // For new raffles, we'll set the URL and path after the raffle is saved
             image.setImageOrder(orderMap.get(image.getId()));
             image.setRaffle(raffle);
+            image.setStatus(ACTIVE);
+            image.setUser(null);
         }
         
         return existingImages;
@@ -95,7 +107,20 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
         // 4: Validate existing images (do this before making any changes)
         imageValidator.validateAtLeastOneImage(existingImages);
         imageValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
-        imageValidator.validateImagesArePendingOrBelongToRaffle(raffle, existingImages);
+
+        // Validate user ownership for pending images
+        User user = usersService.getAuthenticatedUser();
+        List<Image> pendingImages = existingImages.stream()
+                .filter(image -> image.getStatus() == PENDING)
+                .toList();
+        if (!pendingImages.isEmpty()) {
+            imageValidator.validatePendingImagesBelongToUser(user, pendingImages);
+        }
+        
+        // Validate that pending images are not associated with any raffle
+        imageValidator.validatePendingImagesNotAssociatedWithRaffle(existingImages);
+        // Validate that non-pending images have ACTIVE status and belong to this raffle
+        imageValidator.validateActiveImagesBelongToRaffle(raffle, existingImages);
 
         // 5: Remove any existing raffle images that are no longer in the request
         List<Long> currentRaffleImageIds = raffle.getImages().stream()
@@ -121,7 +146,7 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
                 .collect(Collectors.toMap(ImageDTO::id, ImageDTO::imageOrder));
 
         for (Image image : existingImages) {
-            if (image.getRaffle() == null) {
+            if (image.getStatus().equals(PENDING)) {
                 Path finalPath = fileStorageService.moveFileToRaffle(
                         String.valueOf(raffle.getAssociation().getId()),
                         String.valueOf(raffle.getId()),
@@ -131,8 +156,10 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
                 image.setFilePath(finalPath.toString());
                 image.setUrl(host + "/v1/associations/" + raffle.getAssociation().getId() + "/raffles/" + raffle.getId() + "/images/" + image.getId());
                 image.setRaffle(raffle);
+                image.setStatus(ACTIVE);
             }
-            
+
+            image.setUser(null);
             Integer newOrder = imageOrderMap.get(image.getId());
             if (newOrder != null) {
                 image.setImageOrder(newOrder);

@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Domains.Images.Jobs;
 
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
 import com.raffleease.raffleease.util.AuthTestUtils;
@@ -66,11 +67,12 @@ class ImageCleanupSchedulerIT extends AbstractIntegrationTest {
     @Transactional
     private Image createTestPendingImage(String fileName, LocalDateTime createdAt) {
         Image image = TestDataBuilder.image()
+                .user(authData.user())
                 .association(authData.association())
+                .status(ImageStatus.PENDING)
                 .fileName(fileName)
                 .filePath("/test/path/" + fileName)
                 .url("http://localhost/test/" + fileName)
-                .pendingImage() // This sets raffle to null
                 .build();
         
         // Save first to get the ID
@@ -98,7 +100,9 @@ class ImageCleanupSchedulerIT extends AbstractIntegrationTest {
         testRaffle = rafflesRepository.save(testRaffle);
 
         Image image = TestDataBuilder.image()
+                .user(authData.user())
                 .association(authData.association())
+                .status(ImageStatus.ACTIVE)
                 .fileName(fileName)
                 .filePath("/test/path/" + fileName)
                 .url("http://localhost/test/" + fileName)
@@ -182,7 +186,8 @@ class ImageCleanupSchedulerIT extends AbstractIntegrationTest {
         @DisplayName("Should handle empty list of orphan images gracefully")
         void shouldHandleEmptyListOfOrphanImages() {
             // Arrange - Delete all pending images, keeping only associated ones
-            List<Image> pendingImages = imagesRepository.findAllByRaffleIsNullAndAssociation(authData.association());
+            List<Image> pendingImages = imagesRepository.findAllByRaffleIsNullAndUserAndStatus(
+                authData.user(), ImageStatus.PENDING);
             imagesRepository.deleteAll(pendingImages);
 
             // Act

@@ -14,6 +14,5 @@ import java.util.Optional;
 public interface TicketsRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findByRaffleAndStatus(Raffle raffle, TicketStatus status);
     List<Ticket> findAllByRaffle(Raffle raffle);
-    Optional<Ticket> findByRaffleAndTicketNumber(Raffle raffle, String ticketNumber);
     List<Ticket> findAllByCart(Cart cart);
 }

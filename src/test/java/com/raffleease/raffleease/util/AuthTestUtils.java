@@ -156,6 +156,49 @@ public class AuthTestUtils {
     }
 
     /**
+     * Creates a second authenticated user in the same association as the provided association.
+     * Useful for testing multi-user scenarios within the same association.
+     * 
+     * @param association the association to add the new user to
+     * @return AuthTestData containing the new user and existing association
+     */
+    public AuthTestData createAuthenticatedUserInSameAssociation(Association association) {
+        // Generate unique identifier for this test instance
+        String uniqueId = String.valueOf(System.currentTimeMillis());
+        
+        // Create and persist user with encoded password
+        String encodedPassword = passwordEncoder.encode(DEFAULT_TEST_PASSWORD);
+        User user = TestDataBuilder.user()
+                .userName("seconduser" + uniqueId)
+                .email("seconduser" + uniqueId + "@example.com")
+                .phoneNumber("+1888" + String.format("%06d", Math.abs((uniqueId + "second").hashCode() % 1000000)))
+                .password(encodedPassword)
+                .enabled(true)
+                .build();
+        user = usersRepository.save(user);
+
+        // Create and persist membership linking user to existing association
+        AssociationMembership membership = TestDataBuilder.membership()
+                .user(user)
+                .association(association)
+                .role(AssociationRole.MEMBER)
+                .build();
+        membership = membershipsRepository.save(membership);
+
+        // Refresh entities to ensure they have all persisted data
+        entityManager.flush();
+        entityManager.refresh(user);
+        entityManager.refresh(membership);
+
+        // Verify test data is properly set up
+        assertThat(user.getId()).isNotNull();
+        assertThat(membership.getId()).isNotNull();
+        assertThat(user.isEnabled()).isTrue();
+
+        return new AuthTestData(user, association, membership, DEFAULT_TEST_PASSWORD);
+    }
+
+    /**
      * Record to hold test authentication data for clean organization.
      */
     public record AuthTestData(

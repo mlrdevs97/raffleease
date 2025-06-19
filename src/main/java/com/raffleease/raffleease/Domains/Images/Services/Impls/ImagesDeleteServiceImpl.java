@@ -4,6 +4,7 @@ import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesDeleteService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
+import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class ImagesDeleteServiceImpl implements ImagesDeleteService {
+    private final ImagesService imagesService;
     private final ImagesRepository repository;
 
     @Override

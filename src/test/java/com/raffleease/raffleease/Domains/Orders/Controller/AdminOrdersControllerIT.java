@@ -8,6 +8,7 @@ import com.raffleease.raffleease.Domains.Carts.Model.CartStatus;
 import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Customers.DTO.CustomerCreate;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Orders.DTOs.AdminOrderCreate;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderStatus;
@@ -90,7 +91,9 @@ class AdminOrdersControllerIT extends AbstractIntegrationTest {
         for (int i = 0; i < 2; i++) {
             Image image = TestDataBuilder.image()
                     .fileName("raffle-image-" + (i + 1) + ".jpg")
+                    .user(authData.user())
                     .association(authData.association())
+                    .status(ImageStatus.ACTIVE)
                     .imageOrder(i + 1)
                     .build();
             raffleImages.add(image);

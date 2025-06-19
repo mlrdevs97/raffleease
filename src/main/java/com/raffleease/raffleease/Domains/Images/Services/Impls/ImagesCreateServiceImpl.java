@@ -7,6 +7,7 @@ import com.raffleease.raffleease.Domains.Images.DTOs.ImageResponse;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageUpload;
 import com.raffleease.raffleease.Domains.Images.Mappers.ImagesMapper;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesCreateService;
@@ -15,6 +16,9 @@ import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.FileStorageException;
+import com.raffleease.raffleease.Domains.Users.Model.User;
+import com.raffleease.raffleease.Domains.Users.Services.UsersService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +28,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
+
+import static com.raffleease.raffleease.Domains.Images.Model.ImageStatus.PENDING;
 
 @RequiredArgsConstructor
 @Service
@@ -36,13 +42,13 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
     private final AssociationsService associationsService;
     private final RafflesPersistenceService rafflesPersistenceService;
     private final ImageValidator imageValidator;
+    private final UsersService usersService;
 
     @Value("${spring.application.hosts.server}")
     private String host;
 
     /**
-     * Create images for an association
-     * 
+     * Create images still not associated to a raffle.
      * Used to upload images when creating a new raffle
      *  
      * @param associationId Association ID
@@ -53,12 +59,11 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
     @Transactional
     public ImageResponse create(Long associationId, ImageUpload uploadRequest) {
         String baseURL = host + "/v1/associations/" + associationId + "/images/";
-        return processImagesCreationWithFileFirst(associationId, uploadRequest, 0, baseURL, null);
+        return processImagesCreation(associationId, uploadRequest, 0, baseURL, null);
     }
 
     /**
-     * Create images for a raffle
-     * 
+     * Create images for an existing raffle
      * Used to upload images when editing an existing raffle
      * 
      * @param associationId Association ID
@@ -72,12 +77,12 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
         Raffle raffle = rafflesPersistenceService.findById(raffleId);
         int currentImagesCount = raffle.getImages().size();
         String baseURL = host + "/v1/associations/" + associationId + "/raffles/" + raffleId + "/images/";
-        return processImagesCreationWithFileFirst(associationId, uploadRequest, currentImagesCount, baseURL, raffle);
+        return processImagesCreation(associationId, uploadRequest, currentImagesCount, baseURL, raffle);
     }
 
     /**
-     * Process images creation with file first
-     * Used to upload images when creating a new raffle
+     * Process images creation for a new or existing raffle.
+     * Used to upload images when creating a new or editing an existing raffle.
      * 
      * @param associationId Association ID
      * @param uploadRequest Upload request
@@ -86,11 +91,12 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
      * @param raffle Raffle
      * @return Image response
      */
-    private ImageResponse processImagesCreationWithFileFirst(Long associationId, ImageUpload uploadRequest, int currentImagesCount, String baseURL, Raffle raffle) {
+    private ImageResponse processImagesCreation(Long associationId, ImageUpload uploadRequest, int currentImagesCount, String baseURL, Raffle raffle) {
         Association association = associationsService.findById(associationId);
+        User user = usersService.getAuthenticatedUser();
         List<MultipartFile> files = uploadRequest.files();
-        int pendingImagesCount = repository.countPendingImagesByAssociation(association);
-        int totalImagesCount = pendingImagesCount + currentImagesCount;        
+        int pendingImagesCount = repository.countImagesByUserAndStatus(user, PENDING);
+        int totalImagesCount = pendingImagesCount + currentImagesCount;
         imageValidator.validateTotalImagesNumber(files.size(), totalImagesCount);        
         String batchId = UUID.randomUUID().toString();
         List<String> tempFilePaths = null;
@@ -99,9 +105,9 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
         
         try {
             // 1: Store files to temporary location first
-            tempFilePaths = fileStorageService.saveTemporaryBatch(files, String.valueOf(associationId), batchId);            
+            tempFilePaths = fileStorageService.saveTemporaryBatch(files, String.valueOf(associationId), batchId);
             // 2: Create Image entities in database
-            savedImages = createImageEntities(association, files, raffle);
+            savedImages = createImageEntities(association, user, files, raffle);
             // 3: Set image order based on both pending and existing images in the raffle
             setImagesOrder(savedImages, currentImagesCount, pendingImagesCount);
             // 4: Move files to final location using database IDs
@@ -136,17 +142,19 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
      * The images are created without file paths or URLs
      * They are later updated with the file paths and URLs
      * 
-     * @param association Association
+     * @param user User
      * @param files List of files to create images from
      * @param raffle Raffle
      * @return List of created images
      */
-    private List<Image> createImageEntities(Association association, List<MultipartFile> files, Raffle raffle) {
+    private List<Image> createImageEntities(Association association, User user, List<MultipartFile> files, Raffle raffle) {
         return imagesService.saveAll(files.stream()
                 .map(file -> Image.builder()
                         .fileName(file.getOriginalFilename())
                         .contentType(file.getContentType())
+                        .status(PENDING)
                         .association(association)
+                        .user(user)
                         .raffle(raffle)
                         .build())
                 .toList());

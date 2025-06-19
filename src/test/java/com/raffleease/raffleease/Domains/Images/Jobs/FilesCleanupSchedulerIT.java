@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Domains.Images.Jobs;
 
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.util.AuthTestUtils;
 import com.raffleease.raffleease.util.AuthTestUtils.AuthTestData;
@@ -112,11 +113,12 @@ class FilesCleanupSchedulerIT extends AbstractIntegrationTest {
             
             // Create database entry only for validFile
             Image validImage = TestDataBuilder.image()
+                    .user(authData.user())
                     .association(authData.association())
+                    .status(ImageStatus.PENDING)
                     .fileName("valid-file.jpg")
                     .filePath(validFile.toString())
                     .url("http://localhost/test/valid-file.jpg")
-                    .pendingImage()
                     .build();
             imagesRepository.save(validImage);
 
@@ -188,11 +190,12 @@ class FilesCleanupSchedulerIT extends AbstractIntegrationTest {
             Files.createFile(validFile);
             
             Image validImage = TestDataBuilder.image()
+                    .user(authData.user())
                     .association(authData.association())
+                    .status(ImageStatus.PENDING)
                     .fileName("valid.jpg")
                     .filePath(validFile.toString())
                     .url("http://localhost/test/valid.jpg")
-                    .pendingImage()
                     .build();
             imagesRepository.save(validImage);
 

@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Domains.Images.Controller;
 
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
@@ -122,7 +123,9 @@ class ImagesControllerIT extends AbstractIntegrationTest {
             // Verify images are properly associated to raffle
             for (Image image : savedImages) {
                 assertThat(image.getRaffle()).isEqualTo(testRaffle);
+                assertThat(image.getUser().getId()).isEqualTo(authData.user().getId());
                 assertThat(image.getAssociation()).isEqualTo(authData.association());
+                assertThat(image.getStatus()).isEqualTo(ImageStatus.PENDING);
                 assertThat(image.getUrl()).contains("/raffles/" + testRaffle.getId() + "/images/");
                 assertThat(image.getImageOrder()).isGreaterThan(0);
             }
@@ -133,13 +136,17 @@ class ImagesControllerIT extends AbstractIntegrationTest {
         void shouldSetCorrectImageOrderWhenAddingToRaffleWithExistingImages() throws Exception {
             // Arrange - Create existing images for the raffle
             Image existingImage1 = TestDataBuilder.image()
+                    .user(authData.user())
                     .association(authData.association())
+                    .status(ImageStatus.ACTIVE)
                     .raffle(testRaffle)
                     .imageOrder(1)
                     .fileName("existing-1.jpg")
                     .build();
             Image existingImage2 = TestDataBuilder.image()
+                    .user(authData.user())
                     .association(authData.association())
+                    .status(ImageStatus.ACTIVE)
                     .raffle(testRaffle)
                     .imageOrder(2)
                     .fileName("existing-2.jpg")
@@ -240,7 +247,9 @@ class ImagesControllerIT extends AbstractIntegrationTest {
             List<Image> existingImages = new ArrayList<>();
             for (int i = 0; i < 10; i++) {
                 Image image = TestDataBuilder.image()
+                        .user(authData.user())
                         .association(authData.association())
+                        .status(ImageStatus.ACTIVE)
                         .raffle(testRaffle)
                         .imageOrder(i + 1)
                         .fileName("existing-" + (i + 1) + ".jpg")
@@ -272,12 +281,13 @@ class ImagesControllerIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("Should return 400 when total images exceed limit including pending images")
         void shouldReturn400WhenTotalImagesExceedLimitIncludingPendingImages() throws Exception {
-            // Arrange - Create 5 pending images for the association
+            // Arrange - Create 5 pending images for the user
             List<Image> pendingImages = new ArrayList<>();
             for (int i = 0; i < 5; i++) {
                 Image pendingImage = TestDataBuilder.image()
+                        .user(authData.user())
                         .association(authData.association())
-                        .pendingImage()
+                        .status(ImageStatus.PENDING)
                         .imageOrder(i + 1)
                         .fileName("pending-" + (i + 1) + ".jpg")
                         .build();
@@ -289,7 +299,9 @@ class ImagesControllerIT extends AbstractIntegrationTest {
             List<Image> raffleImages = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
                 Image raffleImage = TestDataBuilder.image()
+                        .user(authData.user())
                         .association(authData.association())
+                        .status(ImageStatus.ACTIVE)
                         .raffle(testRaffle)
                         .imageOrder(i + 1)
                         .fileName("raffle-" + (i + 1) + ".jpg")
@@ -324,8 +336,9 @@ class ImagesControllerIT extends AbstractIntegrationTest {
             // Arrange - Create 7 pending images + 2 raffle images = 9 total
             for (int i = 0; i < 7; i++) {
                 Image pendingImage = TestDataBuilder.image()
+                        .user(authData.user())
                         .association(authData.association())
-                        .pendingImage()
+                        .status(ImageStatus.PENDING)
                         .imageOrder(i + 1)
                         .fileName("pending-" + (i + 1) + ".jpg")
                         .build();
@@ -335,7 +348,9 @@ class ImagesControllerIT extends AbstractIntegrationTest {
             List<Image> raffleImages = new ArrayList<>();
             for (int i = 0; i < 2; i++) {
                 Image raffleImage = TestDataBuilder.image()
+                        .user(authData.user())
                         .association(authData.association())
+                        .status(ImageStatus.ACTIVE)
                         .raffle(testRaffle)
                         .imageOrder(i + 1)
                         .fileName("raffle-" + (i + 1) + ".jpg")
@@ -439,11 +454,12 @@ class ImagesControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should properly calculate image order with mixed pending and raffle images")
         void shouldProperlyCalculateImageOrderWithMixedImages() throws Exception {
             // Arrange - Create complex scenario with both pending and raffle images
-            // 3 pending images for association
+            // 3 pending images for user
             for (int i = 0; i < 3; i++) {
                 Image pendingImage = TestDataBuilder.image()
+                        .user(authData.user())
                         .association(authData.association())
-                        .pendingImage()
+                        .status(ImageStatus.PENDING)
                         .imageOrder(i + 1)
                         .fileName("pending-" + (i + 1) + ".jpg")
                         .build();
@@ -454,7 +470,9 @@ class ImagesControllerIT extends AbstractIntegrationTest {
             List<Image> raffleImages = new ArrayList<>();
             for (int i = 0; i < 4; i++) {
                 Image raffleImage = TestDataBuilder.image()
+                        .user(authData.user())
                         .association(authData.association())
+                        .status(ImageStatus.ACTIVE)
                         .raffle(testRaffle)
                         .imageOrder(i + 1)
                         .fileName("raffle-" + (i + 1) + ".jpg")
@@ -493,6 +511,48 @@ class ImagesControllerIT extends AbstractIntegrationTest {
             assertThat(newImages).hasSize(2);
             assertThat(newImages.get(0).getImageOrder()).isEqualTo(8);
             assertThat(newImages.get(1).getImageOrder()).isEqualTo(9);
+        }
+
+        @Test
+        @DisplayName("Should prevent using images from different association")
+        void shouldPreventUsingImagesFromDifferentAssociation() throws Exception {
+            // Arrange - Create another user in different association with pending images
+            AuthTestData otherUserData = authTestUtils.createAuthenticatedUserWithCredentials(
+                    "otheruser", "other@example.com", "password123");
+            
+            Image otherAssociationImage = TestDataBuilder.image()
+                    .user(otherUserData.user())
+                    .association(otherUserData.association()) // Different association
+                    .status(ImageStatus.PENDING)
+                    .fileName("other-association-image.jpg")
+                    .build();
+            otherAssociationImage = imagesRepository.save(otherAssociationImage);
+
+            // Try to upload this image to a raffle in our association
+            MockMultipartFile file = new MockMultipartFile(
+                    "files", "our-image.jpg", "image/jpeg", createTestImageContent());
+
+            // Act
+            ResultActions result = mockMvc.perform(multipart(baseEndpoint)
+                    .file(file)
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should succeed for our own image
+            result.andExpect(status().isOk());
+
+            // Verify the image from other association is not accessible to our user
+            List<Image> ourAssociationImages = imagesRepository.findAll().stream()
+                    .filter(img -> img.getAssociation().equals(authData.association()))
+                    .toList();
+            
+            List<Image> otherAssociationImages = imagesRepository.findAll().stream()
+                    .filter(img -> img.getAssociation().equals(otherUserData.association()))
+                    .toList();
+            
+            assertThat(ourAssociationImages).hasSize(1); // Only our uploaded image
+            assertThat(otherAssociationImages).hasSize(1); // Only their image
+            assertThat(ourAssociationImages.get(0).getFileName()).isEqualTo("our-image.jpg");
+            assertThat(otherAssociationImages.get(0).getFileName()).isEqualTo("other-association-image.jpg");
         }
     }
 

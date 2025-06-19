@@ -3,12 +3,16 @@ package com.raffleease.raffleease.Domains.Images.Model;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Images.Services.Impls.ImageEntityListener;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Domains.Users.Model.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+
+import static jakarta.persistence.FetchType.LAZY;
+import static jakarta.persistence.GenerationType.IDENTITY;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,9 +24,10 @@ import java.time.LocalDateTime;
 @EntityListeners(ImageEntityListener.class)
 public class Image {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
+    private ImageStatus status;
     private String fileName;
     private String filePath;
     private String contentType;
@@ -36,8 +41,12 @@ public class Image {
     @JoinColumn(name = "raffle_id")
     private Raffle raffle;
 
-    @ManyToOne
-    @JoinColumn(name = "association_id")
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = "association_id", nullable = false)
     private Association association;
 
     @Column(nullable = false, updatable = false)
