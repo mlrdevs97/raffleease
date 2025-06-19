@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/v1/associations/{associationId}/")
+@RequestMapping("/public/v1/associations/{associationId}/")
 public class PublicImagesController {
     private final ImagesService imagesService;
 
