@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Images.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesDeleteService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
@@ -33,5 +34,12 @@ public class ImagesDeleteServiceImpl implements ImagesDeleteService {
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while deleting image: " + ex.getMessage());
         }
+    }
+
+    @Override
+    public void softDelete(Long id) {
+        Image image = imagesService.findById(id);
+        image.setStatus(ImageStatus.MARKED_FOR_DELETION);
+        repository.save(image);
     }
 }

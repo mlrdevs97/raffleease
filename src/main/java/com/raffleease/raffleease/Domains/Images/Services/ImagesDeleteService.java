@@ -14,4 +14,10 @@ public interface ImagesDeleteService {
      * Deletes a single image (used internally for cleanup operations)
      */
     void delete(Image image);
+
+    /**
+     * Soft deletes an image by setting the status to MARKED_FOR_DELETION
+     * Soft deleted images cannot be fetched by the API and will be deleted when raffle create/edit process completes
+     */
+    void softDelete(Long id);
 }
