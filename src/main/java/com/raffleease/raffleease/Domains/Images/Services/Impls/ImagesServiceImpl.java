@@ -3,6 +3,7 @@ package com.raffleease.raffleease.Domains.Images.Services.Impls;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
+import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
@@ -16,7 +17,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Service
-public class ImageServiceImpl implements ImagesService {
+public class ImagesServiceImpl implements ImagesService {
     private final FileStorageService fileStorageService;
     private final ImagesRepository repository;
 
@@ -55,6 +56,12 @@ public class ImageServiceImpl implements ImagesService {
     @Override
     public Resource getFile(Long id) {
         Image image = findById(id);
+        
+        // Prevent access to images marked for deletion
+        if (image.getStatus() == ImageStatus.MARKED_FOR_DELETION) {
+            throw new NotFoundException("Image not found for id <" + id + ">");
+        }
+        
         return fileStorageService.load(image.getFilePath());
     }
 }
