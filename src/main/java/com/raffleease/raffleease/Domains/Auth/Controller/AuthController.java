@@ -3,8 +3,11 @@ package com.raffleease.raffleease.Domains.Auth.Controller;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.RegisterEmailVerificationRequest;
+import com.raffleease.raffleease.Domains.Auth.DTOs.ForgotPasswordRequest;
+import com.raffleease.raffleease.Domains.Auth.DTOs.ResetPasswordRequest;
 import com.raffleease.raffleease.Domains.Auth.Services.AuthValidationService;
 import com.raffleease.raffleease.Domains.Auth.Services.LoginService;
+import com.raffleease.raffleease.Domains.Auth.Services.PasswordResetService;
 import com.raffleease.raffleease.Domains.Auth.Services.RegisterService;
 import com.raffleease.raffleease.Domains.Auth.Services.VerificationService;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
@@ -18,6 +21,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RequiredArgsConstructor
 @RequestMapping("/v1/auth")
 @RestController
@@ -27,6 +32,7 @@ public class AuthController {
     private final LogoutHandler logoutHandler;
     private final AuthValidationService authValidationService;
     private final VerificationService verificationService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(
@@ -50,6 +56,32 @@ public class AuthController {
                 ResponseFactory.success(
                         null,
                         "Account verified successfully"
+                )
+        );
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request
+    ) {
+        passwordResetService.requestPasswordReset(request);
+        return ResponseEntity.ok().body(
+                ResponseFactory.success(
+                        null,
+                        "Password reset link has been sent successfully"
+                )
+        );
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        passwordResetService.resetPassword(request);
+        return ResponseEntity.ok().body(
+                ResponseFactory.success(
+                        null,
+                        "Password has been reset successfully"
                 )
         );
     }

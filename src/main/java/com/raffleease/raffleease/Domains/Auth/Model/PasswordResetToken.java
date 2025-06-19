@@ -14,11 +14,11 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 @Setter
 @Builder
 @Entity
-public class VerificationToken {
+public class PasswordResetToken {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
-
+    
     @Column(nullable = false, unique = true)
     private String token;
 
@@ -28,4 +28,4 @@ public class VerificationToken {
 
     @Column(nullable = false)
     private LocalDateTime expiryDate;
-}
+} 

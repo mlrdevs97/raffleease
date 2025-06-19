@@ -19,6 +19,8 @@ public interface UsersRepository extends JpaRepository<User, Long> {
     """)
     Optional<User> findByIdentifier(@Param("identifier") String identifier);
 
+    Optional<User> findByEmail(String email);
+
     @Query("""
         SELECT u FROM User u 
         JOIN AssociationMembership am ON am.user.id = u.id 

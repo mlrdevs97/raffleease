@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 
 import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.EMAIL_VERIFICATION;
 import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.ORDER_SUCCESS;
+import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.PASSWORD_RESET;
 import static com.raffleease.raffleease.Domains.Notifications.Model.NotificationChannel.EMAIL;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.springframework.mail.javamail.MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED;
@@ -54,6 +56,14 @@ public class EmailsServiceImpl implements EmailsService {
 
     @Override
     @Async
+    public void sendPasswordResetEmail(User user, String link) {
+        Map<String, Object> variables = createPasswordResetEmailVariables(user, link);
+        sendEmail(user.getEmail(), PASSWORD_RESET.getSubject(), PASSWORD_RESET.getTemplate(), variables);
+        notificationsService.create(NotificationType.PASSWORD_RESET, EMAIL);
+    }
+
+    @Override
+    @Async
     public void sendOrderSuccessEmail(Order order) {
         Map<String, Object> variables = createOrderSuccessEmailVariables(order);
         sendEmail(order.getCustomer().getEmail(), ORDER_SUCCESS.getSubject(), ORDER_SUCCESS.getTemplate(), variables);
@@ -68,6 +78,18 @@ public class EmailsServiceImpl implements EmailsService {
         variables.put("customerEmail", user.getEmail());
         variables.put("registrationDate", formattedRegistrationDate);
         variables.put("verificationUrl", link);
+
+        return variables;
+    }
+
+    private Map<String, Object> createPasswordResetEmailVariables(User user, String link) {
+        Map<String, Object> variables = new HashMap<>();
+        String formattedRequestDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm"));
+
+        variables.put("customerName", user.getUserName());
+        variables.put("customerEmail", user.getEmail());
+        variables.put("requestDate", formattedRequestDate);
+        variables.put("resetUrl", link);
 
         return variables;
     }

@@ -6,4 +6,5 @@ import com.raffleease.raffleease.Domains.Users.Model.User;
 public interface EmailsService {
     void sendOrderSuccessEmail(Order order);
     void sendEmailVerificationEmail(User user, String link);
+    void sendPasswordResetEmail(User user, String link);
 }

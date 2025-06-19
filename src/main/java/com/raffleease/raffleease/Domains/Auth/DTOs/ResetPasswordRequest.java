@@ -1,0 +1,23 @@
+package com.raffleease.raffleease.Domains.Auth.DTOs;
+
+import com.raffleease.raffleease.Common.Validations.PasswordMatches;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+
+import static com.raffleease.raffleease.Common.Constants.ValidationPatterns.PASSWORD_PATTERN;
+import static com.raffleease.raffleease.Common.Constants.ValidationPatterns.Messages.PASSWORD_MESSAGE;
+
+@PasswordMatches
+public record ResetPasswordRequest(
+        @NotBlank
+        String token,
+        
+        @NotBlank
+        @Pattern(regexp = PASSWORD_PATTERN, message = PASSWORD_MESSAGE)
+        String password,
+        
+        @NotBlank
+        @Pattern(regexp = PASSWORD_PATTERN, message = PASSWORD_MESSAGE)
+        String confirmPassword
+) {
+} 

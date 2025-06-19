@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Common.Validations;
 
 import com.raffleease.raffleease.Common.Models.CreateUserData;
+import com.raffleease.raffleease.Domains.Auth.DTOs.ResetPasswordRequest;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
@@ -10,9 +11,18 @@ public class PasswordMatchesValidator implements ConstraintValidator<PasswordMat
     public boolean isValid(Object request, ConstraintValidatorContext context) {
         if (request == null) return true;
 
-        CreateUserData userData = (CreateUserData) request;
-        String password = ((CreateUserData) request).getPassword();
-        String confirmPassword = ((CreateUserData) request).getConfirmPassword();
+        String password;
+        String confirmPassword;
+
+        if (request instanceof CreateUserData userData) {
+            password = userData.getPassword();
+            confirmPassword = userData.getConfirmPassword();
+        } else if (request instanceof ResetPasswordRequest resetRequest) {
+            password = resetRequest.password();
+            confirmPassword = resetRequest.confirmPassword();
+        } else {
+            return true;
+        }
 
         if (password == null || confirmPassword == null) return true;
 
