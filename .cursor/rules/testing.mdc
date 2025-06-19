@@ -1,0 +1,64 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Guide to Controller-Level Integration Testing in Spring Boot
+
+This guide provides systematic instructions for implementing robust, controller-level integration tests for a Java Spring Boot application. Follow these best practices for structuring your tests, creating mock data, and writing clear assertions using `MockMvc`, `Testcontainers`, and `AssertJ`.
+
+### 1. Core Principles
+
+* **Test the Public API Contract:** Focus tests on the controller's endpoints. Verify request handling, response status codes, headers, and payloads. Do not test internal service logic, as that is the purpose of unit tests.
+* **Ensure Test Isolation:** Each test method must be independent. A failure in one test must not affect another. Achieve this by using `@Transactional` on a base test class to roll back database changes after each test.
+* **Leverage a Real Database:** Use Testcontainers to run tests against a real database instance (e.g., PostgreSQL). This ensures that your native queries and ORM mappings behave exactly as they would in production.
+* **Write Readable and Maintainable Tests:** Structure tests clearly using the Arrange-Act-Assert pattern. Use fluent assertion libraries like AssertJ to make test validation expressive and easy to understand.
+
+### 2. Structuring Your Test Suite
+
+A well-organized test suite is crucial for maintainability. Place all test-related code and resources in the `src/test` directory.
+
+#### File and Folder Layout
+
+Mirror your main source code's package structure within `src/test/java`. This makes it easy to locate tests corresponding to a specific class.
+
+* **`...IT.java` Suffix:** Use the `IT` suffix (for Integration Test) for all integration test classes.
+* **`AbstractIntegrationTest.java`:** A base class containing shared Testcontainers and Spring Boot test configuration. All controller test classes must extend this.
+* **`util/`:** A package for test utility classes, such as test data builders.
+* **`resources/`:** Contains test-specific configuration files like `application-test.properties` and database migration scripts for Flyway or Liquibase.
+
+### 3. Creating Test Data with the Builder Pattern
+
+Avoid creating test data directly within test methods using constructors. Instead, use the **Builder pattern** to create test entities. This approach decouples tests from the entity's constructor, provides sensible defaults, and improves readability.
+
+#### Implement a `TestDataBuilder` for Each Entity
+
+Create a dedicated builder class for each of the domain models.
+
+4. Utilizing the Test Environment
+
+The test environment, including the Spring Application Context and the Testcontainer, is configured in the AbstractIntegrationTest base class.
+
+Ensure every controller integration test class extends AbstractIntegrationTest. This provides each test with a fully configured application context and a running PostgreSQL container, managed by Testcontainers.
+
+For scenarios where the Spring context might be modified by a test (e.g., by mocking beans), and you want to ensure a clean context for the next test class, use the @DirtiesContext annotation on the test class. This annotation instructs Spring to close and recreate the application context after all tests in this class have run. Use it sparingly, as it slows down the test suite.
+
+5. Implementing Controller Tests
+
+Follow these steps to write effective and clear controller tests.
+
+1. Set Up the Test Class Extending AbstractIntegrationTest.
+
+2. Adhere to the Arrange-Act-Assert Pattern
+
+Structure every test method clearly:
+
+Arrange: Set up the test state. Use your test data builders to create and persist entities required for the test case.
+
+Act: Execute the request against the controller endpoint using MockMvc.
+
+Assert: Verify the outcome. Check the HTTP status code, headers, and response body using MockMvcResultMatchers and the AssertJ Jupiter API for fluent assertions.
+
+3. Writing Assertions
+
+Use the andExpect() methods from MockMvc combined with MockMvcResultMatchers for standard web assertions like status and content type. For JSON payload validation, use jsonPath.

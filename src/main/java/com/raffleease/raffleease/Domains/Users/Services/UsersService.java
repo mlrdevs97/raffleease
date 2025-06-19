@@ -1,19 +1,16 @@
 package com.raffleease.raffleease.Domains.Users.Services;
 
-import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterUserData;
-import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserData;
-import com.raffleease.raffleease.Domains.Users.DTOs.UpdateUserData;
+import com.raffleease.raffleease.Common.Models.BaseUserData;
+import com.raffleease.raffleease.Common.Models.CreateUserData;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 
 import java.util.List;
 
 public interface UsersService {
-    User create(RegisterUserData userData, String encodedPassword);
-    User createUser(CreateUserData userData, String encodedPassword);
-    User updateUser(Long userId, UpdateUserData userData);
-    User disableUser(Long userId);
-    User enableUser(User user);
+    User createUser(CreateUserData userData, String encodedPassword, boolean isEnabled);
+    User updateUser(User user, BaseUserData userData);
+    User setUserEnabled(User user, boolean enabled);
     UserResponse getUserById(Long userId);
     List<UserResponse> getUsersByAssociationId(Long associationId);
     User findByIdentifier(String identifier);

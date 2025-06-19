@@ -2,16 +2,14 @@ package com.raffleease.raffleease.Domains.Orders.Controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
-import com.raffleease.raffleease.Domains.Auth.DTOs.Register.PhoneNumberData;
+import com.raffleease.raffleease.Common.Models.PhoneNumber;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
-import com.raffleease.raffleease.Domains.Carts.Model.CartStatus;
 import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Customers.DTO.CustomerCreate;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Orders.DTOs.AdminOrderCreate;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
-import com.raffleease.raffleease.Domains.Orders.Model.OrderStatus;
 import com.raffleease.raffleease.Domains.Orders.Repository.OrdersRepository;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatistics;
@@ -27,7 +25,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.math.BigDecimal;
@@ -144,7 +141,7 @@ class AdminOrdersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should successfully create order with valid data")
         void shouldSuccessfullyCreateOrder() throws Exception {
             // Arrange
-            PhoneNumberData phoneNumber = new PhoneNumberData("+1", "1234567890");
+            PhoneNumber phoneNumber = new PhoneNumber("+1", "1234567890");
             CustomerCreate customerCreate = new CustomerCreate(
                     "John Doe",
                     "john@example.com",

@@ -19,7 +19,7 @@ public class AssociationsMembershipServiceImpl implements AssociationsMembership
     public void validateIsMember(Association association, User user) {
         boolean isMember = membershipsRepository.existsByAssociationAndUser(association, user);
         if (!isMember) {
-            throw new AuthorizationException("You are not a member of this association");
+            throw new AuthorizationException("User is not a member of the association");
         }
     }
 

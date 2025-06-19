@@ -4,17 +4,18 @@ import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
 import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAccess;
 import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserRequest;
-import com.raffleease.raffleease.Domains.Users.DTOs.UpdateUserData;
+import com.raffleease.raffleease.Domains.Users.DTOs.EditUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
 import com.raffleease.raffleease.Domains.Users.Services.UserManagementService;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static org.springframework.http.HttpStatus.CREATED;
 
 @RequiredArgsConstructor
 @RequestMapping("/v1/associations/{associationId}/users")
@@ -25,15 +26,15 @@ public class UsersController {
     private final UsersService usersService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse> createUser(
+    public ResponseEntity<ApiResponse> create(
             @PathVariable Long associationId,
             @Valid @RequestBody CreateUserRequest request
     ) {
-        UserResponse userResponse = userManagementService.createUserInAssociation(
+        UserResponse userResponse = userManagementService.create(
                 associationId, 
                 request.userData()
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(
+        return ResponseEntity.status(CREATED).body(
                 ResponseFactory.success(
                         userResponse,
                         "User account created successfully. Verification email sent."
@@ -42,7 +43,7 @@ public class UsersController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getUsers(
+    public ResponseEntity<ApiResponse> getAll(
             @PathVariable Long associationId
     ) {
         List<UserResponse> users = usersService.getUsersByAssociationId(associationId);
@@ -54,12 +55,12 @@ public class UsersController {
         );
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse> getUser(
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse> get(
             @PathVariable Long associationId,
-            @PathVariable Long userId
+            @PathVariable Long id
     ) {
-        UserResponse user = usersService.getUserById(userId);
+        UserResponse user = usersService.getUserById(id);
         return ResponseEntity.ok().body(
                 ResponseFactory.success(
                         user,
@@ -68,16 +69,16 @@ public class UsersController {
         );
     }
 
-    @PutMapping("/{userId}")
-    public ResponseEntity<ApiResponse> updateUser(
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> edit(
             @PathVariable Long associationId,
-            @PathVariable Long userId,
-            @Valid @RequestBody UpdateUserData userData
+            @PathVariable Long id,
+            @Valid @RequestBody EditUserRequest request
     ) {
-        UserResponse userResponse = userManagementService.updateUserInAssociation(
+        UserResponse userResponse = userManagementService.edit(
                 associationId, 
-                userId, 
-                userData
+                id,
+                request.userData()
         );
         return ResponseEntity.ok().body(
                 ResponseFactory.success(

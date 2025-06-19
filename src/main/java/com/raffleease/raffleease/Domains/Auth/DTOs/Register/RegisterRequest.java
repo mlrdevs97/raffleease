@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Auth.DTOs.Register;
 
+import com.raffleease.raffleease.Common.Models.CreateUserData;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -8,7 +9,7 @@ import lombok.Builder;
 public record RegisterRequest(
         @NotNull
         @Valid
-        RegisterUserData userData,
+        CreateUserData userData,
 
         @NotNull
         @Valid

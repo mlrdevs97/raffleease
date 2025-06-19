@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Auth.DTOs.Register;
 
+import com.raffleease.raffleease.Common.Models.PhoneNumber;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -22,7 +23,7 @@ public record RegisterAssociationData(
 
         @Nullable
         @Valid
-        PhoneNumberData phoneNumber,
+        PhoneNumber phoneNumber,
 
         @NotNull
         @Valid
@@ -32,9 +33,5 @@ public record RegisterAssociationData(
                 associationName = trim(associationName);
                 description = trim(description);
                 email = trimAndLower(email);
-                phoneNumber = phoneNumber == null ? null : new PhoneNumberData(
-                        trim(phoneNumber.prefix()),
-                        trim(phoneNumber.nationalNumber())
-                );
         }
 }

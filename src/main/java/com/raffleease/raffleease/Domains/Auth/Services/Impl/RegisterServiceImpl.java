@@ -43,8 +43,8 @@ public class RegisterServiceImpl implements RegisterService {
     @Transactional
     @Override
     public RegisterResponse register(RegisterRequest request, HttpServletResponse response) {
-        String encodedPassword = passwordEncoder.encode(request.userData().password());
-        User user = usersService.create(request.userData(), encodedPassword);
+        String encodedPassword = passwordEncoder.encode(request.userData().getPassword());
+        User user = usersService.createUser(request.userData(), encodedPassword, false);
         Association association = associationsService.create(request.associationData());
         associationsService.createMembership(association, user, ADMIN);
         handleUserVerification(user);

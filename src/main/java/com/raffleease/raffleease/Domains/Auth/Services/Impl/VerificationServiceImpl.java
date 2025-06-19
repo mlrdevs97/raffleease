@@ -26,7 +26,7 @@ public class VerificationServiceImpl implements VerificationService {
             throw new EmailVerificationException("Verification token is expired");
         }
 
-        usersService.enableUser(verificationToken.getUser());
+        usersService.setUserEnabled(verificationToken.getUser(), true);
         repository.delete(verificationToken);
     }
 }

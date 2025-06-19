@@ -1,8 +1,7 @@
 package com.raffleease.raffleease.Domains.Users.Services.Impls;
 
-import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterUserData;
-import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserData;
-import com.raffleease.raffleease.Domains.Users.DTOs.UpdateUserData;
+import com.raffleease.raffleease.Common.Models.BaseUserData;
+import com.raffleease.raffleease.Common.Models.CreateUserData;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
@@ -30,32 +29,35 @@ public class UsersServiceImpl implements UsersService {
     private final UsersRepository repository;
 
     @Override
-    public User create(RegisterUserData userData, String encodedPassword) {
-        return save(buildUser(userData, encodedPassword));
+    public User createUser(CreateUserData userData, String encodedPassword, boolean isEnabled) {
+        return save(buildUser(userData, encodedPassword, isEnabled));
     }
 
     @Override
-    public User createUser(CreateUserData userData, String encodedPassword) {
-        return save(buildUserFromCreateData(userData, encodedPassword));
-    }
+    public User updateUser(User user, BaseUserData userData) {
+        if (Objects.nonNull(userData.getFirstName())) {
+        user.setFirstName(userData.getFirstName());
+        }
+        if (Objects.nonNull(userData.getLastName())) {
+            user.setLastName(userData.getLastName());
+        }
+        if (Objects.nonNull(userData.getUserName())) {
+            user.setUserName(userData.getUserName());
+        }
+        if (Objects.nonNull(userData.getEmail())) {
+            user.setEmail(userData.getEmail());
+        }
+        if (Objects.nonNull(userData.getPhoneNumber())) {
+            String phoneNumber = userData.getPhoneNumber().prefix() + userData.getPhoneNumber().nationalNumber();
+            user.setPhoneNumber(phoneNumber);
+        }
 
-    @Override
-    public User updateUser(Long userId, UpdateUserData userData) {
-        User user = findById(userId);
-        updateUserFromData(user, userData);
         return save(user);
     }
 
     @Override
-    public User disableUser(Long userId) {
-        User user = findById(userId);
-        user.setEnabled(false);
-        return save(user);
-    }
-
-    @Override
-    public User enableUser(User user) {
-        user.setEnabled(true);
+    public User setUserEnabled(User user, boolean enabled) {
+        user.setEnabled(enabled);
         return save(user);
     }
 
@@ -106,50 +108,21 @@ public class UsersServiceImpl implements UsersService {
          return findByIdentifier(identifier);
      }
 
-    private User buildUser(RegisterUserData data, String encodedPassword) {
-        String phoneNumber = Objects.nonNull(data.phoneNumber())
-                ? data.phoneNumber().prefix() + data.phoneNumber().nationalNumber()
+    private User buildUser(CreateUserData userData, String encodedPassword, boolean isEnabled) {
+        String phoneNumber = Objects.nonNull(userData.getPhoneNumber())
+                ? userData.getPhoneNumber().prefix() + userData.getPhoneNumber().nationalNumber()
                 : null;
 
         return User.builder()
-                .firstName(data.firstName())
-                .lastName(data.lastName())
+                .firstName(userData.getFirstName())
+                .lastName(userData.getLastName())
                 .userRole(ASSOCIATION_MEMBER)
-                .userName(data.userName())
-                .email(data.email())
+                .userName(userData.getUserName())
+                .email(userData.getEmail())
                 .phoneNumber(phoneNumber)
                 .password(encodedPassword)
-                .isEnabled(false)
+                .isEnabled(isEnabled)
                 .build();
-    }
-
-    private User buildUserFromCreateData(CreateUserData data, String encodedPassword) {
-        String phoneNumber = Objects.nonNull(data.phoneNumber())
-                ? data.phoneNumber().prefix() + data.phoneNumber().nationalNumber()
-                : null;
-
-        return User.builder()
-                .firstName(data.firstName())
-                .lastName(data.lastName())
-                .userRole(ASSOCIATION_MEMBER)
-                .userName(data.userName())
-                .email(data.email())
-                .phoneNumber(phoneNumber)
-                .password(encodedPassword)
-                .isEnabled(false)
-                .build();
-    }
-
-    private void updateUserFromData(User user, UpdateUserData data) {
-        String phoneNumber = Objects.nonNull(data.phoneNumber())
-                ? data.phoneNumber().prefix() + data.phoneNumber().nationalNumber()
-                : null;
-
-        user.setFirstName(data.firstName());
-        user.setLastName(data.lastName());
-        user.setUserName(data.userName());
-        user.setEmail(data.email());
-        user.setPhoneNumber(phoneNumber);
     }
 
     private UserResponse toUserResponse(User user) {
