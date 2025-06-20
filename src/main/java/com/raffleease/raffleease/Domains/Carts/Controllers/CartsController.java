@@ -20,7 +20,7 @@ import java.net.URI;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/v1/associations/{associationId}/carts")
-public class AdminCartsController {
+public class CartsController {
     private final CartsService cartsService;
     private final ReservationsService reservationsService;
     private final CartsPersistenceService cartsPersistenceService;
@@ -44,7 +44,7 @@ public class AdminCartsController {
     }
 
     @GetMapping("/active")
-    public ResponseEntity<ApiResponse> getUserCart() {
+    public ResponseEntity<ApiResponse> getUserActiveCart() {
         return ResponseEntity.ok(
                 ResponseFactory.success(
                         cartsService.getUserCart(),
@@ -59,7 +59,7 @@ public class AdminCartsController {
     ) {
         return ResponseEntity.ok(
                 ResponseFactory.success(
-                        cartsPersistenceService.findById(cartId),
+                        cartsService.get(cartId),
                         "Cart retrieved successfully"
                 )
         );

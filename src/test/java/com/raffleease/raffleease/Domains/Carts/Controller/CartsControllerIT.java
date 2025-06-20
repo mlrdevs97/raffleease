@@ -33,8 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @DisplayName("Admin Carts Controller Integration Tests")
-class AdminCartsControllerIT extends AbstractIntegrationTest {
-
+class CartsControllerIT extends AbstractIntegrationTest {
     @Autowired
     private AuthTestUtils authTestUtils;
 

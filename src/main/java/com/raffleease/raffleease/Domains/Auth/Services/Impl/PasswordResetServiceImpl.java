@@ -36,11 +36,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final PasswordEncoder passwordEncoder;
     private final CorsProperties corsProperties;
 
-    /*
-     * Request a password reset for a user. 
-     * 
-     * @param request The request containing the email
-     */
     @Transactional
     @Override
     public void requestPasswordReset(ForgotPasswordRequest request) {
@@ -71,12 +66,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         }
     }
 
-    /**
-     * Reset the password for a user
-     *
-     * @param request The request containing the token and new password
-     * @throws EmailVerificationException If the token is invalid or expired
-     */
     @Transactional
     @Override
     public void resetPassword(ResetPasswordRequest request) {
@@ -98,12 +87,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         log.info("Password reset completed successfully for user: {}", passwordResetToken.getUser().getUserName());
     }
 
-    /**
-     * Create a password reset token for a user. 
-     * 
-     * @param user The user to create a token for
-     * @return The created password reset token
-     */
     private PasswordResetToken createPasswordResetToken(User user) {
         try {
             return passwordResetTokenRepository.save(PasswordResetToken.builder()
@@ -115,33 +98,5 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             log.info(ex.toString());
             throw new DatabaseException("Database error occurred while saving password reset token");
         }
-    }
-
-    /**
-     * Edit password for an authenticated user
-     *
-     * @param request The request containing current password, new password, and confirmation
-     * @throws AuthenticationException If the current password is incorrect
-     */
-    @Transactional
-    @Override
-    public void editPassword(EditPasswordRequest request) {
-        User authenticatedUser = usersService.getAuthenticatedUser();
-        
-        // Verify current password
-        if (!passwordEncoder.matches(request.currentPassword(), authenticatedUser.getPassword())) {
-            throw new AuthenticationException("Current password is incorrect");
-        }
-        
-        // Check if new password is different from current password
-        if (passwordEncoder.matches(request.password(), authenticatedUser.getPassword())) {
-            throw new AuthenticationException("New password must be different from current password");
-        }
-        
-        // Update password
-        String encodedNewPassword = passwordEncoder.encode(request.password());
-        usersService.updatePassword(authenticatedUser, encodedNewPassword);
-        
-        log.info("Password updated successfully for user: {}", authenticatedUser.getUserName());
     }
 } 

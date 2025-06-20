@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDateTime;
@@ -272,6 +274,219 @@ class RafflesSearchControllerIT extends AbstractIntegrationTest {
 
             // Assert
             result.andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should successfully search raffles for COLLABORATOR role")
+        void shouldSuccessfullySearchRafflesForCollaborator() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(searchEndpoint)
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(4))
+                    .andExpect(jsonPath("$.data.totalElements").value(4));
+        }
+
+        @Test
+        @DisplayName("Should successfully search raffles for ADMIN role")
+        void shouldSuccessfullySearchRafflesForAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.ADMIN);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(searchEndpoint)
+                    .with(user(adminData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(4))
+                    .andExpect(jsonPath("$.data.totalElements").value(4));
+        }
+
+        @Test
+        @DisplayName("Should successfully search raffles for MEMBER role")
+        void shouldSuccessfullySearchRafflesForMember() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.MEMBER);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(searchEndpoint)
+                    .with(user(memberData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content.length()").value(4))
+                    .andExpect(jsonPath("$.data.totalElements").value(4));
+        }
+
+        @Test
+        @DisplayName("Should filter raffles by title for COLLABORATOR role")
+        void shouldFilterRafflesByTitleForCollaborator() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(searchEndpoint)
+                    .param("title", "Summer")
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content.length()").value(1))
+                    .andExpect(jsonPath("$.data.content[0].title").value("Summer Raffle"));
+        }
+
+        @Test
+        @DisplayName("Should support pagination for COLLABORATOR role")
+        void shouldSupportPaginationForCollaborator() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(searchEndpoint)
+                    .param("page", "0")
+                    .param("size", "2")
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content.length()").value(2))
+                    .andExpect(jsonPath("$.data.totalElements").value(4))
+                    .andExpect(jsonPath("$.data.totalPages").value(2));
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /v1/associations/{associationId}/raffles/{id}")
+    class GetRaffleByIdTests {
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to get individual raffle details")
+        void shouldReturn403WhenCollaboratorTriesToGetRaffleDetails() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+            
+            Raffle testRaffle = testRaffles.get(0);
+            String getRaffleEndpoint = searchEndpoint + "/" + testRaffle.getId();
+
+            // Act
+            ResultActions result = mockMvc.perform(get(getRaffleEndpoint)
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators and members can access individual raffle details"));
+        }
+
+        @Test
+        @DisplayName("Should successfully get raffle details for ADMIN role")
+        void shouldSuccessfullyGetRaffleDetailsForAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.ADMIN);
+            
+            Raffle testRaffle = testRaffles.get(0);
+            String getRaffleEndpoint = searchEndpoint + "/" + testRaffle.getId();
+
+            // Act
+            ResultActions result = mockMvc.perform(get(getRaffleEndpoint)
+                    .with(user(adminData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Raffle retrieved successfully"))
+                    .andExpect(jsonPath("$.data.id").value(testRaffle.getId()))
+                    .andExpect(jsonPath("$.data.title").value(testRaffle.getTitle()));
+        }
+
+        @Test
+        @DisplayName("Should successfully get raffle details for MEMBER role")
+        void shouldSuccessfullyGetRaffleDetailsForMember() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.MEMBER);
+            
+            Raffle testRaffle = testRaffles.get(0);
+            String getRaffleEndpoint = searchEndpoint + "/" + testRaffle.getId();
+
+            // Act
+            ResultActions result = mockMvc.perform(get(getRaffleEndpoint)
+                    .with(user(memberData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Raffle retrieved successfully"))
+                    .andExpect(jsonPath("$.data.id").value(testRaffle.getId()))
+                    .andExpect(jsonPath("$.data.title").value(testRaffle.getTitle()));
+        }
+
+        @Test
+        @DisplayName("Should return 401 when user is not authenticated")
+        void shouldReturn401WhenNotAuthenticated() throws Exception {
+            // Arrange
+            Raffle testRaffle = testRaffles.get(0);
+            String getRaffleEndpoint = searchEndpoint + "/" + testRaffle.getId();
+
+            // Act
+            ResultActions result = mockMvc.perform(get(getRaffleEndpoint));
+
+            // Assert
+            result.andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when user doesn't belong to association")
+        void shouldReturn403WhenUserDoesntBelongToAssociation() throws Exception {
+            // Arrange
+            AuthTestData otherUserData = authTestUtils.createAuthenticatedUserWithCredentials(
+                    "otheruser", "other@example.com", "password123");
+            
+            Raffle testRaffle = testRaffles.get(0);
+            String getRaffleEndpoint = searchEndpoint + "/" + testRaffle.getId();
+
+            // Act
+            ResultActions result = mockMvc.perform(get(getRaffleEndpoint)
+                    .with(user(otherUserData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should return 404 when raffle doesn't exist")
+        void shouldReturn404WhenRaffleDoesntExist() throws Exception {
+            // Arrange
+            String nonExistentRaffleEndpoint = searchEndpoint + "/99999";
+
+            // Act
+            ResultActions result = mockMvc.perform(get(nonExistentRaffleEndpoint)
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isNotFound());
         }
     }
 } 

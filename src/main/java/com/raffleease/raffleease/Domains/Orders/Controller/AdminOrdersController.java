@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Orders.Controller;
 
 import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAccess;
+import com.raffleease.raffleease.Domains.Auth.Validations.RequireRole;
 import com.raffleease.raffleease.Domains.Orders.DTOs.*;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersCreateService;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersEditService;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+
+import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.MEMBER;
 
 @ValidateAssociationAccess
 @RequiredArgsConstructor
@@ -90,6 +93,7 @@ public class AdminOrdersController {
     }
 
     @PutMapping("/{orderId}/refund")
+    @RequireRole(value = MEMBER, message = "Only administrators and members can refund orders")
     public ResponseEntity<ApiResponse> refund(
             @PathVariable Long orderId
     ) {
@@ -100,6 +104,7 @@ public class AdminOrdersController {
     }
 
     @PutMapping("/{orderId}/unpaid")
+    @RequireRole(value = MEMBER, message = "Only administrators and members can set orders as unpaid")
     public ResponseEntity<ApiResponse> setUnpaid(
             @PathVariable Long orderId
     ) {

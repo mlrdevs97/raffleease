@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Domains.Associations.Services.Impl;
 
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsMembershipsRepository;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsMembershipService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
@@ -28,5 +29,11 @@ public class AssociationsMembershipServiceImpl implements AssociationsMembership
         return membershipsRepository.findByUser(user).orElseThrow(
                 () -> new NotFoundException("No association membership was found for user <" + user.getId() + ">")
         );
+    }
+
+    @Override
+    public AssociationRole getUserRoleInAssociation(User user) {
+        AssociationMembership membership = findByUser(user);
+        return membership.getRole();
     }
 }

@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
@@ -11,6 +12,7 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.test.web.servlet.ResultActions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -163,6 +165,18 @@ public class AuthTestUtils {
      * @return AuthTestData containing the new user and existing association
      */
     public AuthTestData createAuthenticatedUserInSameAssociation(Association association) {
+        return createAuthenticatedUserInSameAssociation(association, AssociationRole.MEMBER);
+    }
+
+    /**
+     * Creates a second authenticated user in the same association with the specified role.
+     * Useful for testing multi-user scenarios within the same association.
+     * 
+     * @param association the association to add the new user to
+     * @param role the association role for the new user
+     * @return AuthTestData containing the new user and existing association
+     */
+    public AuthTestData createAuthenticatedUserInSameAssociation(Association association, AssociationRole role) {
         // Generate unique identifier for this test instance
         String uniqueId = String.valueOf(System.currentTimeMillis());
         
@@ -181,7 +195,7 @@ public class AuthTestUtils {
         AssociationMembership membership = TestDataBuilder.membership()
                 .user(user)
                 .association(association)
-                .role(AssociationRole.MEMBER)
+                .role(role)
                 .build();
         membership = membershipsRepository.save(membership);
 
@@ -196,6 +210,42 @@ public class AuthTestUtils {
         assertThat(user.isEnabled()).isTrue();
 
         return new AuthTestData(user, association, membership, DEFAULT_TEST_PASSWORD);
+    }
+
+    /**
+     * Extracts the user ID from a JSON response containing a user object.
+     * 
+     * @param result the ResultActions from a MockMvc call
+     * @return the user ID from the response
+     * @throws Exception if extraction fails
+     */
+    public Long extractUserIdFromResponse(ResultActions result) throws Exception {
+        String responseJson = result.andReturn().getResponse().getContentAsString();
+        ObjectMapper objectMapper = new ObjectMapper();
+        
+        try {
+            // Parse the JSON response to extract the user ID from data.id
+            var jsonNode = objectMapper.readTree(responseJson);
+            var dataNode = jsonNode.get("data");
+            if (dataNode != null && dataNode.has("id")) {
+                return dataNode.get("id").asLong();
+            }
+            throw new RuntimeException("User ID not found in response: " + responseJson);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to extract user ID from response: " + responseJson, e);
+        }
+    }
+
+    /**
+     * Gets the association role for a user.
+     * 
+     * @param user the user to get the role for
+     * @return the association role of the user
+     */
+    public AssociationRole getUserRoleInAssociation(User user) {
+        AssociationMembership membership = membershipsRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("No membership found for user: " + user.getId()));
+        return membership.getRole();
     }
 
     /**

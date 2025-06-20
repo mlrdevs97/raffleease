@@ -7,12 +7,11 @@ import com.raffleease.raffleease.Domains.Images.DTOs.ImageResponse;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageUpload;
 import com.raffleease.raffleease.Domains.Images.Mappers.ImagesMapper;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesCreateService;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
-import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
+import com.raffleease.raffleease.Domains.Images.Validators.ImagesValidator;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesPersistenceService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.FileStorageException;
@@ -41,7 +40,7 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
     private final ImagesMapper mapper;
     private final AssociationsService associationsService;
     private final RafflesPersistenceService rafflesPersistenceService;
-    private final ImageValidator imageValidator;
+    private final ImagesValidator imagesValidator;
     private final UsersService usersService;
 
     @Value("${spring.application.hosts.server}")
@@ -97,7 +96,7 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
         List<MultipartFile> files = uploadRequest.files();
         int pendingImagesCount = repository.countImagesByUserAndStatus(user, PENDING);
         int totalImagesCount = pendingImagesCount + currentImagesCount;
-        imageValidator.validateTotalImagesNumber(files.size(), totalImagesCount);        
+        imagesValidator.validateTotalImagesNumber(files.size(), totalImagesCount);
         String batchId = UUID.randomUUID().toString();
         List<String> tempFilePaths = null;
         List<String> finalFilePaths = null;

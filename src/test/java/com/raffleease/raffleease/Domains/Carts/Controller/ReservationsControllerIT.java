@@ -276,7 +276,7 @@ class ReservationsControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isBadRequest())
                     .andExpect(content().contentType("application/json"))
                     .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("Cannot reserve tickets for a closed cart"));
+                    .andExpect(jsonPath("$.message").value("Cart must be ACTIVE to reserve or release tickets"));
 
             // Verify tickets remained available
             List<Ticket> tickets = ticketsRepository.findAllById(ticketIds);
@@ -288,6 +288,49 @@ class ReservationsControllerIT extends AbstractIntegrationTest {
             // Verify cart remained closed
             Cart updatedCart = cartsRepository.findById(testCart.getId()).orElseThrow();
             assertThat(updatedCart.getStatus()).isEqualTo(CartStatus.CLOSED);
+            assertThat(updatedCart.getTickets()).isEmpty();
+
+            // Verify statistics were not changed
+            Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(updatedRaffle.getStatistics().getAvailableTickets())
+                    .isEqualTo(initialStatistics.getAvailableTickets());
+        }
+
+        @Test
+        @DisplayName("Should fail when trying to reserve tickets in another user's cart")
+        void shouldFailWhenReservingTicketsInAnotherUsersCart() throws Exception {
+            // Arrange - Create another user and try to use first user's cart
+            AuthTestData otherAuthData = authTestUtils.createAuthenticatedUserWithCredentials(
+                    "otheruser", "other@example.com", "password123");
+
+            List<Long> ticketIds = availableTickets.stream()
+                    .limit(2)
+                    .map(Ticket::getId)
+                    .toList();
+            ReservationRequest request = new ReservationRequest(ticketIds);
+
+            // Act - Use other user's authentication for first user's cart
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .with(user(otherAuthData.user().getEmail()))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType("application/json"))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("You are not allowed to access this cart"));
+
+            // Verify tickets remained available
+            List<Ticket> tickets = ticketsRepository.findAllById(ticketIds);
+            assertThat(tickets).allSatisfy(ticket -> {
+                assertThat(ticket.getStatus()).isEqualTo(AVAILABLE);
+                assertThat(ticket.getCart()).isNull();
+            });
+
+            // Verify cart remained unchanged
+            Cart updatedCart = cartsRepository.findById(testCart.getId()).orElseThrow();
+            assertThat(updatedCart.getStatus()).isEqualTo(ACTIVE);
             assertThat(updatedCart.getTickets()).isEmpty();
 
             // Verify statistics were not changed

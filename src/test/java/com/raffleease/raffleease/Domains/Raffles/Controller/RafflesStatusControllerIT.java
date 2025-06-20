@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.StatusUpdate;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
@@ -595,6 +596,90 @@ class RafflesStatusControllerIT extends AbstractIntegrationTest {
 
                 // Assert
                 result.andExpect(status().isForbidden());
+            }
+
+            @Test
+            @DisplayName("Should return 403 when COLLABORATOR tries to update raffle status")
+            void shouldReturn403WhenCollaboratorTriesToUpdateRaffleStatus() throws Exception {
+                // Arrange
+                AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                        authData.association(), AssociationRole.COLLABORATOR);
+                
+                StatusUpdate statusUpdate = new StatusUpdate(ACTIVE);
+
+                // Act
+                ResultActions result = mockMvc.perform(patch(statusEndpoint)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdate))
+                        .with(user(collaboratorData.user().getEmail())));
+
+                // Assert
+                result.andExpect(status().isForbidden())
+                        .andExpect(content().contentType(APPLICATION_JSON))
+                        .andExpect(jsonPath("$.success").value(false))
+                        .andExpect(jsonPath("$.message").value("Only administrators and members can update raffle status"));
+
+                // Verify raffle status remains unchanged
+                Raffle unchangedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+                assertThat(unchangedRaffle.getStatus()).isEqualTo(RaffleStatus.PENDING);
+            }
+
+            @Test
+            @DisplayName("Should successfully update raffle status for ADMIN role")
+            void shouldSuccessfullyUpdateRaffleStatusForAdmin() throws Exception {
+                // Arrange
+                AuthTestData adminData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                        authData.association(), AssociationRole.ADMIN);
+                
+                StatusUpdate statusUpdate = new StatusUpdate(ACTIVE);
+
+                // Act
+                ResultActions result = mockMvc.perform(patch(statusEndpoint)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdate))
+                        .with(user(adminData.user().getEmail())));
+
+                // Assert
+                result.andExpect(status().isOk())
+                        .andExpect(content().contentType(APPLICATION_JSON))
+                        .andExpect(jsonPath("$.success").value(true))
+                        .andExpect(jsonPath("$.message").value("Raffle status updated successfully"))
+                        .andExpect(jsonPath("$.data.status").value("ACTIVE"))
+                        .andExpect(jsonPath("$.data.startDate").exists());
+
+                // Verify database state
+                Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+                assertThat(updatedRaffle.getStatus()).isEqualTo(ACTIVE);
+                assertThat(updatedRaffle.getStartDate()).isNotNull();
+            }
+
+            @Test
+            @DisplayName("Should successfully update raffle status for MEMBER role")
+            void shouldSuccessfullyUpdateRaffleStatusForMember() throws Exception {
+                // Arrange
+                AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                        authData.association(), AssociationRole.MEMBER);
+                
+                StatusUpdate statusUpdate = new StatusUpdate(ACTIVE);
+
+                // Act
+                ResultActions result = mockMvc.perform(patch(statusEndpoint)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdate))
+                        .with(user(memberData.user().getEmail())));
+
+                // Assert
+                result.andExpect(status().isOk())
+                        .andExpect(content().contentType(APPLICATION_JSON))
+                        .andExpect(jsonPath("$.success").value(true))
+                        .andExpect(jsonPath("$.message").value("Raffle status updated successfully"))
+                        .andExpect(jsonPath("$.data.status").value("ACTIVE"))
+                        .andExpect(jsonPath("$.data.startDate").exists());
+
+                // Verify database state
+                Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+                assertThat(updatedRaffle.getStatus()).isEqualTo(ACTIVE);
+                assertThat(updatedRaffle.getStartDate()).isNotNull();
             }
 
             @Test

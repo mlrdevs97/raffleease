@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAccess;
+import com.raffleease.raffleease.Domains.Auth.Validations.RequireRole;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleCreate;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleDTO;
 import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleEdit;
@@ -18,6 +19,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
+import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.MEMBER;
+
 @ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
@@ -29,6 +32,7 @@ public class RafflesController {
     private final RafflesQueryService rafflesQueryService;
 
     @PostMapping
+    @RequireRole(value = MEMBER, message = "Only administrators and members can create raffles")
     public ResponseEntity<ApiResponse> create(
             @PathVariable Long associationId,
             @RequestBody @Valid RaffleCreate raffleData
@@ -50,6 +54,7 @@ public class RafflesController {
     }
 
     @PutMapping("/{id}")
+    @RequireRole(value = MEMBER, message = "Only administrators and members can edit raffles")
     public ResponseEntity<ApiResponse> edit(
             @PathVariable Long id,
             @RequestBody @Valid RaffleEdit raffleEdit
@@ -61,6 +66,7 @@ public class RafflesController {
     }
 
     @PatchMapping("/{id}/status")
+    @RequireRole(value = MEMBER, message = "Only administrators and members can update raffle status")
     public ResponseEntity<ApiResponse> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody StatusUpdate request
@@ -72,6 +78,7 @@ public class RafflesController {
     }
 
     @GetMapping("/{id}")
+    @RequireRole(value = MEMBER, message = "Only administrators and members can access individual raffle details")
     public ResponseEntity<ApiResponse> get(
             @PathVariable Long id
     ) {
@@ -94,6 +101,7 @@ public class RafflesController {
     }
 
     @DeleteMapping("/{id}")
+    @RequireRole(value = MEMBER, message = "Only administrators and members can delete raffles")
     public ResponseEntity<Void> delete(
             @PathVariable Long id
     ) {

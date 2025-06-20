@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import static jakarta.persistence.EnumType.STRING;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -28,7 +30,7 @@ public class AssociationMembership {
     @JoinColumn(name = "association_id", nullable = false)
     private Association association;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(nullable = false)
     private AssociationRole role;
 }

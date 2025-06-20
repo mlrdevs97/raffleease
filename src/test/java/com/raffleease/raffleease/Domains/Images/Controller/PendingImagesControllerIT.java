@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Images.Controller;
 
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
@@ -155,6 +156,87 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
 
             // Assert
             result.andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to delete pending image")
+        void shouldReturn403WhenCollaboratorTriesToDeletePendingImage() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            // Act
+            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/" + testImage.getId())
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators and members can delete images"));
+
+            // Verify image status is unchanged
+            Image unchangedImage = imagesRepository.findById(testImage.getId()).orElseThrow();
+            assertThat(unchangedImage.getStatus()).isEqualTo(ImageStatus.PENDING);
+        }
+
+        @Test
+        @DisplayName("Should successfully delete pending image for ADMIN role")
+        void shouldSuccessfullyDeletePendingImageForAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.ADMIN);
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("admin-delete-pending.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            // Act
+            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/" + testImage.getId())
+                    .with(user(adminData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isNoContent());
+
+            // Verify image status is updated to MARKED_FOR_DELETION
+            Image updatedImage = imagesRepository.findById(testImage.getId()).orElseThrow();
+            assertThat(updatedImage.getStatus()).isEqualTo(ImageStatus.MARKED_FOR_DELETION);
+        }
+
+        @Test
+        @DisplayName("Should successfully delete pending image for MEMBER role")
+        void shouldSuccessfullyDeletePendingImageForMember() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.MEMBER);
+            Image testImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("member-delete-pending.jpg")
+                    .build();
+            testImage = imagesRepository.save(testImage);
+
+            // Act
+            ResultActions result = mockMvc.perform(delete(baseEndpoint + "/" + testImage.getId())
+                    .with(user(memberData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isNoContent());
+
+            // Verify image status is updated to MARKED_FOR_DELETION
+            Image updatedImage = imagesRepository.findById(testImage.getId()).orElseThrow();
+            assertThat(updatedImage.getStatus()).isEqualTo(ImageStatus.MARKED_FOR_DELETION);
         }
 
         @Test
@@ -315,6 +397,81 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
 
             // Assert
             result.andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to upload pending images")
+        void shouldReturn403WhenCollaboratorTriesToUploadPendingImages() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+            MockMultipartFile imageFile = new MockMultipartFile(
+                    "files", 
+                    "collaborator-test.jpg", 
+                    "image/jpeg", 
+                    createTestImageContent()
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(multipart(baseEndpoint)
+                    .file(imageFile)
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators and members can upload images"));
+        }
+
+        @Test
+        @DisplayName("Should successfully upload pending images for ADMIN role")
+        void shouldSuccessfullyUploadPendingImagesForAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.ADMIN);
+            MockMultipartFile imageFile = new MockMultipartFile(
+                    "files", 
+                    "admin-test.jpg", 
+                    "image/jpeg", 
+                    createTestImageContent()
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(multipart(baseEndpoint)
+                    .file(imageFile)
+                    .with(user(adminData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("New images created successfully"));
+        }
+
+        @Test
+        @DisplayName("Should successfully upload pending images for MEMBER role")
+        void shouldSuccessfullyUploadPendingImagesForMember() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.MEMBER);
+            MockMultipartFile imageFile = new MockMultipartFile(
+                    "files", 
+                    "member-test.jpg", 
+                    "image/jpeg", 
+                    createTestImageContent()
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(multipart(baseEndpoint)
+                    .file(imageFile)
+                    .with(user(memberData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("New images created successfully"));
         }
 
         @Test

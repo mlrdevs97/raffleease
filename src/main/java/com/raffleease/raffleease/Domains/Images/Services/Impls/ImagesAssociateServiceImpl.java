@@ -2,12 +2,11 @@ package com.raffleease.raffleease.Domains.Images.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesAssociateService;
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesDeleteService;
-import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
+import com.raffleease.raffleease.Domains.Images.Validators.ImagesValidator;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
@@ -32,7 +31,7 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
     private final UsersService usersService;
     private final FileStorageService fileStorageService;
     private final ImagesRepository repository;
-    private final ImageValidator imageValidator;
+    private final ImagesValidator imagesValidator;
 
     @Value("${spring.application.hosts.server}")
     private String host;
@@ -42,8 +41,8 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
         // 1: Perform validations
         List<Long> imageIds = imageDTOs.stream().map(ImageDTO::id).toList();
         List<Integer> imageOrders = imageDTOs.stream().map(ImageDTO::imageOrder).toList();
-        imageValidator.validateNoDuplicates(imageIds, "Duplicate image IDs found in request");
-        imageValidator.validateNoDuplicates(imageOrders, "Duplicate image orders detected");
+        imagesValidator.validateNoDuplicates(imageIds, "Duplicate image IDs found in request");
+        imagesValidator.validateNoDuplicates(imageOrders, "Duplicate image orders detected");
 
         // 2: Find existing images and separate valid from missing
         List<Image> existingImages = repository.findAllById(imageIds);
@@ -58,11 +57,11 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
         }
 
         // 4: Validate existing images
-        imageValidator.validateAtLeastOneImage(existingImages);
+        imagesValidator.validateAtLeastOneImage(existingImages);
         User user = usersService.getAuthenticatedUser();
-        imageValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
-        imageValidator.validatePendingImagesBelongToUser(user, existingImages);
-        imageValidator.validateAllArePending(existingImages);
+        imagesValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
+        imagesValidator.validatePendingImagesBelongToUser(user, existingImages);
+        imagesValidator.validateAllArePending(existingImages);
 
         // 5: Filter DTOs to only include existing images
         List<ImageDTO> validImageDTOs = imageDTOs.stream()
@@ -89,8 +88,8 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
         // 1: Perform validations
         List<Long> imageIds = imageDTOs.stream().map(ImageDTO::id).toList();
         List<Integer> imageOrders = imageDTOs.stream().map(ImageDTO::imageOrder).toList();
-        imageValidator.validateNoDuplicates(imageIds, "Duplicate image IDs found in request");
-        imageValidator.validateNoDuplicates(imageOrders, "Duplicate image orders detected");
+        imagesValidator.validateNoDuplicates(imageIds, "Duplicate image IDs found in request");
+        imagesValidator.validateNoDuplicates(imageOrders, "Duplicate image orders detected");
 
         // 2: Find existing images and separate valid from missing
         List<Image> existingImages = repository.findAllById(imageIds);
@@ -105,8 +104,8 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
         }
 
         // 4: Validate existing images (do this before making any changes)
-        imageValidator.validateAtLeastOneImage(existingImages);
-        imageValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
+        imagesValidator.validateAtLeastOneImage(existingImages);
+        imagesValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
 
         // Validate user ownership for pending images
         User user = usersService.getAuthenticatedUser();
@@ -114,13 +113,13 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
                 .filter(image -> image.getStatus() == PENDING)
                 .toList();
         if (!pendingImages.isEmpty()) {
-            imageValidator.validatePendingImagesBelongToUser(user, pendingImages);
+            imagesValidator.validatePendingImagesBelongToUser(user, pendingImages);
         }
         
         // Validate that pending images are not associated with any raffle
-        imageValidator.validatePendingImagesNotAssociatedWithRaffle(existingImages);
+        imagesValidator.validatePendingImagesNotAssociatedWithRaffle(existingImages);
         // Validate that non-pending images have ACTIVE status and belong to this raffle
-        imageValidator.validateActiveImagesBelongToRaffle(raffle, existingImages);
+        imagesValidator.validateActiveImagesBelongToRaffle(raffle, existingImages);
 
         // 5: Remove any existing raffle images that are no longer in the request
         List<Long> currentRaffleImageIds = raffle.getImages().stream()

@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Orders.Controller;
 
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Customers.Repository.CustomersRepository;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
@@ -183,6 +184,118 @@ class AdminOrdersRefundControllerIT extends AbstractIntegrationTest {
         }
 
         return ordersRepository.save(order);
+    }
+
+    @Nested
+    @DisplayName("PUT /v1/associations/{associationId}/orders/{orderId}/refund - Authorization Tests")
+    class AuthorizationTests {
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to refund order")
+        void shouldReturn403WhenCollaboratorTriesToRefundOrder() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+            
+            List<Ticket> orderTickets = new ArrayList<>(testRaffle.getTickets().subList(0, 1));
+            Order testOrder = createTestOrder(COMPLETED, orderTickets, BigDecimal.valueOf(25.00));
+            
+            String endpoint = baseEndpoint + "/" + testOrder.getId() + "/refund";
+
+            // Act
+            ResultActions result = mockMvc.perform(put(endpoint)
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType("application/json"))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators and members can refund orders"));
+
+            // Verify order was not changed
+            Order unchangedOrder = ordersRepository.findById(testOrder.getId()).orElseThrow();
+            assertThat(unchangedOrder.getStatus()).isEqualTo(COMPLETED);
+            assertThat(unchangedOrder.getRefundedAt()).isNull();
+        }
+
+        @Test
+        @DisplayName("Should successfully refund order for ADMIN role")
+        void shouldSuccessfullyRefundOrderForAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.ADMIN);
+            
+            List<Ticket> orderTickets = new ArrayList<>(testRaffle.getTickets().subList(0, 1));
+            Order testOrder = createTestOrder(COMPLETED, orderTickets, BigDecimal.valueOf(25.00));
+            
+            String endpoint = baseEndpoint + "/" + testOrder.getId() + "/refund";
+
+            // Act
+            ResultActions result = mockMvc.perform(put(endpoint)
+                    .with(user(adminData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType("application/json"))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Order refunded successfully"))
+                    .andExpect(jsonPath("$.data.status").value("REFUNDED"));
+
+            // Verify order was refunded
+            Order refundedOrder = ordersRepository.findById(testOrder.getId()).orElseThrow();
+            assertThat(refundedOrder.getStatus()).isEqualTo(REFUNDED);
+            assertThat(refundedOrder.getRefundedAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Should successfully refund order for MEMBER role")
+        void shouldSuccessfullyRefundOrderForMember() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.MEMBER);
+            
+            List<Ticket> orderTickets = new ArrayList<>(testRaffle.getTickets().subList(0, 1));
+            Order testOrder = createTestOrder(COMPLETED, orderTickets, BigDecimal.valueOf(25.00));
+            
+            String endpoint = baseEndpoint + "/" + testOrder.getId() + "/refund";
+
+            // Act
+            ResultActions result = mockMvc.perform(put(endpoint)
+                    .with(user(memberData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType("application/json"))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Order refunded successfully"))
+                    .andExpect(jsonPath("$.data.status").value("REFUNDED"));
+
+            // Verify order was refunded
+            Order refundedOrder = ordersRepository.findById(testOrder.getId()).orElseThrow();
+            assertThat(refundedOrder.getStatus()).isEqualTo(REFUNDED);
+            assertThat(refundedOrder.getRefundedAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Should return 401 when user is not authenticated")
+        void shouldReturn401WhenNotAuthenticated() throws Exception {
+            // Arrange
+            List<Ticket> orderTickets = new ArrayList<>(testRaffle.getTickets().subList(0, 1));
+            Order testOrder = createTestOrder(COMPLETED, orderTickets, BigDecimal.valueOf(25.00));
+            
+            String endpoint = baseEndpoint + "/" + testOrder.getId() + "/refund";
+
+            // Act
+            ResultActions result = mockMvc.perform(put(endpoint));
+
+            // Assert
+            result.andExpect(status().isUnauthorized());
+
+            // Verify order was not changed
+            Order unchangedOrder = ordersRepository.findById(testOrder.getId()).orElseThrow();
+            assertThat(unchangedOrder.getStatus()).isEqualTo(COMPLETED);
+            assertThat(unchangedOrder.getRefundedAt()).isNull();
+        }
     }
 
     @Nested

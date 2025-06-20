@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Orders.Controller;
 
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Customers.Repository.CustomersRepository;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
@@ -172,6 +173,118 @@ class AdminOrdersSetUnpaidControllerIT extends AbstractIntegrationTest {
         }
 
         return ordersRepository.save(order);
+    }
+
+    @Nested
+    @DisplayName("PUT /v1/associations/{associationId}/orders/{orderId}/unpaid - Authorization Tests")
+    class AuthorizationTests {
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to set order as unpaid")
+        void shouldReturn403WhenCollaboratorTriesToSetOrderAsUnpaid() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+            
+            List<Ticket> orderTickets = new ArrayList<>(testRaffle.getTickets().subList(0, 1));
+            Order testOrder = createTestOrder(PENDING, orderTickets, BigDecimal.valueOf(25.00));
+            
+            String endpoint = baseEndpoint + "/" + testOrder.getId() + "/unpaid";
+
+            // Act
+            ResultActions result = mockMvc.perform(put(endpoint)
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType("application/json"))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators and members can set orders as unpaid"));
+
+            // Verify order was not changed
+            Order unchangedOrder = ordersRepository.findById(testOrder.getId()).orElseThrow();
+            assertThat(unchangedOrder.getStatus()).isEqualTo(PENDING);
+            assertThat(unchangedOrder.getUnpaidAt()).isNull();
+        }
+
+        @Test
+        @DisplayName("Should successfully set order as unpaid for ADMIN role")
+        void shouldSuccessfullySetOrderAsUnpaidForAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.ADMIN);
+            
+            List<Ticket> orderTickets = new ArrayList<>(testRaffle.getTickets().subList(0, 1));
+            Order testOrder = createTestOrder(PENDING, orderTickets, BigDecimal.valueOf(25.00));
+            
+            String endpoint = baseEndpoint + "/" + testOrder.getId() + "/unpaid";
+
+            // Act
+            ResultActions result = mockMvc.perform(put(endpoint)
+                    .with(user(adminData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType("application/json"))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Order unpaid successfully"))
+                    .andExpect(jsonPath("$.data.status").value("UNPAID"));
+
+            // Verify order was set as unpaid
+            Order unpaidOrder = ordersRepository.findById(testOrder.getId()).orElseThrow();
+            assertThat(unpaidOrder.getStatus()).isEqualTo(UNPAID);
+            assertThat(unpaidOrder.getUnpaidAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Should successfully set order as unpaid for MEMBER role")
+        void shouldSuccessfullySetOrderAsUnpaidForMember() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.MEMBER);
+            
+            List<Ticket> orderTickets = new ArrayList<>(testRaffle.getTickets().subList(0, 1));
+            Order testOrder = createTestOrder(PENDING, orderTickets, BigDecimal.valueOf(25.00));
+            
+            String endpoint = baseEndpoint + "/" + testOrder.getId() + "/unpaid";
+
+            // Act
+            ResultActions result = mockMvc.perform(put(endpoint)
+                    .with(user(memberData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType("application/json"))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Order unpaid successfully"))
+                    .andExpect(jsonPath("$.data.status").value("UNPAID"));
+
+            // Verify order was set as unpaid
+            Order unpaidOrder = ordersRepository.findById(testOrder.getId()).orElseThrow();
+            assertThat(unpaidOrder.getStatus()).isEqualTo(UNPAID);
+            assertThat(unpaidOrder.getUnpaidAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Should return 401 when user is not authenticated")
+        void shouldReturn401WhenNotAuthenticated() throws Exception {
+            // Arrange
+            List<Ticket> orderTickets = new ArrayList<>(testRaffle.getTickets().subList(0, 1));
+            Order testOrder = createTestOrder(PENDING, orderTickets, BigDecimal.valueOf(25.00));
+            
+            String endpoint = baseEndpoint + "/" + testOrder.getId() + "/unpaid";
+
+            // Act
+            ResultActions result = mockMvc.perform(put(endpoint));
+
+            // Assert
+            result.andExpect(status().isUnauthorized());
+
+            // Verify order was not changed
+            Order unchangedOrder = ordersRepository.findById(testOrder.getId()).orElseThrow();
+            assertThat(unchangedOrder.getStatus()).isEqualTo(PENDING);
+            assertThat(unchangedOrder.getUnpaidAt()).isNull();
+        }
     }
 
     @Nested

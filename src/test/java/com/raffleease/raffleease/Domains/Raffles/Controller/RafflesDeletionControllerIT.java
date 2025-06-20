@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Raffles.Model.CompletionReason;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDateTime;
@@ -20,6 +22,8 @@ import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DisplayName("Raffles Deletion Controller Integration Tests")
@@ -184,6 +188,63 @@ class RafflesDeletionControllerIT extends AbstractIntegrationTest {
 
             // Assert
             result.andExpect(status().isForbidden()); // Association validation should trigger first
+        }
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to delete raffle")
+        void shouldReturn403WhenCollaboratorTriesToDeleteRaffle() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+
+            // Act
+            ResultActions result = mockMvc.perform(delete(deleteEndpoint)
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators and members can delete raffles"));
+
+            // Verify raffle still exists
+            assertThat(rafflesRepository.findById(testRaffle.getId())).isPresent();
+        }
+
+        @Test
+        @DisplayName("Should successfully delete raffle for ADMIN role")
+        void shouldSuccessfullyDeleteRaffleForAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.ADMIN);
+
+            // Act
+            ResultActions result = mockMvc.perform(delete(deleteEndpoint)
+                    .with(user(adminData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isNoContent());
+
+            // Verify raffle was deleted
+            assertThat(rafflesRepository.findById(testRaffle.getId())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should successfully delete raffle for MEMBER role")
+        void shouldSuccessfullyDeleteRaffleForMember() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.MEMBER);
+
+            // Act
+            ResultActions result = mockMvc.perform(delete(deleteEndpoint)
+                    .with(user(memberData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isNoContent());
+
+            // Verify raffle was deleted
+            assertThat(rafflesRepository.findById(testRaffle.getId())).isEmpty();
         }
     }
 } 

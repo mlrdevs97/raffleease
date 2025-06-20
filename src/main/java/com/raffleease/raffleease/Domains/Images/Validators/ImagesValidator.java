@@ -1,10 +1,7 @@
-package com.raffleease.raffleease.Domains.Images.Validators.Impl;
+package com.raffleease.raffleease.Domains.Images.Validators;
 
-import com.raffleease.raffleease.Common.Constants.Constants;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
-import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
-import com.raffleease.raffleease.Domains.Images.Validators.ImageValidator;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
@@ -20,29 +17,25 @@ import static com.raffleease.raffleease.Domains.Images.Model.ImageStatus.ACTIVE;
 import static com.raffleease.raffleease.Domains.Images.Model.ImageStatus.PENDING;
 
 @Component
-public class ImageValidatorImpl implements ImageValidator {
-    @Override
+public class ImagesValidator {
     public <T> void validateNoDuplicates(List<T> list, String message) {
         if (hasDuplicates(list)) {
             throw new IllegalArgumentException(message);
         }
     }
 
-    @Override
     public void validatePendingImagesBelongToUser(User user, List<Image> images) {
         if (images.stream().anyMatch(image -> !image.getUser().equals(user))) {
             throw new AuthorizationException("You are not authorized to use the specified pending image(s)");
         }
     }
 
-    @Override
     public void validateTotalImagesNumber(long uploadingImagesCount, long currentImagesCount) {
         if (currentImagesCount + uploadingImagesCount > MAX_IMAGES) {
             throw new BusinessException("You cannot upload more than 10 images in total");
         }
     }
 
-    @Override
     public void validatePendingImagesNotAssociatedWithRaffle(List<Image> images) {
         boolean hasInvalidImages = images.stream()
                 .anyMatch(image -> image.getStatus().equals(PENDING) && image.getRaffle() != null);
@@ -52,7 +45,6 @@ public class ImageValidatorImpl implements ImageValidator {
         }
     }
 
-    @Override
     public void validateActiveImagesBelongToRaffle(Raffle raffle, List<Image> images) {
         boolean hasInvalidImages = images.stream()
                 .filter(image -> !image.getStatus().equals(PENDING))
@@ -63,7 +55,6 @@ public class ImageValidatorImpl implements ImageValidator {
         }
     }
 
-    @Override
     public void validateAllArePending(List<Image> images) {
         boolean anyLinked = images.stream().anyMatch(img -> !img.getStatus().equals(PENDING));
         if (anyLinked) {
@@ -71,14 +62,12 @@ public class ImageValidatorImpl implements ImageValidator {
         }
     }
 
-    @Override
     public void validateAtLeastOneImage(List<Image> existingImages) {
         if (existingImages.isEmpty()) {
             throw new BusinessException("A raffle must have at least one image.");
         }
     }
 
-    @Override
     public void validateImagesBelongToAssociation(Association association, List<Image> images) {
         if (images.stream().anyMatch(image -> !image.getAssociation().equals(association))) {
             throw new AuthorizationException("You are not authorized to use the specified image(s)");

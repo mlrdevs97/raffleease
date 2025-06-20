@@ -9,13 +9,12 @@ import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseExce
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException;
 import com.raffleease.raffleease.Domains.Carts.Services.CartLifecycleService;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
+import com.raffleease.raffleease.Domains.Carts.Validations.CartsValidator;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,12 +32,12 @@ public class CartsServiceImpl implements CartsService {
     private final UsersService usersService;
     private final CartLifecycleService cartLifecycleService;
     private final CartsPersistenceService cartsPersistenceService;
+    private final CartsValidator cartsValidator;
 
     @Override
     @Transactional
     public CartDTO create() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User user = usersService.findByIdentifier(auth.getName());
+        User user = usersService.getAuthenticatedUser();
         closeUserActiveCart(user);
 
         log.info("Creating new cart for user: {}", user.getId());
@@ -52,7 +51,9 @@ public class CartsServiceImpl implements CartsService {
 
     @Override
     public CartDTO get(Long cartId) {
-        return mapper.fromCart(cartsPersistenceService.findById(cartId));
+        Cart cart = cartsPersistenceService.findById(cartId);
+        cartsValidator.validateIsUserCart(cart);
+        return mapper.fromCart(cart);
     }
 
     @Override

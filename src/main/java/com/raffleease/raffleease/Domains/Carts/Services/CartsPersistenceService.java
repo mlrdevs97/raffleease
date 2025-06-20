@@ -9,7 +9,6 @@ import com.raffleease.raffleease.Domains.Carts.Model.Cart;
  * Use this when you only need to save/persist cart state without business logic.
  */
 public interface CartsPersistenceService {
-    
     /**
      * Saves a cart entity to the database.
      * 

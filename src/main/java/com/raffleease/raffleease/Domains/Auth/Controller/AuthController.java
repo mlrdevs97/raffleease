@@ -5,7 +5,6 @@ import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.RegisterEmailVerificationRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.ForgotPasswordRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.ResetPasswordRequest;
-import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
 import com.raffleease.raffleease.Domains.Auth.Services.AuthValidationService;
 import com.raffleease.raffleease.Domains.Auth.Services.LoginService;
 import com.raffleease.raffleease.Domains.Auth.Services.PasswordResetService;
@@ -83,19 +82,6 @@ public class AuthController {
                 ResponseFactory.success(
                         null,
                         "Password has been reset successfully"
-                )
-        );
-    }
-
-    @PutMapping("/password")
-    public ResponseEntity<ApiResponse> editPassword(
-            @Valid @RequestBody EditPasswordRequest request
-    ) {
-        passwordResetService.editPassword(request);
-        return ResponseEntity.ok().body(
-                ResponseFactory.success(
-                        null,
-                        "Password has been updated successfully"
                 )
         );
     }

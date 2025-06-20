@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
@@ -221,6 +222,84 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
 
             // Assert
             result.andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to create raffle")
+        void shouldReturn403WhenCollaboratorTriesToCreateRaffle() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+            List<Image> pendingImages = createPendingImagesForUser(2);
+            RaffleCreate raffleCreate = createValidRaffleCreate(pendingImages, 1L, 20L);
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators and members can create raffles"));
+
+            // Verify no raffle was created
+            List<Raffle> savedRaffles = rafflesRepository.findAll();
+            assertThat(savedRaffles).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should successfully create raffle for ADMIN role")
+        void shouldSuccessfullyCreateRaffleForAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.ADMIN);
+            List<Image> pendingImages = createPendingImagesForAdmin(adminData, 2);
+            RaffleCreate raffleCreate = createValidRaffleCreateForUser(adminData, pendingImages, 1L, 20L);
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(adminData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isCreated())
+                    .andExpect(content().contentType(APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("New raffle created successfully"));
+
+            // Verify raffle was created
+            List<Raffle> savedRaffles = rafflesRepository.findAll();
+            assertThat(savedRaffles).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Should successfully create raffle for MEMBER role")
+        void shouldSuccessfullyCreateRaffleForMember() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.MEMBER);
+            List<Image> pendingImages = createPendingImagesForMember(memberData, 2);
+            RaffleCreate raffleCreate = createValidRaffleCreateForUser(memberData, pendingImages, 1L, 20L);
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(memberData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isCreated())
+                    .andExpect(content().contentType(APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("New raffle created successfully"));
+
+            // Verify raffle was created
+            List<Raffle> savedRaffles = rafflesRepository.findAll();
+            assertThat(savedRaffles).hasSize(1);
         }
 
         @Test
@@ -671,6 +750,36 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         return images;
     }
 
+    private List<Image> createPendingImagesForAdmin(AuthTestData adminData, int count) {
+        List<Image> images = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Image image = TestDataBuilder.image()
+                    .fileName("admin-pending-image-" + (i + 1) + ".jpg")
+                    .user(adminData.user())
+                    .association(adminData.association())
+                    .status(ImageStatus.PENDING)
+                    .imageOrder(i + 1)
+                    .build();
+            images.add(imagesRepository.save(image));
+        }
+        return images;
+    }
+
+    private List<Image> createPendingImagesForMember(AuthTestData memberData, int count) {
+        List<Image> images = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Image image = TestDataBuilder.image()
+                    .fileName("member-pending-image-" + (i + 1) + ".jpg")
+                    .user(memberData.user())
+                    .association(memberData.association())
+                    .status(ImageStatus.PENDING)
+                    .imageOrder(i + 1)
+                    .build();
+            images.add(imagesRepository.save(image));
+        }
+        return images;
+    }
+
     private RaffleCreate createValidRaffleCreate(List<Image> pendingImages, Long lowerLimit, Long amount) {
         return new RaffleCreate(
                 "Test Raffle",
@@ -746,5 +855,16 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         assertThat(raffle.getStatistics().getRevenue()).isEqualTo(BigDecimal.ZERO);
         assertThat(raffle.getStatistics().getTotalOrders()).isEqualTo(0L);
         assertThat(raffle.getStatistics().getParticipants()).isEqualTo(0L);
+    }
+
+    private RaffleCreate createValidRaffleCreateForUser(AuthTestData userData, List<Image> pendingImages, Long lowerLimit, Long amount) {
+        return new RaffleCreate(
+                "Test Raffle for " + userData.user().getUserName(),
+                "This is a test raffle for integration testing",
+                null,
+                LocalDateTime.now().plusDays(7),
+                convertToImageDTOs(pendingImages),
+                new TicketsCreate(amount, BigDecimal.valueOf(15.50), lowerLimit)
+        );
     }
 } 

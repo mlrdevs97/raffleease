@@ -2,6 +2,7 @@ package com.raffleease.raffleease.Domains.Raffles.Controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Images.DTOs.ImageDTO;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
@@ -857,6 +858,96 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
                 assertThat(image.getStatus()).isEqualTo(ImageStatus.ACTIVE); // Both should be ACTIVE
                 assertThat(image.getRaffle()).isEqualTo(testRaffle); // Both linked to raffle
             }
+        }
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to edit raffle")
+        void shouldReturn403WhenCollaboratorTriesToEditRaffle() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+            
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    "Updated Title", null, null, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators and members can edit raffles"));
+
+            // Verify raffle remains unchanged
+            Raffle unchangedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(unchangedRaffle.getTitle()).isEqualTo("Original Raffle Title");
+        }
+
+        @Test
+        @DisplayName("Should successfully edit raffle for ADMIN role")
+        void shouldSuccessfullyEditRaffleForAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.ADMIN);
+            
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    "Admin Updated Title", "Admin updated description", null, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(adminData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Raffle edited successfully"))
+                    .andExpect(jsonPath("$.data.title").value("Admin Updated Title"))
+                    .andExpect(jsonPath("$.data.description").value("Admin updated description"));
+
+            // Verify database state
+            Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(updatedRaffle.getTitle()).isEqualTo("Admin Updated Title");
+            assertThat(updatedRaffle.getDescription()).isEqualTo("Admin updated description");
+        }
+
+        @Test
+        @DisplayName("Should successfully edit raffle for MEMBER role")
+        void shouldSuccessfullyEditRaffleForMember() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.MEMBER);
+            
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    "Member Updated Title", "Member updated description", null, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(memberData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Raffle edited successfully"))
+                    .andExpect(jsonPath("$.data.title").value("Member Updated Title"))
+                    .andExpect(jsonPath("$.data.description").value("Member updated description"));
+
+            // Verify database state
+            Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(updatedRaffle.getTitle()).isEqualTo("Member Updated Title");
+            assertThat(updatedRaffle.getDescription()).isEqualTo("Member updated description");
         }
     }
 
