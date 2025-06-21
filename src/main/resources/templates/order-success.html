@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmación de Compra</title>
+    <title>Purchase Confirmation</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -90,17 +90,17 @@
 <body>
 <div class="email-container">
     <div class="header">
-        <h1>¡Gracias por tu compra, <span th:text="${customerName}">[Client Name]</span>!</h1>
+        <h1>Thank you for your purchase, <span th:text="${customerName}">[Client Name]</span>!</h1>
     </div>
     <div class="content">
-        <h2>Detalles de tu compra</h2>
-        <p><strong>Referencia de compra:</strong> <span th:text="${orderReference}">[Order Reference]</span></p>
-        <p><strong>Fecha del pedido:</strong> <span th:text="${orderDate}">[Date]</span></p>
-        <p><strong>Total pagado:</strong> $<span th:text="${paymentTotal}">[Total Price]</span></p>
+        <h2>Your purchase details</h2>
+        <p><strong>Purchase reference:</strong> <span th:text="${orderReference}">[Order Reference]</span></p>
+        <p><strong>Order date:</strong> <span th:text="${orderDate}">[Date]</span></p>
+        <p><strong>Total paid:</strong> $<span th:text="${paymentTotal}">[Total Price]</span></p>
 
         <div class="ticket-list">
-            <h2>Tickets comprados:</h2>
-            <!-- Iterar sobre los tickets -->
+            <h2>Purchased tickets:</h2>
+            <!-- Iterate over tickets -->
             <div th:each="ticket : ${ticketList}" class="ticket-item">
                 <svg class="ticket-svg" fill="#3b82f6" height="32px" width="32px" version="1.1" id="Capa_1"
                      xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -141,14 +141,15 @@
                     </svg>
                 <span>Ticket #<span th:text="${ticket}">[Ticket Number]</span></span>
             </div>
-            <!-- Fin de iteración -->
+            <!-- End of iteration -->
         </div>
 
-        <p>Esperamos que tengas mucha suerte en el sorteo. </p>
-        <p>¡Gracias por apoyar esta causa!</p>
+        <p>We hope you have great luck in the drawing. </p>
+        <p>Thank you for supporting this cause!</p>
     </div>
     <div class="footer">
-        <p>Si tienes alguna duda, por favor contáctanos en <a href="mailto:soporte@tuaplicacion.com">contacto@raffleease.com</a>.
+        <p>If you have any questions, please contact us at 
+            <a th:href="'mailto:' + ${senderEmail}" th:text="${senderEmail}">contact@raffleease.com</a>.
         </p>
         <p>© 2024 Raffleease.</p>
     </div>

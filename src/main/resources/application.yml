@@ -44,20 +44,10 @@ spring:
       ddl-auto: update
     database: postgresql
 
-  mail:
-    host: ${MAIL_HOST}
-    port: ${MAIL_PORT}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-        connectiontimeout: 5000
-        timeout: 3000
-        writetimeout: 5000
+mail:
+  API-KEY: ${MAIL_API_KEY}
+  API-URL: ${MAIL_API_URL}
+  SENDER-EMAIL: ${MAIL_SENDER_EMAIL}
 
 rate-limiting:
   enabled: ${RATE_LIMITING_ENABLED:true}

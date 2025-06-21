@@ -2,6 +2,8 @@ package com.raffleease.raffleease.Domains.Notifications.Services.Impls;
 
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Notifications.Model.NotificationType;
+import com.raffleease.raffleease.Domains.Notifications.Model.MailRequest;
+import com.raffleease.raffleease.Domains.Notifications.Model.MailResponse;
 import com.raffleease.raffleease.Domains.Notifications.Services.EmailsService;
 import com.raffleease.raffleease.Domains.Notifications.Services.NotificationsService;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
@@ -9,15 +11,18 @@ import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
 import com.raffleease.raffleease.Domains.Payments.Model.Payment;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.CustomMailException;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
@@ -32,25 +37,30 @@ import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplat
 import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.ORDER_SUCCESS;
 import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.PASSWORD_RESET;
 import static com.raffleease.raffleease.Domains.Notifications.Model.NotificationChannel.EMAIL;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.springframework.mail.javamail.MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class EmailsServiceImpl implements EmailsService {
     private final NotificationsService notificationsService;
-    private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
+    private final RestTemplate restTemplate;
 
-    @Value("${MAIL_USERNAME}")
-    private String userName;
+    @Value("${mail.API-KEY}")
+    private String apiKey;
+
+    @Value("${mail.API-URL}")
+    private String apiUrl;
+
+    @Value("${mail.SENDER-EMAIL}")
+    private String senderEmail;
 
     @Override
     @Async
     public void sendEmailVerificationEmail(User user, String link) {
         Map<String, Object> variables = createEmailVerificationEmailVariables(user, link);
-        sendEmail(user.getEmail(), EMAIL_VERIFICATION.getSubject(), EMAIL_VERIFICATION.getTemplate(), variables);
+        String htmlContent = processTemplate(EMAIL_VERIFICATION.getTemplate(), variables);
+        sendEmail(user.getEmail(), EMAIL_VERIFICATION.getSubject(), htmlContent);
         notificationsService.create(NotificationType.EMAIL_VERIFICATION, EMAIL);
     }
 
@@ -58,7 +68,8 @@ public class EmailsServiceImpl implements EmailsService {
     @Async
     public void sendPasswordResetEmail(User user, String link) {
         Map<String, Object> variables = createPasswordResetEmailVariables(user, link);
-        sendEmail(user.getEmail(), PASSWORD_RESET.getSubject(), PASSWORD_RESET.getTemplate(), variables);
+        String htmlContent = processTemplate(PASSWORD_RESET.getTemplate(), variables);
+        sendEmail(user.getEmail(), PASSWORD_RESET.getSubject(), htmlContent);
         notificationsService.create(NotificationType.PASSWORD_RESET, EMAIL);
     }
 
@@ -66,7 +77,8 @@ public class EmailsServiceImpl implements EmailsService {
     @Async
     public void sendOrderSuccessEmail(Order order) {
         Map<String, Object> variables = createOrderSuccessEmailVariables(order);
-        sendEmail(order.getCustomer().getEmail(), ORDER_SUCCESS.getSubject(), ORDER_SUCCESS.getTemplate(), variables);
+        String htmlContent = processTemplate(ORDER_SUCCESS.getTemplate(), variables);
+        sendEmail(order.getCustomer().getEmail(), ORDER_SUCCESS.getSubject(), htmlContent);
         notificationsService.create(NotificationType.ORDER_SUCCESS, EMAIL);
     }
 
@@ -76,6 +88,7 @@ public class EmailsServiceImpl implements EmailsService {
 
         variables.put("customerName", user.getUserName());
         variables.put("customerEmail", user.getEmail());
+        variables.put("senderEmail", senderEmail);
         variables.put("registrationDate", formattedRegistrationDate);
         variables.put("verificationUrl", link);
 
@@ -88,6 +101,7 @@ public class EmailsServiceImpl implements EmailsService {
 
         variables.put("customerName", user.getUserName());
         variables.put("customerEmail", user.getEmail());
+        variables.put("senderEmail", senderEmail);
         variables.put("requestDate", formattedRequestDate);
         variables.put("resetUrl", link);
 
@@ -109,6 +123,7 @@ public class EmailsServiceImpl implements EmailsService {
         variables.put("customerName", customer.getFullName());
         variables.put("customerEmail", customer.getEmail());
         variables.put("customerPhoneNumber", customer.getPhoneNumber());
+        variables.put("senderEmail", senderEmail);
         variables.put("paymentMethod", paymentData.getPaymentMethod());
         variables.put("paymentTotal", paymentData.getTotal());
         variables.put("orderReference", order.getOrderReference());
@@ -119,22 +134,58 @@ public class EmailsServiceImpl implements EmailsService {
         return variables;
     }
 
-    private void sendEmail(String to, String subject, String templateName, Map<String, Object> variables) {
+    private String processTemplate(String templateName, Map<String, Object> variables) {
         try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, MULTIPART_MODE_MIXED_RELATED, UTF_8.name());
             Context context = new Context();
             context.setVariables(variables);
-            String htmlTemplate = templateEngine.process(templateName, context);
+            return templateEngine.process(templateName, context);
+        } catch (Exception ex) {
+            log.error("Error processing email template {}: {}", templateName, ex.getMessage());
+            throw new CustomMailException("Error processing email template: " + ex.getMessage());
+        }
+    }
 
-            messageHelper.setSubject(subject);
-            messageHelper.setText(htmlTemplate, true);
-            messageHelper.setTo(to);
-            messageHelper.setFrom(userName);
+    private void sendEmail(String to, String subject, String htmlContent) {
+        try {
+            MailRequest emailRequest = MailRequest.builder()
+                    .sender(senderEmail)
+                    .to(List.of(to))
+                    .subject(subject)
+                    .htmlBody(htmlContent)
+                    .build();
 
-            mailSender.send(mimeMessage);
-        } catch (MessagingException ex) {
-            throw new CustomMailException("Error occurred while sending notification: " + ex.getMessage());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-Smtp2go-Api-Key", apiKey);
+            headers.set("accept", "application/json");
+
+            HttpEntity<MailRequest> requestEntity = new HttpEntity<>(emailRequest, headers);
+
+            // Construct the complete endpoint URL
+            String emailEndpoint = apiUrl + "/email/send";
+
+            ResponseEntity<MailResponse> response = restTemplate.exchange(
+                    emailEndpoint,
+                    HttpMethod.POST,
+                    requestEntity,
+                    MailResponse.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                MailResponse responseBody = response.getBody();
+                if (responseBody.getData() != null && responseBody.getData().getSucceeded() != null && responseBody.getData().getSucceeded() > 0) {
+                    log.info("Email sent successfully to {} with email ID: {}", to, responseBody.getData().getEmailId());
+                } else {
+                    String errorMessage = responseBody.getData() != null ? responseBody.getData().getError() : "Unknown error";
+                    throw new CustomMailException("Failed to send email: " + errorMessage);
+                }
+            } else {
+                throw new CustomMailException("Failed to send email: HTTP " + response.getStatusCode());
+            }
+
+        } catch (RestClientException ex) {
+            log.error("Error sending email to {}: {}", to, ex.getMessage());
+            throw new CustomMailException("Error occurred while sending email: " + ex.getMessage());
         }
     }
 }
