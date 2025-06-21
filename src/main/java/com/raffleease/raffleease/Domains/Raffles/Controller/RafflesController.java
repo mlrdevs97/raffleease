@@ -10,6 +10,7 @@ import com.raffleease.raffleease.Domains.Raffles.DTOs.RaffleSearchFilters;
 import com.raffleease.raffleease.Domains.Raffles.Services.*;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
+import com.raffleease.raffleease.Common.RateLimiting.RateLimit;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
+import static com.raffleease.raffleease.Common.RateLimiting.RateLimit.AccessLevel.PRIVATE;
 import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.MEMBER;
 
 @ValidateAssociationAccess
@@ -33,6 +35,7 @@ public class RafflesController {
 
     @PostMapping
     @RequireRole(value = MEMBER, message = "Only administrators and members can create raffles")
+    @RateLimit(operation = "create", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> create(
             @PathVariable Long associationId,
             @RequestBody @Valid RaffleCreate raffleData
@@ -55,6 +58,7 @@ public class RafflesController {
 
     @PutMapping("/{id}")
     @RequireRole(value = MEMBER, message = "Only administrators and members can edit raffles")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> edit(
             @PathVariable Long id,
             @RequestBody @Valid RaffleEdit raffleEdit
@@ -67,6 +71,7 @@ public class RafflesController {
 
     @PatchMapping("/{id}/status")
     @RequireRole(value = MEMBER, message = "Only administrators and members can update raffle status")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody StatusUpdate request
@@ -78,7 +83,7 @@ public class RafflesController {
     }
 
     @GetMapping("/{id}")
-    @RequireRole(value = MEMBER, message = "Only administrators and members can access individual raffle details")
+    @RateLimit(operation = "read", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> get(
             @PathVariable Long id
     ) {
@@ -89,6 +94,7 @@ public class RafflesController {
     }
 
     @GetMapping
+    @RateLimit(operation = "search", accessLevel = RateLimit.AccessLevel.PUBLIC)
     public ResponseEntity<ApiResponse> search(
             @PathVariable Long associationId,
             RaffleSearchFilters searchFilters,
@@ -102,6 +108,7 @@ public class RafflesController {
 
     @DeleteMapping("/{id}")
     @RequireRole(value = MEMBER, message = "Only administrators and members can delete raffles")
+    @RateLimit(operation = "delete", accessLevel = PRIVATE)
     public ResponseEntity<Void> delete(
             @PathVariable Long id
     ) {

@@ -5,7 +5,6 @@ import com.raffleease.raffleease.Domains.Auth.DTOs.ForgotPasswordRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.ResetPasswordRequest;
 
 public interface PasswordResetService {
-
     /*
      * Request a password reset for a non-authenticated user to be sent to their email.
      *
@@ -14,7 +13,7 @@ public interface PasswordResetService {
     void requestPasswordReset(ForgotPasswordRequest request);
 
     /**
-     * Reset the password for a non-user using a token sent to their email.
+     * Reset the password for a non-authenticated user using a token sent to their email.
      *
      * @param request The request containing the token and new password
      * @throws EmailVerificationException If the token is invalid or expired

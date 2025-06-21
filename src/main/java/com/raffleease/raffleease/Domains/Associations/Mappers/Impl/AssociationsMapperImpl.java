@@ -2,7 +2,7 @@ package com.raffleease.raffleease.Domains.Associations.Mappers.Impl;
 
 import com.raffleease.raffleease.Domains.Associations.DTO.AssociationDTO;
 import com.raffleease.raffleease.Domains.Associations.Mappers.AddressMapper;
-import com.raffleease.raffleease.Domains.Associations.Mappers.IAssociationsMapper;
+import com.raffleease.raffleease.Domains.Associations.Mappers.AssociationsMapper;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterAssociationData;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,7 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
-public class AssociationsMapper implements IAssociationsMapper {
+public class AssociationsMapperImpl implements AssociationsMapper {
     private final AddressMapper addressMapper;
 
     public Association toAssociation(RegisterAssociationData data) {

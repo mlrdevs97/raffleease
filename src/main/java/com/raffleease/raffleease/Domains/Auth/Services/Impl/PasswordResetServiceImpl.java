@@ -57,7 +57,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
                     .queryParam("token", passwordResetToken.getToken())
                     .build()
                     .toUriString();
-                    
             emailsService.sendPasswordResetEmail(user, resetLink);
             
             log.info("Password reset email sent successfully to: {}", request.email());
@@ -77,13 +76,9 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             throw new EmailVerificationException("Password reset token has expired");
         }
 
-        // Update user's password
         String encodedPassword = passwordEncoder.encode(request.password());
         usersService.updatePassword(passwordResetToken.getUser(), encodedPassword);
-
-        // Delete the used token
         passwordResetTokenRepository.delete(passwordResetToken);
-        
         log.info("Password reset completed successfully for user: {}", passwordResetToken.getUser().getUserName());
     }
 

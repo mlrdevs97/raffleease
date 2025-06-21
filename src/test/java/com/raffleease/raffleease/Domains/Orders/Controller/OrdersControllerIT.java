@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @DisplayName("Admin Orders Controller Integration Tests")
-class AdminOrdersControllerIT extends AbstractIntegrationTest {
+class OrdersControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     private AuthTestUtils authTestUtils;

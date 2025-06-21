@@ -57,7 +57,7 @@ public class CartsServiceImpl implements CartsService {
     }
 
     @Override
-    public CartDTO getUserCart() {
+    public CartDTO getUserActiveCart() {
         User user = usersService.getAuthenticatedUser();
         Cart cart = repository.findByUserAndStatus(user, ACTIVE)
                 .orElseThrow(() -> new NotFoundException("Active cart not found for user with id <" + user.getId() + ">"));

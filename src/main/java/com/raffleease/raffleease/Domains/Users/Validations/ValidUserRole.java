@@ -8,10 +8,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Validation annotation to ensure that only MEMBER and COLLABORATOR roles
- * are allowed when creating new users. ADMIN role creation is restricted.
- */
 @Documented
 @Constraint(validatedBy = ValidUserRoleValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})

@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Associations.Services.Impl;
 
-import com.raffleease.raffleease.Domains.Associations.Mappers.IAssociationsMapper;
+import com.raffleease.raffleease.Domains.Associations.Mappers.AssociationsMapper;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
@@ -26,7 +26,7 @@ import java.util.Optional;
 public class AssociationsServiceImpl implements AssociationsService {
     private final AssociationsRepository associationsRepository;
     private final AssociationsMembershipsRepository membershipsRepository;
-    private final IAssociationsMapper mapper;
+    private final AssociationsMapper mapper;
 
     @Transactional
     @Override

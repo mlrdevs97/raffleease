@@ -11,6 +11,7 @@ import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
 public interface UsersManagementService {
     /**
      * Create a new user account.
+     * Only ADMINS of the association can create new user accounts for the association.
      *
      * @param associationId The ID of the association
      * @param request The request containing user data and role
@@ -20,6 +21,8 @@ public interface UsersManagementService {
 
     /**
      * Edit a user account.
+     * AN user can only edit their own account.
+     * Only ADMINS of the association can edit other user accounts.
      *
      * @param associationId The ID of the association
      * @param userId The ID of the user to edit
@@ -30,7 +33,9 @@ public interface UsersManagementService {
 
     /**
      * Disable a user account. Disabled accounts cannot login to the application.
-     *
+     * Only ADMINS of the association can disable user accounts.
+     * ADMIN account cannot be disabled.
+     * 
      * @param associationId The ID of the association
      * @param userId The ID of the user to disable
      */
@@ -38,6 +43,7 @@ public interface UsersManagementService {
     
     /**
      * Enable a user account. Enabled accounts can login to the application.
+     * Only ADMINS of the association can enable user accounts.
      *
      * @param associationId The ID of the association
      * @param userId The ID of the user to enable
@@ -46,6 +52,8 @@ public interface UsersManagementService {
 
     /**
      * Edit password for an authenticated user using their current password.
+     * Only authenticated users can edit their own password.
+     * ADMIN cannot edit other users' passwords.
      *
      * @param request The request containing current password, new password, and confirmation
      * @throws AuthenticationException If the current password is incorrect

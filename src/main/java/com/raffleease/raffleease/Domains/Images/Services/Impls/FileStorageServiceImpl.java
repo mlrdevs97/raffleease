@@ -25,53 +25,25 @@ public class FileStorageServiceImpl implements FileStorageService {
     @Value("${spring.storage.images.base_path}")
     private String basePath;
 
-    /*
-     * Move file to raffle
-     * Use this method when you want to move a file from a pending directory to a raffle directory.
-     * This maintains consistent file naming with the batch operations.
-     * 
-     * @param associationId Association ID
-     * @param raffleId Raffle ID
-     * @param imageId Image ID
-     * @param currentPath Path of the current file (can be temp or pending)
-     * @return Path of the final file
-     */
     @Override
     public Path moveFileToRaffle(String associationId, String raffleId, String imageId, String currentPath) {
         try {
             Path currentFile = Paths.get(currentPath);
-            
-            // Check if source file exists
             if (!Files.exists(currentFile)) {
                 throw new FileStorageException("Source file not found: " + currentPath);
             }
-            
-            // Extract original filename (handle both temp and pending formats)
             String originalFileName = extractOriginalFileNameForSingleMove(currentFile.getFileName().toString());
-            
-            // Create final directory
             Path finalDir = Paths.get(basePath, "associations", associationId, "raffles", raffleId, "images");
             Files.createDirectories(finalDir);
-            
-            // Use consistent naming: imageId_originalFileName
             String finalFileName = imageId + "_" + originalFileName;
             Path finalFilePath = finalDir.resolve(finalFileName);
-            
-            // Move file
             Files.move(currentFile, finalFilePath);
-            
             return finalFilePath;
         } catch (IOException e) {
             throw new FileStorageException("Failed to move file to raffle: " + e.getMessage());
         }
     }
 
-    /*
-     * Load file from path.
-     * 
-     * @param filePath Path of the file to load
-     * @return Resource of the file
-     */
     @Override
     public Resource load(String filePath) {
         try {
@@ -92,11 +64,6 @@ public class FileStorageServiceImpl implements FileStorageService {
         }
     }
 
-    /*
-     * Delete file
-     * 
-     * @param filePath Path of the file to delete
-     */
     @Override
     public void delete(String filePath) {
         try {
@@ -106,16 +73,6 @@ public class FileStorageServiceImpl implements FileStorageService {
         }
     }
 
-    /*
-     * Save temporary batch of files.
-     * If the batch save fails, the temporary files will be cleaned up.
-     * Use this method when you want to save a batch of files to a temporary directory.
-     * 
-     * @param files List of files to save
-     * @param associationId Association ID
-     * @param batchId Batch ID
-     * @return List of temporary file paths
-     */
     @Override
     public List<String> saveTemporaryBatch(List<MultipartFile> files, String associationId, String batchId) {
         List<String> tempPaths = new ArrayList<>();
@@ -145,17 +102,6 @@ public class FileStorageServiceImpl implements FileStorageService {
         }
     }
 
-    /*
-     * Move temporary batch to final
-     * If the batch move fails, the temporary files will be cleaned up.
-     * Use this method when you want to move a batch of files from a temporary directory to a final directory.
-     * 
-     * @param tempPaths List of temporary file paths to move
-     * @param associationId Association ID
-     * @param raffleId Raffle ID
-     * @param imageIds List of image IDs
-     * @return List of final file paths
-     */
     @Override
     public List<String> moveTemporaryBatchToFinal(List<String> tempPaths, String associationId, String raffleId, List<String> imageIds) {
         if (tempPaths.size() != imageIds.size()) {
@@ -187,23 +133,14 @@ public class FileStorageServiceImpl implements FileStorageService {
                 }
             }
             
-            // Clean up temporary directory if empty (only after successful completion)
             cleanupEmptyDirectory(tempPaths.get(0));
-            
             return finalPaths;
-            
         } catch (IOException e) {
-            // If we can't even create the directory, clean up temp files
             cleanupTemporaryFiles(tempPaths);
             throw new FileStorageException("Failed to create final directory: " + e.getMessage());
         }
     }
 
-    /*
-     * Cleanup temporary files
-     * 
-     * @param tempPaths List of temporary file paths to cleanup
-     */
     @Override
     public void cleanupTemporaryFiles(List<String> tempPaths) {
         for (String tempPath : tempPaths) {
@@ -216,11 +153,6 @@ public class FileStorageServiceImpl implements FileStorageService {
         }
     }
 
-    /*
-     * Cleanup files
-     * 
-     * @param filePaths List of file paths to cleanup
-     */
     @Override
     public void cleanupFiles(List<String> filePaths) {
         for (String filePath : filePaths) {
@@ -298,7 +230,6 @@ public class FileStorageServiceImpl implements FileStorageService {
      * @return Original file name
      */
     private String extractOriginalFileNameForSingleMove(String fileName) {
-        // If it's already in the format {id}_{filename}, extract the filename part
         int underscoreIndex = fileName.indexOf('_');
         if (underscoreIndex != -1) {
             // Check if it's temp format (temp_0_filename.jpg) or pending format (123_filename.jpg)
@@ -311,7 +242,6 @@ public class FileStorageServiceImpl implements FileStorageService {
                 return fileName.substring(underscoreIndex + 1);
             }
         }
-        // If no underscore found, return as-is (original filename)
         return fileName;
     }
 }

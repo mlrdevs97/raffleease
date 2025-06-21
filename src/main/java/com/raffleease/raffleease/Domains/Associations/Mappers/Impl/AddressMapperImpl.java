@@ -1,12 +1,13 @@
 package com.raffleease.raffleease.Domains.Associations.Mappers.Impl;
 
 import com.raffleease.raffleease.Domains.Associations.DTO.AddressDTO;
+import com.raffleease.raffleease.Domains.Associations.Mappers.AddressMapper;
 import com.raffleease.raffleease.Domains.Associations.Model.Address;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterAddressData;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AddressMapper implements com.raffleease.raffleease.Domains.Associations.Mappers.AddressMapper {
+public class AddressMapperImpl implements AddressMapper {
     public Address toAddress(RegisterAddressData addressData) {
         return Address.builder()
                 .placeId(addressData.placeId())
