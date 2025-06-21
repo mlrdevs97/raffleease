@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static com.raffleease.raffleease.Domains.Images.Model.ImageStatus.MARKED_FOR_DELETION;
+
 @RequiredArgsConstructor
 @Service
 public class ImagesDeleteServiceImpl implements ImagesDeleteService {
@@ -39,7 +41,7 @@ public class ImagesDeleteServiceImpl implements ImagesDeleteService {
     @Override
     public void softDelete(Long id) {
         Image image = imagesService.findById(id);
-        image.setStatus(ImageStatus.MARKED_FOR_DELETION);
+        image.setStatus(MARKED_FOR_DELETION);
         repository.save(image);
     }
 }

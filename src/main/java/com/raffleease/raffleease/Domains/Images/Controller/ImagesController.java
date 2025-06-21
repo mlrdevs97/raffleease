@@ -7,6 +7,7 @@ import com.raffleease.raffleease.Domains.Images.Services.ImagesCreateService;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesDeleteService;
+import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 public class ImagesController {
     private final ImagesDeleteService deleteService;
     private final ImagesCreateService createService;
+    private final ImagesService imagesService;
 
     @PostMapping(consumes = MULTIPART_FORM_DATA_VALUE)
     @RequireRole(value = MEMBER, message = "Only administrators and members can upload images")
@@ -37,6 +39,21 @@ public class ImagesController {
                 ResponseFactory.success(
                         createService.create(associationId, raffleId, imageUpload),
                         "New images created successfully"
+                )
+        );
+    }
+
+    @GetMapping
+    @RequireRole(value = MEMBER, message = "Only administrators and members can view images")
+    @RateLimit(operation = "read", accessLevel = PRIVATE)
+    public ResponseEntity<ApiResponse> getUserImages(
+            @PathVariable Long associationId,
+            @PathVariable Long raffleId
+    ) {
+        return ResponseEntity.ok().body(
+                ResponseFactory.success(
+                        imagesService.getAllUserImagesForRaffle(associationId, raffleId),
+                        "Images retrieved successfully"
                 )
         );
     }

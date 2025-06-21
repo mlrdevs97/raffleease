@@ -6,6 +6,9 @@ import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
 import com.raffleease.raffleease.Domains.Images.Repository.ImagesRepository;
 import com.raffleease.raffleease.Domains.Images.Services.FileStorageService;
+import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
+import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
+import com.raffleease.raffleease.Domains.Raffles.Repository.RafflesRepository;
 import com.raffleease.raffleease.util.AuthTestUtils;
 import com.raffleease.raffleease.util.AuthTestUtils.AuthTestData;
 import com.raffleease.raffleease.util.TestDataBuilder;
@@ -40,6 +43,9 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     private ImagesRepository imagesRepository;
+
+    @Autowired
+    private RafflesRepository rafflesRepository;
 
     @MockitoBean
     private FileStorageService fileStorageService;
@@ -261,31 +267,6 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
             // Verify image status is updated to MARKED_FOR_DELETION
             Image updatedImage = imagesRepository.findById(testImage.getId()).orElseThrow();
             assertThat(updatedImage.getStatus()).isEqualTo(ImageStatus.MARKED_FOR_DELETION);
-        }
-
-        @Test
-        @DisplayName("Should prevent access to soft deleted pending image via GET endpoint")
-        void shouldPreventAccessToSoftDeletedPendingImageViaGetEndpoint() throws Exception {
-            // Arrange
-            Image testImage = TestDataBuilder.image()
-                    .user(authData.user())
-                    .association(authData.association())
-                    .status(ImageStatus.PENDING)
-                    .fileName("pending-image.jpg")
-                    .build();
-            testImage = imagesRepository.save(testImage);
-
-            // Act - First soft delete the image
-            mockMvc.perform(delete(baseEndpoint + "/" + testImage.getId())
-                    .with(user(authData.user().getEmail())))
-                    .andExpect(status().isNoContent());
-
-            // Act - Then try to get the soft deleted image
-            ResultActions result = mockMvc.perform(get("/public/" + baseEndpoint + "/" + testImage.getId())
-                    .with(user(authData.user().getEmail())));
-
-            // Assert - Should return 404 for soft deleted image
-            result.andExpect(status().isNotFound());
         }
 
         @Test
@@ -723,6 +704,311 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
             List<Image> userPendingImages = imagesRepository.findAllByRaffleIsNullAndUserAndStatus(
                 authData.user(), ImageStatus.PENDING);
             assertThat(userPendingImages).hasSize(9); // Still 9, no new images added
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /v1/associations/{associationId}/images/images")
+    class GetUserImagesTests {
+
+        @Test
+        @DisplayName("Should successfully return all user's images (pending and active)")
+        void shouldReturnAllUserImages() throws Exception {
+            // Arrange - Create various images for the authenticated user
+            Image pendingImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/pending.jpg")
+                    .build();
+            Image activeImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("active-image.jpg")
+                    .imageOrder(2)
+                    .url("http://example.com/active.jpg")
+                    .build();
+            imagesRepository.saveAll(List.of(pendingImage, activeImage));
+
+            // Create an image for another user (should not be returned)
+            AuthTestData otherUserData = authTestUtils.createAuthenticatedUserInSameAssociation(authData.association());
+            Image otherUserImage = TestDataBuilder.image()
+                    .user(otherUserData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("other-user-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/other-user.jpg")
+                    .build();
+            imagesRepository.save(otherUserImage);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/images")
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Images retrieved successfully"))
+                    .andExpect(jsonPath("$.data.images").isArray())
+                    .andExpect(jsonPath("$.data.images", hasSize(2)))
+                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'pending-image.jpg')]").exists())
+                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'active-image.jpg')]").exists());
+        }
+
+        @Test
+        @DisplayName("Should return empty array when user has no images")
+        void shouldReturnEmptyArrayWhenUserHasNoImages() throws Exception {
+            // Arrange - No images created for this user
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/images")
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Images retrieved successfully"))
+                    .andExpect(jsonPath("$.data.images").isArray())
+                    .andExpect(jsonPath("$.data.images", hasSize(0)));
+        }
+
+        @Test
+        @DisplayName("Should return 401 when user is not authenticated")
+        void shouldReturn401WhenNotAuthenticated() throws Exception {
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/images"));
+
+            // Assert
+            result.andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when user doesn't belong to association")
+        void shouldReturn403WhenUserDoesntBelongToAssociation() throws Exception {
+            // Arrange
+            AuthTestData otherUserData = authTestUtils.createAuthenticatedUserWithCredentials(
+                    "otheruser", "other@example.com", "password123");
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/images")
+                    .with(user(otherUserData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to get images")
+        void shouldReturn403WhenCollaboratorTriesToGetImages() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/images")
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators and members can delete images"));
+        }
+
+        @Test
+        @DisplayName("Should successfully get images for ADMIN role")
+        void shouldSuccessfullyGetImagesForAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.ADMIN);
+            Image adminImage = TestDataBuilder.image()
+                    .user(adminData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("admin-pending-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/admin-pending.jpg")
+                    .build();
+            imagesRepository.save(adminImage);
+
+            String adminEndpoint = "/v1/associations/" + authData.association().getId() + "/images";
+
+            // Act
+            ResultActions result = mockMvc.perform(get(adminEndpoint + "/images")
+                    .with(user(adminData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Images retrieved successfully"))
+                    .andExpect(jsonPath("$.data.images", hasSize(1)))
+                    .andExpect(jsonPath("$.data.images[0].fileName").value("admin-pending-image.jpg"));
+        }
+
+        @Test
+        @DisplayName("Should successfully get images for MEMBER role")
+        void shouldSuccessfullyGetImagesForMember() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.MEMBER);
+            Image memberImage = TestDataBuilder.image()
+                    .user(memberData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("member-pending-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/member-pending.jpg")
+                    .build();
+            imagesRepository.save(memberImage);
+
+            String memberEndpoint = "/v1/associations/" + authData.association().getId() + "/images";
+
+            // Act
+            ResultActions result = mockMvc.perform(get(memberEndpoint + "/images")
+                    .with(user(memberData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Images retrieved successfully"))
+                    .andExpect(jsonPath("$.data.images", hasSize(1)))
+                    .andExpect(jsonPath("$.data.images[0].fileName").value("member-pending-image.jpg"));
+        }
+
+        @Test
+        @DisplayName("Should include soft deleted images in results")
+        void shouldIncludeSoftDeletedImagesInResults() throws Exception {
+            // Arrange - Create active, pending, and soft deleted images for the user
+            Image activeImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("active-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/active.jpg")
+                    .build();
+            Image pendingImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .imageOrder(2)
+                    .url("http://example.com/pending.jpg")
+                    .build();
+            Image deletedImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.MARKED_FOR_DELETION)
+                    .fileName("deleted-image.jpg")
+                    .imageOrder(3)
+                    .url("http://example.com/deleted.jpg")
+                    .build();
+            imagesRepository.saveAll(List.of(activeImage, pendingImage, deletedImage));
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/images")
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should return all images including soft deleted ones (findAllByUser doesn't filter by status)
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.images", hasSize(3)))
+                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'active-image.jpg')]").exists())
+                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'pending-image.jpg')]").exists())
+                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'deleted-image.jpg')]").exists());
+        }
+
+        @Test
+        @DisplayName("Should return images associated with raffles and without raffles")
+        void shouldReturnImagesWithAndWithoutRaffles() throws Exception {
+            // Arrange - Create images with and without raffle associations
+            Image pendingImageNoRaffle = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .raffle(null) // No raffle association
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-no-raffle.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/pending-no-raffle.jpg")
+                    .build();
+
+            // Create a raffle and an image associated with it
+            Raffle testRaffle = TestDataBuilder.raffle()
+                    .association(authData.association())
+                    .status(RaffleStatus.PENDING)
+                    .title("Test Raffle")
+                    .build();
+            testRaffle = rafflesRepository.save(testRaffle);
+
+            Image activeImageWithRaffle = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .raffle(testRaffle)
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("active-with-raffle.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/active-with-raffle.jpg")
+                    .build();
+
+            imagesRepository.saveAll(List.of(pendingImageNoRaffle, activeImageWithRaffle));
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/images")
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should return both types of images
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.images", hasSize(2)))
+                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'pending-no-raffle.jpg')]").exists())
+                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'active-with-raffle.jpg')]").exists());
+        }
+
+        @Test
+        @DisplayName("Should return only user's own images, not images from other users")
+        void shouldReturnOnlyUserOwnImages() throws Exception {
+            // Arrange - Create another user in the same association
+            AuthTestData anotherUserData = authTestUtils.createAuthenticatedUserInSameAssociation(authData.association());
+
+            // Create images for both users in the same association
+            Image firstUserImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("first-user-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/first-user.jpg")
+                    .build();
+            Image secondUserImage = TestDataBuilder.image()
+                    .user(anotherUserData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("second-user-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/second-user.jpg")
+                    .build();
+            imagesRepository.saveAll(List.of(firstUserImage, secondUserImage));
+
+            // Act - Get images for first user
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/images")
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should return only first user's images, not second user's
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.images", hasSize(1)))
+                    .andExpect(jsonPath("$.data.images[0].fileName").value("first-user-image.jpg"));
         }
     }
 

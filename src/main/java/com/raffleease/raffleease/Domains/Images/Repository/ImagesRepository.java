@@ -15,12 +15,17 @@ import java.util.List;
 
 @Repository("ImagesRepository")
 public interface ImagesRepository extends JpaRepository<Image, Long> {
+
     @Query("SELECT COUNT(i) FROM Image i WHERE i.status = :status AND i.user = :user")
     int countImagesByUserAndStatus(@Param("user") User user, @Param("status") ImageStatus status);
+
     List<Image> findAllByRaffleIsNullAndCreatedAtBefore(LocalDateTime cutoff);
     List<Image> findAllByRaffleIsNullAndUserAndStatus(User user, ImageStatus status);
-    List<Image> findAllByUserAndStatus(User user, ImageStatus status);
     List<Image> findAllByRaffle(Raffle raffle);
+
     @Query("SELECT i.filePath FROM Image i WHERE i.filePath IS NOT NULL")
     List<String> findAllFilePaths();
+
+    List<Image> findAllByUserAndStatus(User user, ImageStatus imageStatus);
+    List<Image> findAllByUserAndRaffleAndStatus(User user, Raffle raffle, ImageStatus imageStatus);
 }

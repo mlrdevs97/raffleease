@@ -53,7 +53,7 @@ class PublicImagesControllerIT extends AbstractIntegrationTest {
 
         @BeforeEach
         void setUpPublicEndpoint() {
-            publicPendingEndpoint = "/public/v1/associations/" + authData.association().getId() + "/images";
+            publicPendingEndpoint = "/v1/public/associations/" + authData.association().getId() + "/images";
         }
 
         @Test
@@ -152,7 +152,7 @@ class PublicImagesControllerIT extends AbstractIntegrationTest {
             when(fileStorageService.load("/test/path/other-association-pending-image.jpg"))
                     .thenReturn(new org.springframework.core.io.ByteArrayResource("other association pending image content".getBytes()));
 
-            String otherPublicPendingEndpoint = "/public/v1/associations/" + otherUserData.association().getId() + "/images";
+            String otherPublicPendingEndpoint = "/v1/public/associations/" + otherUserData.association().getId() + "/images";
 
             // Act - Access without any authentication
             ResultActions result = mockMvc.perform(get(otherPublicPendingEndpoint + "/" + otherAssociationImage.getId()));
@@ -180,7 +180,7 @@ class PublicImagesControllerIT extends AbstractIntegrationTest {
                     .build();
             testRaffle = rafflesRepository.save(testRaffle);
             
-            publicRaffleEndpoint = "/public/v1/associations/" + authData.association().getId() + "/raffles/" + testRaffle.getId() + "/images";
+            publicRaffleEndpoint = "/v1/public/associations/" + authData.association().getId() + "/raffles/" + testRaffle.getId() + "/images";
         }
 
         @Test
@@ -291,7 +291,7 @@ class PublicImagesControllerIT extends AbstractIntegrationTest {
             when(fileStorageService.load("/test/path/other-association-image.jpg"))
                     .thenReturn(new org.springframework.core.io.ByteArrayResource("other association image content".getBytes()));
 
-            String otherPublicRaffleEndpoint = "/public/v1/associations/" + otherUserData.association().getId() + 
+            String otherPublicRaffleEndpoint = "/v1/publicassociations/" + otherUserData.association().getId() +
                                            "/raffles/" + otherRaffle.getId() + "/images";
 
             // Act - Access without any authentication
@@ -319,8 +319,8 @@ class PublicImagesControllerIT extends AbstractIntegrationTest {
             when(fileStorageService.load("/test/path/shared-image.jpg"))
                     .thenReturn(new org.springframework.core.io.ByteArrayResource("shared image content".getBytes()));
 
-            String pendingEndpoint = "/public/v1/associations/" + authData.association().getId() + "/images";
-            String raffleEndpoint = "/public/v1/associations/" + authData.association().getId() + "/raffles/" + testRaffle.getId() + "/images";
+            String pendingEndpoint = "/v1/public/associations/" + authData.association().getId() + "/images";
+            String raffleEndpoint = "/v1/public/associations/" + authData.association().getId() + "/raffles/" + testRaffle.getId() + "/images";
 
             // Act & Assert - Both endpoints should work for the same image
             mockMvc.perform(get(pendingEndpoint + "/" + testImage.getId()))

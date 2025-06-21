@@ -74,6 +74,12 @@ public class ImagesValidator {
         }
     }
 
+    public void validateRaffleBelongsToAssociation(Long associationId, Raffle raffle) {
+        if (!raffle.getAssociation().getId().equals(associationId)) {
+            throw new AuthorizationException("You are not authorized to use the specified raffle");
+        }
+    }
+
     private <T> boolean hasDuplicates(List<T> list) {
         Set<T> set = new HashSet<>();
         return list.stream().anyMatch(element -> !set.add(element));

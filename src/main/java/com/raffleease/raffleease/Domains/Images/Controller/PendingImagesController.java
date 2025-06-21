@@ -7,6 +7,7 @@ import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
 import com.raffleease.raffleease.Domains.Images.Services.ImagesDeleteService;
 import com.raffleease.raffleease.Domains.Auth.Validations.RequireRole;
+import com.raffleease.raffleease.Domains.Images.Services.ImagesService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 public class PendingImagesController {
     private final ImagesDeleteService deleteService;
     private final ImagesCreateService createService;
+    private final ImagesService imagesService;
 
     @PostMapping(consumes = MULTIPART_FORM_DATA_VALUE)
     @RequireRole(value = MEMBER, message = "Only administrators and members can upload images")
@@ -36,6 +38,18 @@ public class PendingImagesController {
                 ResponseFactory.success(
                         createService.create(associationId, imageUpload),
                         "New images created successfully"
+                )
+        );
+    }
+
+    @GetMapping("/images")
+    @RequireRole(value = MEMBER, message = "Only administrators and members can delete images")
+    @RateLimit(operation = "read", accessLevel = PRIVATE)
+    public ResponseEntity<ApiResponse> getUserImages() {
+        return ResponseEntity.ok().body(
+                ResponseFactory.success(
+                        imagesService.getAllUserImages(),
+                        "Images retrieved successfully"
                 )
         );
     }

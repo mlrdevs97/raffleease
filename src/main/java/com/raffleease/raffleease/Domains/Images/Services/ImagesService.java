@@ -1,5 +1,6 @@
 package com.raffleease.raffleease.Domains.Images.Services;
 
+import com.raffleease.raffleease.Domains.Images.DTOs.UserImagesResponse;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import org.springframework.core.io.Resource;
 
@@ -37,4 +38,22 @@ public interface ImagesService {
      * @return the file
      */
     Resource getFile(Long id);
+
+    /*
+     * Fetches all images for a user. 
+     * Useful during the creation of a raffle to fetch the pending images that the user creating the raffle uploaded.
+     * 
+     * @return the user's images
+     */
+    UserImagesResponse getAllUserImages();
+
+    /**
+     * Fetches all images for a user for a specific raffle.
+     * Useful during the edition of a raffle to fetch the pending images that the user editing the raffle uploaded.
+     * 
+     * @param associationId the ID of the association
+     * @param raffleId the ID of the raffle
+     * @return the user's images for the raffle
+     */
+    UserImagesResponse getAllUserImagesForRaffle(Long associationId, Long raffleId);
 }

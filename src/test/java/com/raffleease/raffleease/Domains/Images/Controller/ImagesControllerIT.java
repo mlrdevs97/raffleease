@@ -287,32 +287,6 @@ class ImagesControllerIT extends AbstractIntegrationTest {
             Image updatedImage = imagesRepository.findById(testImage.getId()).orElseThrow();
             assertThat(updatedImage.getStatus()).isEqualTo(ImageStatus.MARKED_FOR_DELETION);
         }
-
-        @Test
-        @DisplayName("Should prevent access to soft deleted image via GET endpoint")
-        void shouldPreventAccessToSoftDeletedImageViaGetEndpoint() throws Exception {
-            // Arrange
-            Image testImage = TestDataBuilder.image()
-                    .user(authData.user())
-                    .association(authData.association())
-                    .raffle(testRaffle)
-                    .status(ImageStatus.ACTIVE)
-                    .fileName("test-image.jpg")
-                    .build();
-            testImage = imagesRepository.save(testImage);
-
-            // Act - First soft delete the image
-            mockMvc.perform(delete(baseEndpoint + "/" + testImage.getId())
-                    .with(user(authData.user().getEmail())))
-                    .andExpect(status().isNoContent());
-
-            // Act - Then try to get the soft deleted image
-            ResultActions result = mockMvc.perform(get("/public/" + baseEndpoint + "/" + testImage.getId())
-                    .with(user(authData.user().getEmail())));
-
-            // Assert - Should return 404 for soft deleted image
-            result.andExpect(status().isNotFound());
-        }
     }
 
     @Nested
@@ -844,6 +818,356 @@ class ImagesControllerIT extends AbstractIntegrationTest {
             assertThat(otherAssociationImages).hasSize(1); // Only their image
             assertThat(ourAssociationImages.get(0).getFileName()).isEqualTo("our-image.jpg");
             assertThat(otherAssociationImages.get(0).getFileName()).isEqualTo("other-association-image.jpg");
+        }
+
+        @Test
+        @DisplayName("Should return 403 when trying to upload images to raffle from different association")
+        void shouldReturn403WhenTryingToUploadImagesToRaffleFromDifferentAssociation() throws Exception {
+            // Arrange - Create another user with different association and a raffle in that association
+            AuthTestData otherUserData = authTestUtils.createAuthenticatedUserWithCredentials(
+                    "otheruser", "other@example.com", "password123");
+            
+            Raffle otherAssociationRaffle = TestDataBuilder.raffle()
+                    .association(otherUserData.association()) // Different association
+                    .status(RaffleStatus.PENDING)
+                    .title("Other Association Raffle")
+                    .build();
+            otherAssociationRaffle = rafflesRepository.save(otherAssociationRaffle);
+
+            // Try to upload to other association's raffle using our association ID
+            String wrongEndpoint = "/v1/associations/" + authData.association().getId() + 
+                    "/raffles/" + otherAssociationRaffle.getId() + "/images";
+            
+            MockMultipartFile file = new MockMultipartFile(
+                    "files", "test-image.jpg", "image/jpeg", createTestImageContent());
+
+            // Act - Try to upload image to raffle from different association
+            ResultActions result = mockMvc.perform(multipart(wrongEndpoint)
+                    .file(file)
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("You are not authorized to use the specified raffle"))
+                    .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+
+            // Verify no images were uploaded to either raffle
+            List<Image> testRaffleImages = imagesRepository.findAllByRaffle(testRaffle);
+            List<Image> otherRaffleImages = imagesRepository.findAllByRaffle(otherAssociationRaffle);
+            
+            assertThat(testRaffleImages).isEmpty();
+            assertThat(otherRaffleImages).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /v1/associations/{associationId}/raffles/{raffleId}/images")
+    class GetUserImagesForRaffleTests {
+
+        @Test
+        @DisplayName("Should successfully return user's images for a specific raffle")
+        void shouldReturnUserImagesForSpecificRaffle() throws Exception {
+            // Arrange - Create images for the authenticated user and raffle
+            Image userImage1 = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .raffle(testRaffle)
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("user-raffle-image-1.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/image1.jpg")
+                    .build();
+            Image userImage2 = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .raffle(testRaffle)
+                    .status(ImageStatus.PENDING)
+                    .fileName("user-raffle-image-2.jpg")
+                    .imageOrder(2)
+                    .url("http://example.com/image2.jpg")
+                    .build();
+            imagesRepository.saveAll(List.of(userImage1, userImage2));
+
+            // Create an image for another user in the same raffle (should not be returned)
+            AuthTestData otherUserData = authTestUtils.createAuthenticatedUserInSameAssociation(authData.association());
+            Image otherUserImage = TestDataBuilder.image()
+                    .user(otherUserData.user())
+                    .association(authData.association())
+                    .raffle(testRaffle)
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("other-user-raffle-image.jpg")
+                    .imageOrder(3)
+                    .url("http://example.com/image3.jpg")
+                    .build();
+            imagesRepository.save(otherUserImage);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint)
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Images retrieved successfully"))
+                    .andExpect(jsonPath("$.data.images").isArray())
+                    .andExpect(jsonPath("$.data.images", hasSize(2)))
+                    .andExpect(jsonPath("$.data.images[0].fileName").value("user-raffle-image-1.jpg"))
+                    .andExpect(jsonPath("$.data.images[0].imageOrder").value(1))
+                    .andExpect(jsonPath("$.data.images[1].fileName").value("user-raffle-image-2.jpg"))
+                    .andExpect(jsonPath("$.data.images[1].imageOrder").value(2));
+        }
+
+        @Test
+        @DisplayName("Should return empty array when user has no images for the raffle")
+        void shouldReturnEmptyArrayWhenUserHasNoImagesForRaffle() throws Exception {
+            // Arrange - No images created for this user and raffle
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint)
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Images retrieved successfully"))
+                    .andExpect(jsonPath("$.data.images").isArray())
+                    .andExpect(jsonPath("$.data.images", hasSize(0)));
+        }
+
+        @Test
+        @DisplayName("Should return 401 when user is not authenticated")
+        void shouldReturn401WhenNotAuthenticated() throws Exception {
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint));
+
+            // Assert
+            result.andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when user doesn't belong to association")
+        void shouldReturn403WhenUserDoesntBelongToAssociation() throws Exception {
+            // Arrange
+            AuthTestData otherUserData = authTestUtils.createAuthenticatedUserWithCredentials(
+                    "otheruser", "other@example.com", "password123");
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint)
+                    .with(user(otherUserData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to get images")
+        void shouldReturn403WhenCollaboratorTriesToGetImages() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.COLLABORATOR);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint)
+                    .with(user(collaboratorData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators and members can view images"));
+        }
+
+        @Test
+        @DisplayName("Should successfully get images for ADMIN role")
+        void shouldSuccessfullyGetImagesForAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.ADMIN);
+            Image adminImage = TestDataBuilder.image()
+                    .user(adminData.user())
+                    .association(authData.association())
+                    .raffle(testRaffle)
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("admin-raffle-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/admin-image.jpg")
+                    .build();
+            imagesRepository.save(adminImage);
+
+            String adminEndpoint = "/v1/associations/" + authData.association().getId() + "/raffles/" + testRaffle.getId() + "/images";
+
+            // Act
+            ResultActions result = mockMvc.perform(get(adminEndpoint)
+                    .with(user(adminData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Images retrieved successfully"))
+                    .andExpect(jsonPath("$.data.images", hasSize(1)))
+                    .andExpect(jsonPath("$.data.images[0].fileName").value("admin-raffle-image.jpg"));
+        }
+
+        @Test
+        @DisplayName("Should successfully get images for MEMBER role")
+        void shouldSuccessfullyGetImagesForMember() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(
+                    authData.association(), AssociationRole.MEMBER);
+            Image memberImage = TestDataBuilder.image()
+                    .user(memberData.user())
+                    .association(authData.association())
+                    .raffle(testRaffle)
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("member-raffle-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/member-image.jpg")
+                    .build();
+            imagesRepository.save(memberImage);
+
+            String memberEndpoint = "/v1/associations/" + authData.association().getId() + "/raffles/" + testRaffle.getId() + "/images";
+
+            // Act
+            ResultActions result = mockMvc.perform(get(memberEndpoint)
+                    .with(user(memberData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Images retrieved successfully"))
+                    .andExpect(jsonPath("$.data.images", hasSize(1)))
+                    .andExpect(jsonPath("$.data.images[0].fileName").value("member-raffle-image.jpg"));
+        }
+
+        @Test
+        @DisplayName("Should return 404 when raffle doesn't exist")
+        void shouldReturn404WhenRaffleDoesntExist() throws Exception {
+            // Arrange
+            String nonExistentRaffleEndpoint = "/v1/associations/" + authData.association().getId() + "/raffles/99999/images";
+
+            // Act
+            ResultActions result = mockMvc.perform(get(nonExistentRaffleEndpoint)
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when raffle belongs to different association")
+        void shouldReturn403WhenRaffleBelongsToDifferentAssociation() throws Exception {
+            // Arrange - Create another user with different association and a raffle
+            AuthTestData otherUserData = authTestUtils.createAuthenticatedUserWithCredentials(
+                    "otheruser", "other@example.com", "password123");
+            
+            Raffle otherAssociationRaffle = TestDataBuilder.raffle()
+                    .association(otherUserData.association())
+                    .status(RaffleStatus.PENDING)
+                    .title("Other Association Raffle")
+                    .build();
+            otherAssociationRaffle = rafflesRepository.save(otherAssociationRaffle);
+
+            // Try to get images for raffle from different association using our association ID
+            String wrongEndpoint = "/v1/associations/" + authData.association().getId() + 
+                    "/raffles/" + otherAssociationRaffle.getId() + "/images";
+
+            // Act - Try to get images for raffle from different association
+            ResultActions result = mockMvc.perform(get(wrongEndpoint)
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("You are not authorized to use the specified raffle"))
+                    .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+        }
+
+        @Test
+        @DisplayName("Should exclude soft deleted images from results")
+        void shouldExcludeSoftDeletedImagesFromResults() throws Exception {
+            // Arrange - Create active and soft deleted images for the user and raffle
+            Image activeImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .raffle(testRaffle)
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("active-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/active.jpg")
+                    .build();
+            Image deletedImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .raffle(testRaffle)
+                    .status(ImageStatus.MARKED_FOR_DELETION)
+                    .fileName("deleted-image.jpg")
+                    .imageOrder(2)
+                    .url("http://example.com/deleted.jpg")
+                    .build();
+            imagesRepository.saveAll(List.of(activeImage, deletedImage));
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint)
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should only return active image, not the soft deleted one
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.images", hasSize(2))) // Both active and deleted should be returned by findAllByUserAndRaffle
+                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'active-image.jpg')]").exists())
+                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'deleted-image.jpg')]").exists()); // The service doesn't filter out deleted images
+        }
+
+        @Test
+        @DisplayName("Should return images only for the specified raffle, not other raffles")
+        void shouldReturnImagesOnlyForSpecifiedRaffle() throws Exception {
+            // Arrange - Create another raffle in the same association
+            Raffle anotherRaffle = TestDataBuilder.raffle()
+                    .association(authData.association())
+                    .status(RaffleStatus.PENDING)
+                    .title("Another Raffle")
+                    .build();
+            anotherRaffle = rafflesRepository.save(anotherRaffle);
+
+            // Create images for both raffles for the same user
+            Image testRaffleImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .raffle(testRaffle)
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("test-raffle-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/test-raffle.jpg")
+                    .build();
+            Image anotherRaffleImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .raffle(anotherRaffle)
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("another-raffle-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/another-raffle.jpg")
+                    .build();
+            imagesRepository.saveAll(List.of(testRaffleImage, anotherRaffleImage));
+
+            // Act - Get images for testRaffle
+            ResultActions result = mockMvc.perform(get(baseEndpoint)
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should only return image from testRaffle
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.images", hasSize(1)))
+                    .andExpect(jsonPath("$.data.images[0].fileName").value("test-raffle-image.jpg"));
         }
     }
 

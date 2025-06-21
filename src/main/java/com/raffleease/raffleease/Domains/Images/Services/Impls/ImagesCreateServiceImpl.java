@@ -57,7 +57,7 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
     @Override
     @Transactional
     public ImageResponse create(Long associationId, ImageUpload uploadRequest) {
-        String baseURL = host + "/public/v1/associations/" + associationId + "/images/";
+        String baseURL = host + "/v1/public/associations/" + associationId + "/images/";
         return processImagesCreation(associationId, uploadRequest, 0, baseURL, null);
     }
 
@@ -74,8 +74,9 @@ public class ImagesCreateServiceImpl implements ImagesCreateService {
     @Transactional
     public ImageResponse create(Long associationId, Long raffleId, ImageUpload uploadRequest) {
         Raffle raffle = rafflesPersistenceService.findById(raffleId);
+        imagesValidator.validateRaffleBelongsToAssociation(associationId, raffle);
         int currentImagesCount = raffle.getImages().size();
-        String baseURL = host + "/public/v1/associations/" + associationId + "/raffles/" + raffleId + "/images/";
+        String baseURL = host + "/v1/public/associations/" + associationId + "/raffles/" + raffleId + "/images/";
         return processImagesCreation(associationId, uploadRequest, currentImagesCount, baseURL, raffle);
     }
 

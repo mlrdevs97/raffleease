@@ -14,7 +14,7 @@ import static com.raffleease.raffleease.Common.RateLimiting.RateLimit.AccessLeve
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/public/v1/associations/{associationId}")
+@RequestMapping("/v1/public/associations/{associationId}")
 public class PublicImagesController {
     private final ImagesService imagesService;
 

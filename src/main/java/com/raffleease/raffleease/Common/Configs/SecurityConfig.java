@@ -48,7 +48,7 @@ public class SecurityConfig {
                                         "/v1/auth/verify",
                                         "/v1/auth/forgot-password",
                                         "/v1/auth/reset-password",
-                                        "/public/v1/**"
+                                        "/v1/public/**"
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )

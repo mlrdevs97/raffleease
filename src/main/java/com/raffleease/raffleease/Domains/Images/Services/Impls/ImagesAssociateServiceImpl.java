@@ -20,8 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.raffleease.raffleease.Domains.Images.Model.ImageStatus.ACTIVE;
-import static com.raffleease.raffleease.Domains.Images.Model.ImageStatus.PENDING;
+import static com.raffleease.raffleease.Domains.Images.Model.ImageStatus.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -63,23 +62,24 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
         imagesValidator.validatePendingImagesBelongToUser(user, existingImages);
         imagesValidator.validateAllArePending(existingImages);
 
-        // 5: Filter DTOs to only include existing images
+        // 5: Cleanup marked for deletion images
+        removeAllMarkedForDeletionUserImages(user);
+
+        // 6: Filter DTOs to only include existing images
         List<ImageDTO> validImageDTOs = imageDTOs.stream()
                 .filter(dto -> existingImageIds.contains(dto.id()))
                 .toList();
 
-        // 6: Process and link all existing images in the request with correct order
+        // 7: Process and link all existing images in the request with correct order
         Map<Long, Integer> orderMap = validImageDTOs.stream()
                 .collect(Collectors.toMap(ImageDTO::id, ImageDTO::imageOrder));
 
         for (Image image : existingImages) {
-            // For new raffles, we'll set the URL and path after the raffle is saved
             image.setImageOrder(orderMap.get(image.getId()));
             image.setRaffle(raffle);
             image.setStatus(ACTIVE);
             image.setUser(null);
         }
-        
         return existingImages;
     }
 
@@ -134,12 +134,15 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
             raffle.getImages().removeIf(image -> imagesToRemoveFromRaffle.contains(image.getId()));
         }
 
-        // 6: Filter DTOs to only include existing images
+        // 6: Remove images marked for deletion
+        removeAllMarkedForDeletionUserImages(user);
+
+        // 7: Filter DTOs to only include existing images
         List<ImageDTO> validImageDTOs = imageDTOs.stream()
                 .filter(dto -> existingImageIds.contains(dto.id()))
                 .toList();
 
-        // 7: Process and link all images in the request with correct order
+        // 8: Process and link all images in the request with correct order
         Map<Long, Integer> imageOrderMap = validImageDTOs.stream()
                 .filter(dto -> existingImageIds.contains(dto.id()))
                 .collect(Collectors.toMap(ImageDTO::id, ImageDTO::imageOrder));
@@ -153,7 +156,7 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
                         image.getFilePath()
                 );
                 image.setFilePath(finalPath.toString());
-                image.setUrl(host + "/public/v1/associations/" + raffle.getAssociation().getId() + "/raffles/" + raffle.getId() + "/images/" + image.getId());
+                image.setUrl(host + "/v1/public/associations/" + raffle.getAssociation().getId() + "/raffles/" + raffle.getId() + "/images/" + image.getId());
                 image.setRaffle(raffle);
                 image.setStatus(ACTIVE);
             }
@@ -164,13 +167,17 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
                 image.setImageOrder(newOrder);
             }
         }
-        
         return existingImages;
     }
 
     private void removePendingImages(List<Long> missingImageIds) {
         List<Image> pendingImages = repository.findAllById(missingImageIds);
         deleteService.deleteAll(pendingImages);
+    }
+
+    private void removeAllMarkedForDeletionUserImages(User user) {
+        List<Image> images = repository.findAllByUserAndStatus(user, MARKED_FOR_DELETION);
+        deleteService.deleteAll(images);
     }
 
     public void finalizeImagePathsAndUrls(Raffle raffle, List<Image> images) {
@@ -182,7 +189,7 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
                     image.getFilePath()
             );
             image.setFilePath(finalPath.toString());
-            image.setUrl(host + "/public/v1/associations/" + raffle.getAssociation().getId() + "/raffles/" + raffle.getId() + "/images/" + image.getId());
+            image.setUrl(host + "/v1/public/associations/" + raffle.getAssociation().getId() + "/raffles/" + raffle.getId() + "/images/" + image.getId());
         }
     }
 }
