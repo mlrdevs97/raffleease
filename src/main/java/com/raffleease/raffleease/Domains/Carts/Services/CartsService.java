@@ -8,7 +8,7 @@ public interface CartsService {
     /**
      * Creates a new cart for the authenticated user.
      * If the user has an active cart, it will be closed and a new one will be created.
-     * Creating a cart is the first step in the sell process since it will be used to store the tickets that will be sold.
+     * Creating a cart is the first step in the sell process since it will be used to store the tickets.
      * 
      * @return the created cart
      */
