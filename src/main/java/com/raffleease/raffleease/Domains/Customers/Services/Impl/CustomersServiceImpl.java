@@ -26,15 +26,6 @@ public class CustomersServiceImpl implements CustomersService {
     private final CustomersMapper mapper;
 
     @Override
-    public Customer create(String stripeId, String fullName, String email, String phoneNumber) {
-        return save(Customer.builder()
-                .fullName(fullName)
-                .email(email)
-                .phoneNumber(phoneNumber)
-                .build());
-    }
-
-    @Override
     public Customer create(CustomerCreate data) {
         String phoneNumber = Objects.nonNull(data.phoneNumber())
                 ? data.phoneNumber().prefix() + data.phoneNumber().nationalNumber()
@@ -45,15 +36,6 @@ public class CustomersServiceImpl implements CustomersService {
                 .email(data.email())
                 .phoneNumber(phoneNumber)
                 .build());
-    }
-
-    @Override
-    public Customer findById(Long id) {
-        try {
-            return repository.findById(id).orElseThrow(() -> new NotFoundException("Customer not found for id <" + id + ">"));
-        } catch (DataAccessException ex) {
-            throw new DatabaseException("Database error occurred while fetching customer with ID <" + id + ">: " + ex.getMessage());
-        }
     }
 
     @Override
