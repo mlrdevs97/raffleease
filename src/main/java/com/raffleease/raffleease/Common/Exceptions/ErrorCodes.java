@@ -8,7 +8,6 @@ public final class ErrorCodes {
     public static final String UNAUTHORIZED = "UNAUTHORIZED";
     public static final String ACCESS_DENIED = "ACCESS_DENIED";
     public static final String CONFLICT = "CONFLICT";
-    public static final String CART_HEADER_MISSING = "CART_HEADER_MISSING";
     public static final String FILE_STORAGE_ERROR = "FILE_STORAGE_ERROR";
     public static final String USER_NOT_FOUND = "USER_NOT_FOUND";
     public static final String EMAIL_VERIFICATION_FAILED = "EMAIL_VERIFICATION_FAILED";
@@ -21,4 +20,5 @@ public final class ErrorCodes {
     public static final String VALIDATION_ERROR = "VALIDATION_ERROR";
     public static final String VALUE_ALREADY_EXISTS = "VALUE_ALREADY_EXISTS";
     public static final String RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED";
+    public static final String IMAGE_LIMIT_EXCEEDED = "IMAGE_LIMIT_EXCEEDED";
 }

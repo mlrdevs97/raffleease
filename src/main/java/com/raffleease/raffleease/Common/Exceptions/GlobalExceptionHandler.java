@@ -20,6 +20,7 @@ import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.raffleease.raffleease.Common.Exceptions.ErrorCodes.NOT_FOUND;
 import static com.raffleease.raffleease.Common.Exceptions.ErrorCodes.VALIDATION_ERROR;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -36,7 +37,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiResponse> handleNotFoundException(NotFoundException ex) {
-        return wrapError(ex, NOT_FOUND, ErrorCodes.NOT_FOUND);
+        return wrapError(ex, HttpStatus.NOT_FOUND, ErrorCodes.NOT_FOUND);
     }
 
     @ExceptionHandler(CustomMailException.class)
@@ -91,7 +92,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse> handleBusinessException(BusinessException ex) {
-        return wrapError(ex, BAD_REQUEST, ErrorCodes.BUSINESS_ERROR);
+        String errorCode = ex.getErrorCode() != null ? ex.getErrorCode() : ErrorCodes.BUSINESS_ERROR;
+        return wrapError(ex, BAD_REQUEST, errorCode);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

@@ -15,6 +15,7 @@ import java.util.Set;
 import static com.raffleease.raffleease.Common.Constants.Constants.MAX_IMAGES;
 import static com.raffleease.raffleease.Domains.Images.Model.ImageStatus.ACTIVE;
 import static com.raffleease.raffleease.Domains.Images.Model.ImageStatus.PENDING;
+import static com.raffleease.raffleease.Common.Exceptions.ErrorCodes.IMAGE_LIMIT_EXCEEDED;
 
 @Component
 public class ImagesValidator {
@@ -32,7 +33,7 @@ public class ImagesValidator {
 
     public void validateTotalImagesNumber(long uploadingImagesCount, long currentImagesCount) {
         if (currentImagesCount + uploadingImagesCount > MAX_IMAGES) {
-            throw new BusinessException("You cannot upload more than 10 images in total");
+            throw new BusinessException("You cannot upload more than 10 images in total", IMAGE_LIMIT_EXCEEDED);
         }
     }
 
