@@ -72,9 +72,7 @@ public class RateLimitConfig {
         burstLimits.put("general", generalBurstLimit);
     }
 
-    public Map<String, RateLimitRule> getRateLimits() {
-        return rateLimits;
-    }
+    public Map<String, RateLimitRule> getRateLimits() { return rateLimits; }
     public Map<String, Integer> getBurstLimits() {
         return burstLimits;
     }

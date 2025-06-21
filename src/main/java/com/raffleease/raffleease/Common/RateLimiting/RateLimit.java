@@ -5,12 +5,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import static com.raffleease.raffleease.Common.RateLimiting.RateLimit.AccessLevel.PRIVATE;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 /**
  * Annotation to apply rate limiting to controller methods.
  * Rate limits are determined by the operation type and access level (public/private).
  */
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
+@Target({METHOD})
+@Retention(RUNTIME)
 public @interface RateLimit {
     
     /**
@@ -21,7 +25,7 @@ public @interface RateLimit {
     /**
      * Access level for the endpoint (public or private)
      */
-    AccessLevel accessLevel() default AccessLevel.PRIVATE;
+    AccessLevel accessLevel() default PRIVATE;
     
     /**
      * Fallback limit to use if specific limit is not found
