@@ -25,6 +25,13 @@ spring:
         carts_cleanup_cutoff_seconds: ${CARTS_CLEANUP_CUTOFF_SECONDS}
         images_cleanup_cutoff_seconds: ${IMAGES_CLEANUP_CUTOFF_SECONDS}
 
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 100MB
+      file-size-threshold: 2KB
+      location: ${java.io.tmpdir}
+
   storage:
     images:
       base_path: ${IMAGES_BASE_PATH}
