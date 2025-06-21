@@ -8,6 +8,7 @@ import com.raffleease.raffleease.Domains.Orders.Services.OrdersEditService;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
 import com.raffleease.raffleease.Domains.Orders.Services.OrdersQueryService;
+import com.raffleease.raffleease.Common.RateLimiting.RateLimit;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -17,18 +18,20 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
+import static com.raffleease.raffleease.Common.RateLimiting.RateLimit.AccessLevel.PRIVATE;
 import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.MEMBER;
 
 @ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/v1/associations/{associationId}/orders")
-public class AdminOrdersController {
+public class OrdersController {
     private final OrdersQueryService ordersQueryService;
     private final OrdersCreateService ordersCreateService;
     private final OrdersEditService ordersEditService;
 
     @PostMapping
+    @RateLimit(operation = "create", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> create(
             @PathVariable Long associationId,
             @Valid @RequestBody AdminOrderCreate adminOrderCreate
@@ -50,6 +53,7 @@ public class AdminOrdersController {
     }
 
     @GetMapping
+    @RateLimit(operation = "search", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> search(
             @PathVariable Long associationId,
             @Valid OrderSearchFilters filters,
@@ -62,6 +66,7 @@ public class AdminOrdersController {
     }
 
     @GetMapping("/{orderId}")
+    @RateLimit(operation = "read", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> get(
             @PathVariable Long orderId
     ) {
@@ -72,6 +77,7 @@ public class AdminOrdersController {
     }
 
     @PutMapping("/{orderId}/complete")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> complete(
             @PathVariable Long orderId,
             @Valid @RequestBody OrderComplete orderComplete
@@ -83,6 +89,7 @@ public class AdminOrdersController {
     }
 
     @PutMapping("/{orderId}/cancel")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> cancel(
             @PathVariable Long orderId
     ) {
@@ -94,6 +101,7 @@ public class AdminOrdersController {
 
     @PutMapping("/{orderId}/refund")
     @RequireRole(value = MEMBER, message = "Only administrators and members can refund orders")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> refund(
             @PathVariable Long orderId
     ) {
@@ -105,6 +113,7 @@ public class AdminOrdersController {
 
     @PutMapping("/{orderId}/unpaid")
     @RequireRole(value = MEMBER, message = "Only administrators and members can set orders as unpaid")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> setUnpaid(
             @PathVariable Long orderId
     ) {
@@ -115,6 +124,7 @@ public class AdminOrdersController {
     }
 
     @PostMapping("/{orderId}/comment")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> addComment(
             @PathVariable Long orderId,
             @Valid @RequestBody CommentRequest request
@@ -126,6 +136,7 @@ public class AdminOrdersController {
     }
 
     @PutMapping("/{orderId}/comment")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> editComment(
             @PathVariable Long orderId,
             @Valid @RequestBody CommentRequest request
@@ -137,6 +148,7 @@ public class AdminOrdersController {
     }
 
     @DeleteMapping("/{orderId}/comment")
+    @RateLimit(operation = "delete", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> removeComment(
             @PathVariable Long orderId
     ) {

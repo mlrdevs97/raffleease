@@ -20,4 +20,5 @@ public final class ErrorCodes {
     public static final String UNEXPECTED_ERROR = "UNEXPECTED_ERROR";
     public static final String VALIDATION_ERROR = "VALIDATION_ERROR";
     public static final String VALUE_ALREADY_EXISTS = "VALUE_ALREADY_EXISTS";
+    public static final String RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED";
 }

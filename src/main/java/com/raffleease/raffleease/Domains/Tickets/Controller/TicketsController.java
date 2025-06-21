@@ -5,6 +5,7 @@ import com.raffleease.raffleease.Domains.Tickets.DTO.*;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
+import com.raffleease.raffleease.Common.RateLimiting.RateLimit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,8 @@ public class TicketsController {
     private final TicketsQueryService queryService;
 
     @GetMapping
+    @RateLimit(operation = "search", accessLevel = RateLimit.AccessLevel.PRIVATE,
+               message = "Too many search requests. Please try again later.")
     public ResponseEntity<ApiResponse> search(
             @PathVariable Long associationId,
             @PathVariable Long raffleId,
@@ -35,6 +38,8 @@ public class TicketsController {
     }
 
      @GetMapping("/random")
+     @RateLimit(operation = "read", accessLevel = RateLimit.AccessLevel.PRIVATE,
+                message = "Too many random ticket requests. Please try again later.")
      public ResponseEntity<ApiResponse> getRandom(
              @PathVariable Long raffleId,
              @RequestParam Long quantity

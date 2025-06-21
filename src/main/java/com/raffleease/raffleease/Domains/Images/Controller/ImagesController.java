@@ -11,7 +11,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.raffleease.raffleease.Common.RateLimiting.RateLimit;
 
+import static com.raffleease.raffleease.Common.RateLimiting.RateLimit.AccessLevel.PRIVATE;
 import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.MEMBER;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
@@ -25,6 +27,7 @@ public class ImagesController {
 
     @PostMapping(consumes = MULTIPART_FORM_DATA_VALUE)
     @RequireRole(value = MEMBER, message = "Only administrators and members can upload images")
+    @RateLimit(operation = "upload", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> upload(
             @PathVariable Long associationId,
             @PathVariable Long raffleId,
@@ -40,6 +43,7 @@ public class ImagesController {
 
     @DeleteMapping("/{imageId}")
     @RequireRole(value = MEMBER, message = "Only administrators and members can delete images")
+    @RateLimit(operation = "delete", accessLevel = PRIVATE)
     public ResponseEntity<Void> delete(
             @PathVariable Long imageId
     ) {

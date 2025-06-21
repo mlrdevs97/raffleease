@@ -2,12 +2,12 @@ package com.raffleease.raffleease.Domains.Carts.Controllers;
 
 import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAccess;
 import com.raffleease.raffleease.Domains.Carts.DTO.CartDTO;
-import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsService;
 import com.raffleease.raffleease.Domains.Carts.DTO.ReservationRequest;
 import com.raffleease.raffleease.Domains.Carts.Services.ReservationsService;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
+import com.raffleease.raffleease.Common.RateLimiting.RateLimit;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +16,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
+import static com.raffleease.raffleease.Common.RateLimiting.RateLimit.AccessLevel.PRIVATE;
+
 @ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
@@ -23,9 +25,9 @@ import java.net.URI;
 public class CartsController {
     private final CartsService cartsService;
     private final ReservationsService reservationsService;
-    private final CartsPersistenceService cartsPersistenceService;
 
     @PostMapping
+    @RateLimit(operation = "create", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> create() {
         CartDTO createdCart = cartsService.create();
 
@@ -44,16 +46,18 @@ public class CartsController {
     }
 
     @GetMapping("/active")
+    @RateLimit(operation = "read", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> getUserActiveCart() {
         return ResponseEntity.ok(
                 ResponseFactory.success(
-                        cartsService.getUserCart(),
+                        cartsService.getUserActiveCart(),
                         "Active user cart retrieved successfully"
                 )
         );
     }
 
     @GetMapping("/{cartId}")
+    @RateLimit(operation = "read", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> get(
             @PathVariable Long cartId
     ) {
@@ -66,6 +70,7 @@ public class CartsController {
     }
 
     @PostMapping("/{cartId}/reservations")
+    @RateLimit(operation = "create", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> reserve(
             @PathVariable Long associationId,
             @PathVariable Long cartId,
@@ -80,6 +85,7 @@ public class CartsController {
     }
 
     @PutMapping("/{cartId}/reservations")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> release(
             @PathVariable Long associationId,
             @PathVariable Long cartId,

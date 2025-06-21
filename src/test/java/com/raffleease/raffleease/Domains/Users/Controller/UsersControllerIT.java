@@ -610,13 +610,9 @@ class UsersControllerIT extends AbstractIntegrationTest {
             
             User adminUser = usersRepository.findById(adminData.user().getId()).orElseThrow();
             User otherUser = usersRepository.findById(otherUserData.user().getId()).orElseThrow();
-            
-            // Manually set a known username for the other user to ensure conflict
             String conflictUsername = "conflictuser";
             otherUser.setUserName(conflictUsername);
-            usersRepository.save(otherUser);
-            
-            // Ensure the users have different usernames initially
+            usersRepository.save(otherUser);            
             assertThat(adminUser.getUserName()).isNotEqualTo(otherUser.getUserName());
             assertThat(adminUser.getId()).isNotEqualTo(otherUser.getId());
             

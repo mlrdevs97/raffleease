@@ -13,6 +13,7 @@ import com.raffleease.raffleease.Domains.Users.DTOs.EditUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
 import com.raffleease.raffleease.Domains.Users.Services.UsersManagementService;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
+import com.raffleease.raffleease.Common.RateLimiting.RateLimit;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,7 @@ public class UsersController {
 
     @PostMapping
     @AdminOnly(message = "Only administrators can create user accounts")
+    @RateLimit(operation = "create", accessLevel = RateLimit.AccessLevel.PRIVATE)
     public ResponseEntity<ApiResponse> create(
             @PathVariable Long associationId,
             @Valid @RequestBody CreateUserRequest request
@@ -51,6 +53,7 @@ public class UsersController {
 
     @GetMapping
     @AdminOnly(message = "Only administrators can access user accounts information")
+    @RateLimit(operation = "read", accessLevel = RateLimit.AccessLevel.PRIVATE)
     public ResponseEntity<ApiResponse> getAll(
             @PathVariable Long associationId
     ) {
@@ -69,6 +72,7 @@ public class UsersController {
         allowSelfAccess = true,
         message = "Only administrators can access other users' account information, or users can access their own account"
     )
+    @RateLimit(operation = "read", accessLevel = RateLimit.AccessLevel.PRIVATE)
     public ResponseEntity<ApiResponse> get(
             @PathVariable Long associationId,
             @PathVariable Long userId
@@ -88,6 +92,7 @@ public class UsersController {
         allowSelfAccess = true,
         message = "Only administrators can update user accounts, or users can update their own account"
     )
+    @RateLimit(operation = "update", accessLevel = RateLimit.AccessLevel.PRIVATE)
     public ResponseEntity<ApiResponse> edit(
             @PathVariable Long associationId,
             @PathVariable Long userId,
@@ -108,6 +113,7 @@ public class UsersController {
 
     @PutMapping("/{userId}/password")
     @SelfAccessOnly(message = "You can only change your own password")
+    @RateLimit(operation = "update", accessLevel = RateLimit.AccessLevel.PRIVATE)
     public ResponseEntity<ApiResponse> editPassword(
             @PathVariable Long associationId,
             @PathVariable Long userId,
@@ -125,6 +131,7 @@ public class UsersController {
     @PatchMapping("/{userId}/disable")
     @AdminOnly(message = "Only administrators can disable user accounts")
     @PreventSelfDeletion(message = "Administrators cannot disable their own account")
+    @RateLimit(operation = "delete", accessLevel = RateLimit.AccessLevel.PRIVATE)
     public ResponseEntity<ApiResponse> disableUser(
             @PathVariable Long associationId,
             @PathVariable Long userId
@@ -140,6 +147,7 @@ public class UsersController {
 
     @PatchMapping("/{userId}/enable")
     @AdminOnly(message = "Only administrators can enable user accounts")
+    @RateLimit(operation = "delete", accessLevel = RateLimit.AccessLevel.PRIVATE)
     public ResponseEntity<ApiResponse> enableUser(
             @PathVariable Long associationId,
             @PathVariable Long userId

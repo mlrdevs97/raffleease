@@ -74,6 +74,11 @@ public class GlobalExceptionHandler {
         return wrapError(ex, FORBIDDEN, ErrorCodes.ACCESS_DENIED);
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiResponse> handleRateLimitExceededException(RateLimitExceededException ex) {
+        return wrapError(ex, TOO_MANY_REQUESTS, ErrorCodes.RATE_LIMIT_EXCEEDED);
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse> handleAccessDeniedException(AccessDeniedException ex) {
         return wrapError(ex, FORBIDDEN, ErrorCodes.ACCESS_DENIED);
@@ -82,11 +87,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ApiResponse> handleConflictException(ConflictException ex) {
         return wrapError(ex, CONFLICT, ErrorCodes.CONFLICT);
-    }
-
-    @ExceptionHandler(CartHeaderMissingException.class)
-    public ResponseEntity<ApiResponse> handleCartHeaderMissingException(CartHeaderMissingException ex) {
-        return wrapError(ex, BAD_REQUEST, ErrorCodes.CART_HEADER_MISSING);
     }
 
     @ExceptionHandler(BusinessException.class)

@@ -12,6 +12,7 @@ import com.raffleease.raffleease.Domains.Auth.Services.RegisterService;
 import com.raffleease.raffleease.Domains.Auth.Services.VerificationService;
 import com.raffleease.raffleease.Common.Responses.ApiResponse;
 import com.raffleease.raffleease.Common.Responses.ResponseFactory;
+import com.raffleease.raffleease.Common.RateLimiting.RateLimit;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -22,6 +23,9 @@ import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+
+import static com.raffleease.raffleease.Common.RateLimiting.RateLimit.AccessLevel.PRIVATE;
+import static com.raffleease.raffleease.Common.RateLimiting.RateLimit.AccessLevel.PUBLIC;
 
 @RequiredArgsConstructor
 @RequestMapping("/v1/auth")
@@ -35,6 +39,7 @@ public class AuthController {
     private final PasswordResetService passwordResetService;
 
     @PostMapping("/register")
+    @RateLimit(operation = "create", accessLevel = PUBLIC)
     public ResponseEntity<ApiResponse> register(
             @Valid @RequestBody RegisterRequest request,
             HttpServletResponse response
@@ -48,6 +53,7 @@ public class AuthController {
     }
 
     @PostMapping("/verify")
+    @RateLimit(operation = "update", accessLevel = PUBLIC)
     public ResponseEntity<ApiResponse> verify(
             @RequestBody @Valid RegisterEmailVerificationRequest request
     ) {
@@ -61,6 +67,7 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
+    @RateLimit(operation = "create", accessLevel = PUBLIC)
     public ResponseEntity<ApiResponse> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request
     ) {
@@ -74,6 +81,7 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
+    @RateLimit(operation = "update", accessLevel = PUBLIC)
     public ResponseEntity<ApiResponse> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request
     ) {        
@@ -87,6 +95,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @RateLimit(operation = "read", accessLevel = PUBLIC)
     public ResponseEntity<ApiResponse> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletResponse response
@@ -100,6 +109,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<Void> logout(
             HttpServletRequest request,
             HttpServletResponse response,
@@ -110,6 +120,7 @@ public class AuthController {
     }
 
     @GetMapping("/validate")
+    @RateLimit(operation = "read", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> validate() {
         authValidationService.isUserAuthenticated();
         return ResponseEntity.ok().body(
