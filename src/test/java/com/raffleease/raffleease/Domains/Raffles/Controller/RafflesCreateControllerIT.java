@@ -355,12 +355,43 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
         }
 
         @Test
+        @DisplayName("Should return 400 when endDate is less than 24 hours after startDate")
+        void shouldReturn400WhenEndDateIsLessThan24HoursAfterStartDate() throws Exception {
+            // Arrange
+            List<Image> pendingImages = createPendingImagesForUser(2);
+            LocalDateTime startDate = LocalDateTime.now().plusDays(2);
+            LocalDateTime endDate = startDate.plusHours(23); // Less than 24 hours after start date
+            
+            RaffleCreate raffleCreate = new RaffleCreate(
+                    "Invalid Date Range Raffle",
+                    "End date is less than 24 hours after start date",
+                    startDate,
+                    endDate,
+                    convertToImageDTOs(pendingImages),
+                    new TicketsCreate(10L, BigDecimal.valueOf(5.00), 1L)
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors").exists());
+        }
+
+        @Test
         @DisplayName("Should return 400 when startDate is after endDate")
         void shouldReturn400WhenStartDateIsAfterEndDate() throws Exception {
             // Arrange
             List<Image> pendingImages = createPendingImagesForUser(2);
             LocalDateTime startDate = LocalDateTime.now().plusDays(5);
-            LocalDateTime endDate = LocalDateTime.now().plusDays(3); // ← Before start date
+            LocalDateTime endDate = LocalDateTime.now().plusDays(3); // Before start date
             
             RaffleCreate raffleCreate = new RaffleCreate(
                     "Invalid Date Range Raffle",
@@ -378,7 +409,124 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
                     .with(user(authData.user().getEmail())));
 
             // Assert
-            result.andExpect(status().isBadRequest());
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors").exists());
+        }
+
+        @Test
+        @DisplayName("Should succeed when endDate is exactly 24 hours after startDate")
+        void shouldSucceedWhenEndDateIsExactly24HoursAfterStartDate() throws Exception {
+            // Arrange
+            List<Image> pendingImages = createPendingImagesForUser(2);
+            LocalDateTime startDate = LocalDateTime.now().plusDays(2);
+            LocalDateTime endDate = startDate.plusHours(24); // Exactly 24 hours after start date
+            
+            RaffleCreate raffleCreate = new RaffleCreate(
+                    "Valid 24 Hour Range Raffle",
+                    "End date is exactly 24 hours after start date",
+                    startDate,
+                    endDate,
+                    convertToImageDTOs(pendingImages),
+                    new TicketsCreate(10L, BigDecimal.valueOf(5.00), 1L)
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isCreated())
+                    .andExpect(content().contentType(APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("New raffle created successfully"));
+
+            // Verify raffle was created
+            List<Raffle> savedRaffles = rafflesRepository.findAll();
+            assertThat(savedRaffles).hasSize(1);
+            
+            Raffle savedRaffle = savedRaffles.get(0);
+            assertThat(savedRaffle.getStartDate()).isEqualTo(startDate);
+            assertThat(savedRaffle.getEndDate()).isEqualTo(endDate);
+        }
+
+        @Test
+        @DisplayName("Should succeed when endDate is more than 24 hours after startDate")
+        void shouldSucceedWhenEndDateIsMoreThan24HoursAfterStartDate() throws Exception {
+            // Arrange
+            List<Image> pendingImages = createPendingImagesForUser(2);
+            LocalDateTime startDate = LocalDateTime.now().plusDays(2);
+            LocalDateTime endDate = startDate.plusHours(48); // 48 hours after start date
+            
+            RaffleCreate raffleCreate = new RaffleCreate(
+                    "Valid Long Range Raffle",
+                    "End date is more than 24 hours after start date",
+                    startDate,
+                    endDate,
+                    convertToImageDTOs(pendingImages),
+                    new TicketsCreate(10L, BigDecimal.valueOf(5.00), 1L)
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isCreated())
+                    .andExpect(content().contentType(APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("New raffle created successfully"));
+
+            // Verify raffle was created
+            List<Raffle> savedRaffles = rafflesRepository.findAll();
+            assertThat(savedRaffles).hasSize(1);
+            
+            Raffle savedRaffle = savedRaffles.get(0);
+            assertThat(savedRaffle.getStartDate()).isEqualTo(startDate);
+            assertThat(savedRaffle.getEndDate()).isEqualTo(endDate);
+        }
+
+        @Test
+        @DisplayName("Should succeed when startDate is null (immediate start) regardless of endDate timing")
+        void shouldSucceedWhenStartDateIsNullRegardlessOfEndDateTiming() throws Exception {
+            // Arrange
+            List<Image> pendingImages = createPendingImagesForUser(2);
+            LocalDateTime endDate = LocalDateTime.now().plusHours(6); // Less than 24 hours from now, but startDate is null
+            
+            RaffleCreate raffleCreate = new RaffleCreate(
+                    "Immediate Start Raffle",
+                    "Raffle with null startDate should not be subject to 24-hour validation",
+                    null, // No start date - immediate start
+                    endDate,
+                    convertToImageDTOs(pendingImages),
+                    new TicketsCreate(10L, BigDecimal.valueOf(5.00), 1L)
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should succeed because validation doesn't apply when startDate is null
+            result.andExpect(status().isCreated())
+                    .andExpect(content().contentType(APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("New raffle created successfully"));
+
+            // Verify raffle was created
+            List<Raffle> savedRaffles = rafflesRepository.findAll();
+            assertThat(savedRaffles).hasSize(1);
+            
+            Raffle savedRaffle = savedRaffles.get(0);
+            assertThat(savedRaffle.getStartDate()).isNull();
+            assertThat(savedRaffle.getEndDate()).isEqualTo(endDate);
         }
 
         @Test

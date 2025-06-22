@@ -13,7 +13,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Constraint(validatedBy = StartDateNotAfterEndDateValidator.class)
 public @interface StartDateNotAfterEndDate {
-    String message() default "Start time cannot be after end time";
+    String message() default "The end date must be at least 24 hours after the start date";
     Class<?>[] groups() default{};
     Class<? extends Payload>[] payload() default {};
 }

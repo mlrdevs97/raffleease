@@ -18,8 +18,10 @@ public class StartDateNotAfterEndDateValidator implements ConstraintValidator<St
             return true;
         }
 
-        if (startDate.isEqual(endDate) || startDate.isAfter(endDate)) {
-            context.buildConstraintViolationWithTemplate(startDate + " must be before or equal to " + endDate)
+        // Check if end date is at least 24 hours after start date
+        LocalDateTime minimumEndDate = startDate.plusHours(24);
+        if (endDate.isBefore(minimumEndDate)) {
+            context.buildConstraintViolationWithTemplate("The end date must be at least 24 hours after the start date")
                     .addConstraintViolation();
             return false;
         }
