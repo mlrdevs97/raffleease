@@ -38,4 +38,12 @@ public interface RafflesStatusService {
      * @param raffle the raffle to update
      */
     void updateStatusAfterAvailableTicketsIncrease(Raffle raffle);
+
+    /**
+     * Reactivates raffles that were completed due to END_DATE_REACHED.
+     * Used when the end date of a raffle is edited.
+     * 
+     * @param raffle the raffle to potentially reactivate
+     */
+    void reactivateRaffleAfterEndDateChange(Raffle raffle);
 }

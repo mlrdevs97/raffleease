@@ -560,15 +560,17 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should reactivate completed raffle when end date is extended")
-        void shouldReactivateCompletedRaffleWhenEndDateExtended() throws Exception {
+        @DisplayName("Should reactivate completed raffle when end date is extended and completion reason was END_DATE_REACHED")
+        void shouldReactivateCompletedRaffleWhenEndDateExtendedAndReasonWasEndDateReached() throws Exception {
             // Arrange - Make raffle completed due to end date reached
+            setupRaffleWithTickets(testRaffle, 10L, 1L); // Add some available tickets
             testRaffle.setStatus(RaffleStatus.COMPLETED);
             testRaffle.setCompletionReason(CompletionReason.END_DATE_REACHED);
             testRaffle.setCompletedAt(LocalDateTime.now().minusDays(1));
+            testRaffle.setEndDate(LocalDateTime.now().minusHours(1)); // Past end date
             rafflesRepository.save(testRaffle);
 
-            LocalDateTime newEndDate = LocalDateTime.now().plusDays(7);
+            LocalDateTime newEndDate = LocalDateTime.now().plusDays(7); // Valid future date
             RaffleEdit raffleEdit = new RaffleEdit(
                     null, null, newEndDate, null, null, null
             );
@@ -589,6 +591,136 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
             assertThat(updatedRaffle.getStatus()).isEqualTo(RaffleStatus.ACTIVE);
             assertThat(updatedRaffle.getCompletionReason()).isNull();
             assertThat(updatedRaffle.getCompletedAt()).isNull();
+            assertThat(updatedRaffle.getEndDate()).isEqualToIgnoringNanos(newEndDate);
+        }
+
+        @Test
+        @DisplayName("Should NOT reactivate completed raffle when end date is extended but completion reason was not END_DATE_REACHED")
+        void shouldNotReactivateCompletedRaffleWhenEndDateExtendedButReasonWasNotEndDateReached() throws Exception {
+            // Arrange - Make raffle completed due to manual completion (not end date)
+            setupRaffleWithTickets(testRaffle, 10L, 1L);
+            testRaffle.setStatus(RaffleStatus.COMPLETED);
+            testRaffle.setCompletionReason(CompletionReason.MANUALLY_COMPLETED); // Different reason
+            testRaffle.setCompletedAt(LocalDateTime.now().minusDays(1));
+            rafflesRepository.save(testRaffle);
+
+            LocalDateTime newEndDate = LocalDateTime.now().plusDays(7);
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, newEndDate, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.status").value("COMPLETED")); // Should remain completed
+
+            // Verify raffle was NOT reactivated
+            Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(updatedRaffle.getStatus()).isEqualTo(RaffleStatus.COMPLETED);
+            assertThat(updatedRaffle.getCompletionReason()).isEqualTo(CompletionReason.MANUALLY_COMPLETED);
+            assertThat(updatedRaffle.getCompletedAt()).isNotNull();
+            assertThat(updatedRaffle.getEndDate()).isEqualToIgnoringNanos(newEndDate); // End date should still be updated
+        }
+
+        @Test
+        @DisplayName("Should NOT reactivate raffle when end date is extended but validation fails")
+        void shouldNotReactivateRaffleWhenEndDateExtendedButValidationFails() throws Exception {
+            // Arrange - Make raffle completed due to end date reached, but set new end date too close
+            setupRaffleWithTickets(testRaffle, 10L, 1L);
+            testRaffle.setStatus(RaffleStatus.COMPLETED);
+            testRaffle.setCompletionReason(CompletionReason.END_DATE_REACHED);
+            testRaffle.setCompletedAt(LocalDateTime.now().minusDays(1));
+            rafflesRepository.save(testRaffle);
+
+            LocalDateTime newEndDate = LocalDateTime.now().plusHours(12); // Less than 24 hours - should fail validation
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, newEndDate, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.status").value("COMPLETED")); // Should remain completed due to validation failure
+
+            // Verify raffle was NOT reactivated (validation failed silently)
+            Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(updatedRaffle.getStatus()).isEqualTo(RaffleStatus.COMPLETED);
+            assertThat(updatedRaffle.getCompletionReason()).isEqualTo(CompletionReason.END_DATE_REACHED);
+            assertThat(updatedRaffle.getCompletedAt()).isNotNull();
+            assertThat(updatedRaffle.getEndDate()).isEqualToIgnoringNanos(newEndDate); // End date should still be updated
+        }
+
+        @Test
+        @DisplayName("Should NOT reactivate raffle when end date is extended but no available tickets")
+        void shouldNotReactivateRaffleWhenEndDateExtendedButNoAvailableTickets() throws Exception {
+            // Arrange - Make raffle completed due to end date reached, but with no available tickets
+            setupRaffleWithTickets(testRaffle, 5L, 1L);
+            sellTickets(testRaffle, 5); // Sell all tickets
+            testRaffle.setStatus(RaffleStatus.COMPLETED);
+            testRaffle.setCompletionReason(CompletionReason.END_DATE_REACHED);
+            testRaffle.setCompletedAt(LocalDateTime.now().minusDays(1));
+            rafflesRepository.save(testRaffle);
+
+            LocalDateTime newEndDate = LocalDateTime.now().plusDays(7); // Valid future date
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, newEndDate, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.status").value("COMPLETED")); // Should remain completed due to no available tickets
+
+            // Verify raffle was NOT reactivated (validation failed silently)
+            Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(updatedRaffle.getStatus()).isEqualTo(RaffleStatus.COMPLETED);
+            assertThat(updatedRaffle.getCompletionReason()).isEqualTo(CompletionReason.END_DATE_REACHED);
+            assertThat(updatedRaffle.getCompletedAt()).isNotNull();
+            assertThat(updatedRaffle.getEndDate()).isEqualToIgnoringNanos(newEndDate); // End date should still be updated
+        }
+
+        @Test
+        @DisplayName("Should successfully edit end date for PENDING raffle without attempting reactivation")
+        void shouldEditEndDateForPendingRaffleWithoutAttemptingReactivation() throws Exception {
+            // Arrange - Raffle is in PENDING status
+            LocalDateTime newEndDate = LocalDateTime.now().plusDays(14);
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, newEndDate, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.status").value("PENDING")); // Should remain pending
+
+            // Verify database state
+            Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(updatedRaffle.getStatus()).isEqualTo(RaffleStatus.PENDING);
+            assertThat(updatedRaffle.getEndDate()).isEqualToIgnoringNanos(newEndDate);
         }
 
         @Test

@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.ACTIVE;
+import static com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus.COMPLETED;
 
 @RequiredArgsConstructor
 @Service
@@ -68,9 +69,7 @@ public class RafflesEditServiceImpl implements RafflesEditService {
 
     private void editEndDate(Raffle raffle, LocalDateTime endDate) {
         raffle.setEndDate(endDate);
-        raffle.setStatus(ACTIVE);
-        raffle.setCompletionReason(null);
-        raffle.setCompletedAt(null);
+        rafflesStatusService.reactivateRaffleAfterEndDateChange(raffle);
     }
 
     private void addNewImages(Raffle raffle, List<ImageDTO> imageDTOs) {

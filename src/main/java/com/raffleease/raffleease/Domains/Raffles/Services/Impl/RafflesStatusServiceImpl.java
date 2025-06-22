@@ -73,6 +73,15 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
         rafflesPersistence.save(raffle);
     }
 
+    @Override
+    public void reactivateRaffleAfterEndDateChange(Raffle raffle) {
+        if (raffle.getStatus().equals(COMPLETED) && raffle.getCompletionReason().equals(CompletionReason.END_DATE_REACHED)) {
+            try {
+                reactivateRaffle(raffle);
+            } catch (BusinessException ex) {}
+        }
+    }
+
     private void updateToActive(Raffle raffle) {
         switch (raffle.getStatus()) {
             case PENDING -> {
