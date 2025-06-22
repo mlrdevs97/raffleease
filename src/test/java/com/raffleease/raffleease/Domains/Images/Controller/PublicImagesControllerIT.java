@@ -291,7 +291,7 @@ class PublicImagesControllerIT extends AbstractIntegrationTest {
             when(fileStorageService.load("/test/path/other-association-image.jpg"))
                     .thenReturn(new org.springframework.core.io.ByteArrayResource("other association image content".getBytes()));
 
-            String otherPublicRaffleEndpoint = "/v1/publicassociations/" + otherUserData.association().getId() +
+            String otherPublicRaffleEndpoint = "/v1/public/associations/" + otherUserData.association().getId() +
                                            "/raffles/" + otherRaffle.getId() + "/images";
 
             // Act - Access without any authentication

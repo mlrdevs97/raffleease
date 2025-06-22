@@ -712,8 +712,8 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
     class GetUserImagesTests {
 
         @Test
-        @DisplayName("Should successfully return all user's images (pending and active)")
-        void shouldReturnAllUserImages() throws Exception {
+        @DisplayName("Should successfully return only user's pending images")
+        void shouldReturnOnlyUserPendingImages() throws Exception {
             // Arrange - Create various images for the authenticated user
             Image pendingImage = TestDataBuilder.image()
                     .user(authData.user())
@@ -738,7 +738,7 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
             Image otherUserImage = TestDataBuilder.image()
                     .user(otherUserData.user())
                     .association(authData.association())
-                    .status(ImageStatus.ACTIVE)
+                    .status(ImageStatus.PENDING)
                     .fileName("other-user-image.jpg")
                     .imageOrder(1)
                     .url("http://example.com/other-user.jpg")
@@ -749,15 +749,48 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
             ResultActions result = mockMvc.perform(get(baseEndpoint + "/images")
                     .with(user(authData.user().getEmail())));
 
-            // Assert
+            // Assert - Should only return pending images, not active images
             result.andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.message").value("Images retrieved successfully"))
                     .andExpect(jsonPath("$.data.images").isArray())
-                    .andExpect(jsonPath("$.data.images", hasSize(2)))
-                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'pending-image.jpg')]").exists())
-                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'active-image.jpg')]").exists());
+                    .andExpect(jsonPath("$.data.images", hasSize(1)))
+                    .andExpect(jsonPath("$.data.images[0].fileName").value("pending-image.jpg"));
+        }
+
+        @Test
+        @DisplayName("Should not return images marked for deletion")
+        void shouldNotReturnImagesMarkedForDeletion() throws Exception {
+            // Arrange - Create pending and soft deleted images for the user
+            Image pendingImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/pending.jpg")
+                    .build();
+            Image deletedImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.MARKED_FOR_DELETION)
+                    .fileName("deleted-image.jpg")
+                    .imageOrder(2)
+                    .url("http://example.com/deleted.jpg")
+                    .build();
+            imagesRepository.saveAll(List.of(pendingImage, deletedImage));
+
+            // Act
+            ResultActions result = mockMvc.perform(get(baseEndpoint + "/images")
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should only return pending image, not the soft deleted one
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.images", hasSize(1)))
+                    .andExpect(jsonPath("$.data.images[0].fileName").value("pending-image.jpg"));
         }
 
         @Test
@@ -884,8 +917,8 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should include soft deleted images in results")
-        void shouldIncludeSoftDeletedImagesInResults() throws Exception {
+        @DisplayName("Should only return pending images, not active or soft deleted images")
+        void shouldOnlyReturnPendingImagesNotActiveOrSoftDeleted() throws Exception {
             // Arrange - Create active, pending, and soft deleted images for the user
             Image activeImage = TestDataBuilder.image()
                     .user(authData.user())
@@ -917,19 +950,17 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
             ResultActions result = mockMvc.perform(get(baseEndpoint + "/images")
                     .with(user(authData.user().getEmail())));
 
-            // Assert - Should return all images including soft deleted ones (findAllByUser doesn't filter by status)
+            // Assert - Should return only pending images, filtering out active and soft deleted ones
             result.andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.data.images", hasSize(3)))
-                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'active-image.jpg')]").exists())
-                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'pending-image.jpg')]").exists())
-                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'deleted-image.jpg')]").exists());
+                    .andExpect(jsonPath("$.data.images", hasSize(1)))
+                    .andExpect(jsonPath("$.data.images[0].fileName").value("pending-image.jpg"));
         }
 
         @Test
-        @DisplayName("Should return images associated with raffles and without raffles")
-        void shouldReturnImagesWithAndWithoutRaffles() throws Exception {
+        @DisplayName("Should only return pending images without raffle associations")
+        void shouldOnlyReturnPendingImagesWithoutRaffleAssociations() throws Exception {
             // Arrange - Create images with and without raffle associations
             Image pendingImageNoRaffle = TestDataBuilder.image()
                     .user(authData.user())
@@ -965,13 +996,12 @@ class PendingImagesControllerIT extends AbstractIntegrationTest {
             ResultActions result = mockMvc.perform(get(baseEndpoint + "/images")
                     .with(user(authData.user().getEmail())));
 
-            // Assert - Should return both types of images
+            // Assert - Should return only pending images without raffle associations
             result.andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.data.images", hasSize(2)))
-                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'pending-no-raffle.jpg')]").exists())
-                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'active-with-raffle.jpg')]").exists());
+                    .andExpect(jsonPath("$.data.images", hasSize(1)))
+                    .andExpect(jsonPath("$.data.images[0].fileName").value("pending-no-raffle.jpg"));
         }
 
         @Test

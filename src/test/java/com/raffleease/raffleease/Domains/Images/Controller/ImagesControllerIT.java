@@ -867,14 +867,14 @@ class ImagesControllerIT extends AbstractIntegrationTest {
     class GetUserImagesForRaffleTests {
 
         @Test
-        @DisplayName("Should successfully return user's images for a specific raffle")
-        void shouldReturnUserImagesForSpecificRaffle() throws Exception {
-            // Arrange - Create images for the authenticated user and raffle
+        @DisplayName("Should successfully return user's pending images for a specific raffle")
+        void shouldReturnUserPendingImagesForSpecificRaffle() throws Exception {
+            // Arrange - Create pending and active images for the authenticated user and raffle
             Image userImage1 = TestDataBuilder.image()
                     .user(authData.user())
                     .association(authData.association())
                     .raffle(testRaffle)
-                    .status(ImageStatus.ACTIVE)
+                    .status(ImageStatus.PENDING)
                     .fileName("user-raffle-image-1.jpg")
                     .imageOrder(1)
                     .url("http://example.com/image1.jpg")
@@ -888,7 +888,17 @@ class ImagesControllerIT extends AbstractIntegrationTest {
                     .imageOrder(2)
                     .url("http://example.com/image2.jpg")
                     .build();
-            imagesRepository.saveAll(List.of(userImage1, userImage2));
+            // Create an active image that should not be returned
+            Image activeImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .raffle(testRaffle)
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("user-active-image.jpg")
+                    .imageOrder(3)
+                    .url("http://example.com/active.jpg")
+                    .build();
+            imagesRepository.saveAll(List.of(userImage1, userImage2, activeImage));
 
             // Create an image for another user in the same raffle (should not be returned)
             AuthTestData otherUserData = authTestUtils.createAuthenticatedUserInSameAssociation(authData.association());
@@ -896,9 +906,9 @@ class ImagesControllerIT extends AbstractIntegrationTest {
                     .user(otherUserData.user())
                     .association(authData.association())
                     .raffle(testRaffle)
-                    .status(ImageStatus.ACTIVE)
+                    .status(ImageStatus.PENDING)
                     .fileName("other-user-raffle-image.jpg")
-                    .imageOrder(3)
+                    .imageOrder(4)
                     .url("http://example.com/image3.jpg")
                     .build();
             imagesRepository.save(otherUserImage);
@@ -907,7 +917,7 @@ class ImagesControllerIT extends AbstractIntegrationTest {
             ResultActions result = mockMvc.perform(get(baseEndpoint)
                     .with(user(authData.user().getEmail())));
 
-            // Assert
+            // Assert - Should only return pending images for this user
             result.andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
@@ -991,7 +1001,7 @@ class ImagesControllerIT extends AbstractIntegrationTest {
                     .user(adminData.user())
                     .association(authData.association())
                     .raffle(testRaffle)
-                    .status(ImageStatus.ACTIVE)
+                    .status(ImageStatus.PENDING)
                     .fileName("admin-raffle-image.jpg")
                     .imageOrder(1)
                     .url("http://example.com/admin-image.jpg")
@@ -1023,7 +1033,7 @@ class ImagesControllerIT extends AbstractIntegrationTest {
                     .user(memberData.user())
                     .association(authData.association())
                     .raffle(testRaffle)
-                    .status(ImageStatus.ACTIVE)
+                    .status(ImageStatus.PENDING)
                     .fileName("member-raffle-image.jpg")
                     .imageOrder(1)
                     .url("http://example.com/member-image.jpg")
@@ -1087,19 +1097,35 @@ class ImagesControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.message").value("You are not authorized to use the specified raffle"))
                     .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+
+            // Verify no images were uploaded to either raffle
+            List<Image> testRaffleImages = imagesRepository.findAllByRaffle(testRaffle);
+            List<Image> otherRaffleImages = imagesRepository.findAllByRaffle(otherAssociationRaffle);
+            
+            assertThat(testRaffleImages).isEmpty();
+            assertThat(otherRaffleImages).isEmpty();
         }
 
         @Test
-        @DisplayName("Should exclude soft deleted images from results")
-        void shouldExcludeSoftDeletedImagesFromResults() throws Exception {
-            // Arrange - Create active and soft deleted images for the user and raffle
+        @DisplayName("Should only return pending images for raffle, not active or soft deleted images")
+        void shouldOnlyReturnPendingImagesForRaffleNotActiveOrSoftDeleted() throws Exception {
+            // Arrange - Create pending, active and soft deleted images for the user and raffle
+            Image pendingImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .raffle(testRaffle)
+                    .status(ImageStatus.PENDING)
+                    .fileName("pending-image.jpg")
+                    .imageOrder(1)
+                    .url("http://example.com/pending.jpg")
+                    .build();
             Image activeImage = TestDataBuilder.image()
                     .user(authData.user())
                     .association(authData.association())
                     .raffle(testRaffle)
                     .status(ImageStatus.ACTIVE)
                     .fileName("active-image.jpg")
-                    .imageOrder(1)
+                    .imageOrder(2)
                     .url("http://example.com/active.jpg")
                     .build();
             Image deletedImage = TestDataBuilder.image()
@@ -1108,27 +1134,26 @@ class ImagesControllerIT extends AbstractIntegrationTest {
                     .raffle(testRaffle)
                     .status(ImageStatus.MARKED_FOR_DELETION)
                     .fileName("deleted-image.jpg")
-                    .imageOrder(2)
+                    .imageOrder(3)
                     .url("http://example.com/deleted.jpg")
                     .build();
-            imagesRepository.saveAll(List.of(activeImage, deletedImage));
+            imagesRepository.saveAll(List.of(pendingImage, activeImage, deletedImage));
 
             // Act
             ResultActions result = mockMvc.perform(get(baseEndpoint)
                     .with(user(authData.user().getEmail())));
 
-            // Assert - Should only return active image, not the soft deleted one
+            // Assert - Should only return pending image, filtering out active and soft deleted ones
             result.andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.data.images", hasSize(2))) // Both active and deleted should be returned by findAllByUserAndRaffle
-                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'active-image.jpg')]").exists())
-                    .andExpect(jsonPath("$.data.images[?(@.fileName == 'deleted-image.jpg')]").exists()); // The service doesn't filter out deleted images
+                    .andExpect(jsonPath("$.data.images", hasSize(1)))
+                    .andExpect(jsonPath("$.data.images[0].fileName").value("pending-image.jpg"));
         }
 
         @Test
-        @DisplayName("Should return images only for the specified raffle, not other raffles")
-        void shouldReturnImagesOnlyForSpecifiedRaffle() throws Exception {
+        @DisplayName("Should return pending images only for the specified raffle, not other raffles")
+        void shouldReturnPendingImagesOnlyForSpecifiedRaffle() throws Exception {
             // Arrange - Create another raffle in the same association
             Raffle anotherRaffle = TestDataBuilder.raffle()
                     .association(authData.association())
@@ -1137,12 +1162,12 @@ class ImagesControllerIT extends AbstractIntegrationTest {
                     .build();
             anotherRaffle = rafflesRepository.save(anotherRaffle);
 
-            // Create images for both raffles for the same user
+            // Create pending images for both raffles for the same user
             Image testRaffleImage = TestDataBuilder.image()
                     .user(authData.user())
                     .association(authData.association())
                     .raffle(testRaffle)
-                    .status(ImageStatus.ACTIVE)
+                    .status(ImageStatus.PENDING)
                     .fileName("test-raffle-image.jpg")
                     .imageOrder(1)
                     .url("http://example.com/test-raffle.jpg")
@@ -1151,18 +1176,28 @@ class ImagesControllerIT extends AbstractIntegrationTest {
                     .user(authData.user())
                     .association(authData.association())
                     .raffle(anotherRaffle)
-                    .status(ImageStatus.ACTIVE)
+                    .status(ImageStatus.PENDING)
                     .fileName("another-raffle-image.jpg")
                     .imageOrder(1)
                     .url("http://example.com/another-raffle.jpg")
                     .build();
-            imagesRepository.saveAll(List.of(testRaffleImage, anotherRaffleImage));
+            // Create an active image for testRaffle that should not be returned
+            Image activeImage = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .raffle(testRaffle)
+                    .status(ImageStatus.ACTIVE)
+                    .fileName("active-test-raffle-image.jpg")
+                    .imageOrder(2)
+                    .url("http://example.com/active-test-raffle.jpg")
+                    .build();
+            imagesRepository.saveAll(List.of(testRaffleImage, anotherRaffleImage, activeImage));
 
             // Act - Get images for testRaffle
             ResultActions result = mockMvc.perform(get(baseEndpoint)
                     .with(user(authData.user().getEmail())));
 
-            // Assert - Should only return image from testRaffle
+            // Assert - Should only return pending image from testRaffle
             result.andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
