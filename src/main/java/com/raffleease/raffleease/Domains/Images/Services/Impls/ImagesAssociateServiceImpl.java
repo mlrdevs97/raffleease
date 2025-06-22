@@ -57,8 +57,9 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
 
         // 4: Validate existing images
         imagesValidator.validateAtLeastOneImage(existingImages);
-        User user = usersService.getAuthenticatedUser();
         imagesValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
+
+        User user = usersService.getAuthenticatedUser();
         imagesValidator.validatePendingImagesBelongToUser(user, existingImages);
         imagesValidator.validateAllArePending(existingImages);
 
@@ -103,22 +104,18 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
             removePendingImages(missingImageIds);
         }
 
-        // 4: Validate existing images (do this before making any changes)
+        // 4: Validate existing images
         imagesValidator.validateAtLeastOneImage(existingImages);
         imagesValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
 
-        // Validate user ownership for pending images
         User user = usersService.getAuthenticatedUser();
         List<Image> pendingImages = existingImages.stream()
-                .filter(image -> image.getStatus() == PENDING)
+                .filter(image -> image.getStatus().equals(PENDING))
                 .toList();
         if (!pendingImages.isEmpty()) {
             imagesValidator.validatePendingImagesBelongToUser(user, pendingImages);
         }
-        
-        // Validate that pending images are not associated with any raffle
-        imagesValidator.validatePendingImagesNotAssociatedWithRaffle(existingImages);
-        // Validate that non-pending images have ACTIVE status and belong to this raffle
+
         imagesValidator.validateActiveImagesBelongToRaffle(raffle, existingImages);
 
         // 5: Remove any existing raffle images that are no longer in the request
