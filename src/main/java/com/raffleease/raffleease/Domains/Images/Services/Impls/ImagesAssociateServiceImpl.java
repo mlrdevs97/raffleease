@@ -59,6 +59,13 @@ public class ImagesAssociateServiceImpl implements ImagesAssociateService {
         imagesValidator.validateAtLeastOneImage(existingImages);
         imagesValidator.validateImagesBelongToAssociation(raffle.getAssociation(), existingImages);
 
+        List<Image> pendingImages = existingImages.stream()
+                .filter(image -> image.getStatus().equals(PENDING))
+                .toList();
+        if (!pendingImages.isEmpty()) {
+            imagesValidator.validatePendingImagesNotAssociatedWithRaffle(pendingImages);
+        }
+
         User user = usersService.getAuthenticatedUser();
         imagesValidator.validatePendingImagesBelongToUser(user, existingImages);
         imagesValidator.validateAllArePending(existingImages);

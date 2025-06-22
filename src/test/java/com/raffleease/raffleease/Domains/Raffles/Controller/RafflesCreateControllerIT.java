@@ -462,9 +462,57 @@ class RafflesCreateControllerIT extends AbstractIntegrationTest {
                     .content(objectMapper.writeValueAsString(raffleCreate))
                     .with(user(authData.user().getEmail())));
 
-            // Assert - Should still fail because validation runs on existing images
+            // Assert - Should fail because only pending images can be used for raffle creation
             result.andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.success").value(false));
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only pending images can be associated with a raffle."));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trying to use pending images already associated with a raffle")
+        void shouldReturn400WhenUsingPendingImagesAlreadyAssociatedWithRaffle() throws Exception {
+            // Arrange
+            // Create an existing raffle
+            Raffle existingRaffle = TestDataBuilder.raffle()
+                    .association(authData.association())
+                    .status(PENDING)
+                    .build();
+            existingRaffle = rafflesRepository.save(existingRaffle);
+
+            // Create pending image already associated to raffle
+            Image pendingImageWithRaffle = TestDataBuilder.image()
+                    .user(authData.user())
+                    .association(authData.association())
+                    .status(ImageStatus.PENDING)
+                    .raffle(existingRaffle)
+                    .imageOrder(1)
+                    .build();
+            pendingImageWithRaffle = imagesRepository.save(pendingImageWithRaffle);
+
+            RaffleCreate raffleCreate = new RaffleCreate(
+                    "Pending Image With Raffle",
+                    "Trying to use pending image already associated with a raffle",
+                    null,
+                    LocalDateTime.now().plusDays(7),
+                    List.of(new ImageDTO(pendingImageWithRaffle.getId(),
+                            pendingImageWithRaffle.getFileName(),
+                            pendingImageWithRaffle.getFilePath(),
+                            pendingImageWithRaffle.getContentType(),
+                            pendingImageWithRaffle.getUrl(),
+                            1)),
+                    new TicketsCreate(10L, BigDecimal.valueOf(5.00), 1L)
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(post(baseEndpoint)
+                    .contentType(APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleCreate))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should fail because pending images cannot be associated with a raffle during creation
+            result.andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Pending images cannot be associated with a raffle."));
         }
 
         @Test
