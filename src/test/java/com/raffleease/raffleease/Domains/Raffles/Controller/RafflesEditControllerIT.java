@@ -700,7 +700,7 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("Should successfully edit end date for PENDING raffle without attempting reactivation")
         void shouldEditEndDateForPendingRaffleWithoutAttemptingReactivation() throws Exception {
-            // Arrange - Raffle is in PENDING status
+            // Arrange - Raffle is in PENDING status (no start date)
             LocalDateTime newEndDate = LocalDateTime.now().plusDays(14);
             RaffleEdit raffleEdit = new RaffleEdit(
                     null, null, newEndDate, null, null, null
@@ -721,6 +721,155 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
             Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
             assertThat(updatedRaffle.getStatus()).isEqualTo(RaffleStatus.PENDING);
             assertThat(updatedRaffle.getEndDate()).isEqualToIgnoringNanos(newEndDate);
+        }
+
+        @Test
+        @DisplayName("Should successfully edit end date when it's more than 24 hours after start date")
+        void shouldSuccessfullyEditEndDateWhenMoreThan24HoursAfterStartDate() throws Exception {
+            // Arrange - Set raffle to ACTIVE with start date
+            testRaffle.setStatus(RaffleStatus.ACTIVE);
+            testRaffle.setStartDate(LocalDateTime.now().minusHours(2));
+            rafflesRepository.save(testRaffle);
+
+            LocalDateTime newEndDate = LocalDateTime.now().plusDays(2); // More than 24 hours after start
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, newEndDate, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+
+            // Verify database state
+            Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(updatedRaffle.getEndDate()).isEqualToIgnoringNanos(newEndDate);
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trying to edit end date to less than 24 hours after start date (23h 59m)")
+        void shouldReturn400WhenTryingToEditEndDateToLessThan24HoursAfterStartDate23h59m() throws Exception {
+            // Arrange - Set raffle to ACTIVE with start date
+            LocalDateTime startDate = LocalDateTime.now().minusHours(1);
+            testRaffle.setStatus(RaffleStatus.ACTIVE);
+            testRaffle.setStartDate(startDate);
+            rafflesRepository.save(testRaffle);
+
+            LocalDateTime newEndDate = startDate.plusHours(23).plusMinutes(59); // 23 hours 59 minutes after start date - should fail
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, newEndDate, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("The end date of the raffle must be at least one day after the start date"));
+
+            // Verify raffle end date remains unchanged
+            Raffle unchangedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(unchangedRaffle.getEndDate()).isNotEqualTo(newEndDate);
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trying to edit end date to before start date")
+        void shouldReturn400WhenTryingToEditEndDateToBeforeStartDate() throws Exception {
+            // Arrange - Set raffle to ACTIVE with future start date
+            LocalDateTime startDate = LocalDateTime.now().plusDays(2);
+            testRaffle.setStatus(RaffleStatus.ACTIVE);
+            testRaffle.setStartDate(startDate);
+            rafflesRepository.save(testRaffle);
+
+            LocalDateTime newEndDate = LocalDateTime.now().plusDays(1); // Future, but before start date
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, newEndDate, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert - Should trigger business logic validation, not DTO validation
+            result.andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("The end date of the raffle must be at least one day after the start date"));
+
+            // Verify raffle end date remains unchanged
+            Raffle unchangedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(unchangedRaffle.getEndDate()).isNotEqualTo(newEndDate);
+        }
+
+        @Test
+        @DisplayName("Should successfully edit end date for PAUSED raffle when valid")
+        void shouldSuccessfullyEditEndDateForPausedRaffleWhenValid() throws Exception {
+            // Arrange - Set raffle to PAUSED with start date
+            LocalDateTime startDate = LocalDateTime.now().minusDays(1);
+            testRaffle.setStatus(RaffleStatus.PAUSED);
+            testRaffle.setStartDate(startDate);
+            rafflesRepository.save(testRaffle);
+
+            LocalDateTime newEndDate = startDate.plusDays(2); // More than 24 hours after start
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, newEndDate, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+
+            // Verify database state
+            Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(updatedRaffle.getEndDate()).isEqualToIgnoringNanos(newEndDate);
+            assertThat(updatedRaffle.getStatus()).isEqualTo(RaffleStatus.PAUSED); // Should remain paused
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trying to edit end date for PAUSED raffle to less than 24 hours after start date")
+        void shouldReturn400WhenTryingToEditEndDateForPausedRaffleToLessThan24HoursAfterStartDate() throws Exception {
+            // Arrange - Set raffle to PAUSED with start date
+            LocalDateTime startDate = LocalDateTime.now().minusHours(2);
+            testRaffle.setStatus(RaffleStatus.PAUSED);
+            testRaffle.setStartDate(startDate);
+            rafflesRepository.save(testRaffle);
+
+            LocalDateTime newEndDate = startDate.plusHours(12); // Only 12 hours after start date
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, newEndDate, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("The end date of the raffle must be at least one day after the start date"));
+
+            // Verify raffle end date remains unchanged
+            Raffle unchangedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(unchangedRaffle.getStatus()).isEqualTo(RaffleStatus.PAUSED);
+            assertThat(unchangedRaffle.getEndDate()).isNotEqualTo(newEndDate);
         }
 
         @Test
@@ -1080,6 +1229,65 @@ class RafflesEditControllerIT extends AbstractIntegrationTest {
             Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
             assertThat(updatedRaffle.getTitle()).isEqualTo("Member Updated Title");
             assertThat(updatedRaffle.getDescription()).isEqualTo("Member updated description");
+        }
+
+        @Test
+        @DisplayName("Should successfully edit end date when exactly 24 hours after start date")
+        void shouldSuccessfullyEditEndDateWhenExactly24HoursAfterStartDate() throws Exception {
+            // Arrange - Set raffle to ACTIVE with start date
+            LocalDateTime startDate = LocalDateTime.now().minusHours(1);
+            testRaffle.setStatus(RaffleStatus.ACTIVE);
+            testRaffle.setStartDate(startDate);
+            rafflesRepository.save(testRaffle);
+
+            LocalDateTime newEndDate = startDate.plusHours(24); // Exactly 24 hours after start date - should be allowed
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, newEndDate, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+
+            // Verify database state - end date should be updated successfully
+            Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(updatedRaffle.getEndDate()).isEqualToIgnoringNanos(newEndDate);
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trying to edit end date to future time but less than 24 hours after start date")
+        void shouldReturn400WhenTryingToEditEndDateToFutureButLessThan24HoursAfterStartDate() throws Exception {
+            // Arrange - Set raffle to ACTIVE with start date in the past
+            LocalDateTime startDate = LocalDateTime.now().minusHours(2);
+            testRaffle.setStatus(RaffleStatus.ACTIVE);
+            testRaffle.setStartDate(startDate);
+            rafflesRepository.save(testRaffle);
+
+            LocalDateTime newEndDate = LocalDateTime.now().plusHours(12); // Future, but less than 24 hours after start date
+            RaffleEdit raffleEdit = new RaffleEdit(
+                    null, null, newEndDate, null, null, null
+            );
+
+            // Act
+            ResultActions result = mockMvc.perform(put(baseEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(raffleEdit))
+                    .with(user(authData.user().getEmail())));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("The end date of the raffle must be at least one day after the start date"));
+
+            // Verify raffle end date remains unchanged
+            Raffle unchangedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+            assertThat(unchangedRaffle.getEndDate()).isNotEqualTo(newEndDate);
         }
     }
 

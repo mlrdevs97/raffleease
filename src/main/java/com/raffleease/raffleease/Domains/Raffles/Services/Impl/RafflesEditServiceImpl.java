@@ -68,6 +68,9 @@ public class RafflesEditServiceImpl implements RafflesEditService {
     }
 
     private void editEndDate(Raffle raffle, LocalDateTime endDate) {
+        if (raffle.getStartDate() != null && endDate.isBefore(raffle.getStartDate().plusHours(24))) {
+            throw new BusinessException("The end date of the raffle must be at least one day after the start date");
+        }
         raffle.setEndDate(endDate);
         rafflesStatusService.reactivateRaffleAfterEndDateChange(raffle);
     }
