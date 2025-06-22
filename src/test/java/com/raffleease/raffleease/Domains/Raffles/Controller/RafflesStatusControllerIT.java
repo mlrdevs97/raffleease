@@ -277,6 +277,142 @@ class RafflesStatusControllerIT extends AbstractIntegrationTest {
                         .andExpect(jsonPath("$.success").value(false))
                         .andExpect(jsonPath("$.message").value("Invalid status transition to ACTIVE"));
             }
+
+            @Test
+            @DisplayName("Should return 400 when trying to activate PENDING raffle with end date less than 24 hours away")
+            void shouldReturn400WhenTryingToActivatePendingRaffleWithNearEndDate() throws Exception {
+                // Arrange - Set raffle end date to less than 24 hours from now
+                testRaffle.setEndDate(LocalDateTime.now().plusHours(12)); // Only 12 hours away
+                rafflesRepository.save(testRaffle);
+
+                StatusUpdate statusUpdate = new StatusUpdate(ACTIVE);
+
+                // Act
+                ResultActions result = mockMvc.perform(patch(statusEndpoint)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdate))
+                        .with(user(authData.user().getEmail())));
+
+                // Assert
+                result.andExpect(status().isBadRequest())
+                        .andExpect(jsonPath("$.success").value(false))
+                        .andExpect(jsonPath("$.message").value("The end date of the raffle must be at least one day after the current date to reactivate"));
+
+                // Verify raffle remains in PENDING status
+                Raffle unchangedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+                assertThat(unchangedRaffle.getStatus()).isEqualTo(RaffleStatus.PENDING);
+                assertThat(unchangedRaffle.getStartDate()).isNull(); // Should not have been set
+            }
+
+            @Test
+            @DisplayName("Should return 400 when trying to activate PENDING raffle with end date exactly 24 hours away")
+            void shouldReturn400WhenTryingToActivatePendingRaffleWithEndDateExactly24HoursAway() throws Exception {
+                // Arrange - Set raffle end date to exactly 24 hours from now (should still fail due to "isBefore" check)
+                testRaffle.setEndDate(LocalDateTime.now().plusHours(24));
+                rafflesRepository.save(testRaffle);
+
+                StatusUpdate statusUpdate = new StatusUpdate(ACTIVE);
+
+                // Act
+                ResultActions result = mockMvc.perform(patch(statusEndpoint)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdate))
+                        .with(user(authData.user().getEmail())));
+
+                // Assert
+                result.andExpect(status().isBadRequest())
+                        .andExpect(jsonPath("$.success").value(false))
+                        .andExpect(jsonPath("$.message").value("The end date of the raffle must be at least one day after the current date to reactivate"));
+
+                // Verify raffle remains in PENDING status
+                Raffle unchangedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+                assertThat(unchangedRaffle.getStatus()).isEqualTo(RaffleStatus.PENDING);
+                assertThat(unchangedRaffle.getStartDate()).isNull();
+            }
+
+            @Test
+            @DisplayName("Should successfully activate PENDING raffle with end date more than 24 hours away")
+            void shouldSuccessfullyActivatePendingRaffleWithValidEndDate() throws Exception {
+                // Arrange - Set raffle end date to more than 24 hours from now
+                testRaffle.setEndDate(LocalDateTime.now().plusHours(25)); // 25 hours away
+                rafflesRepository.save(testRaffle);
+
+                StatusUpdate statusUpdate = new StatusUpdate(ACTIVE);
+
+                // Act
+                ResultActions result = mockMvc.perform(patch(statusEndpoint)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdate))
+                        .with(user(authData.user().getEmail())));
+
+                // Assert
+                result.andExpect(status().isOk())
+                        .andExpect(jsonPath("$.success").value(true))
+                        .andExpect(jsonPath("$.data.status").value("ACTIVE"))
+                        .andExpect(jsonPath("$.data.startDate").exists());
+
+                // Verify database state
+                Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+                assertThat(updatedRaffle.getStatus()).isEqualTo(ACTIVE);
+                assertThat(updatedRaffle.getStartDate()).isNotNull();
+                assertThat(updatedRaffle.getStartDate()).isBeforeOrEqualTo(LocalDateTime.now());
+            }
+
+            @Test
+            @DisplayName("Should return 400 when trying to activate PAUSED raffle with end date less than 24 hours away")
+            void shouldReturn400WhenTryingToActivatePausedRaffleWithNearEndDate() throws Exception {
+                // Arrange - Set raffle to PAUSED with end date less than 24 hours away
+                testRaffle.setStatus(RaffleStatus.PAUSED);
+                testRaffle.setStartDate(LocalDateTime.now().minusHours(2)); // Previously activated
+                testRaffle.setEndDate(LocalDateTime.now().plusHours(18)); // Only 18 hours away
+                rafflesRepository.save(testRaffle);
+
+                StatusUpdate statusUpdate = new StatusUpdate(ACTIVE);
+
+                // Act
+                ResultActions result = mockMvc.perform(patch(statusEndpoint)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdate))
+                        .with(user(authData.user().getEmail())));
+
+                // Assert
+                result.andExpect(status().isBadRequest())
+                        .andExpect(jsonPath("$.success").value(false))
+                        .andExpect(jsonPath("$.message").value("The end date of the raffle must be at least one day after the current date to reactivate"));
+
+                // Verify raffle remains in PAUSED status
+                Raffle unchangedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+                assertThat(unchangedRaffle.getStatus()).isEqualTo(RaffleStatus.PAUSED);
+                assertThat(unchangedRaffle.getStartDate()).isNotNull(); // Should preserve original start date
+            }
+
+            @Test
+            @DisplayName("Should successfully activate PAUSED raffle with end date more than 24 hours away")
+            void shouldSuccessfullyActivatePausedRaffleWithValidEndDate() throws Exception {
+                // Arrange - Set raffle to PAUSED with valid end date
+                testRaffle.setStatus(RaffleStatus.PAUSED);
+                testRaffle.setStartDate(LocalDateTime.now().minusHours(2)); // Previously activated
+                testRaffle.setEndDate(LocalDateTime.now().plusHours(30)); // 30 hours away
+                rafflesRepository.save(testRaffle);
+
+                StatusUpdate statusUpdate = new StatusUpdate(ACTIVE);
+
+                // Act
+                ResultActions result = mockMvc.perform(patch(statusEndpoint)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdate))
+                        .with(user(authData.user().getEmail())));
+
+                // Assert
+                result.andExpect(status().isOk())
+                        .andExpect(jsonPath("$.success").value(true))
+                        .andExpect(jsonPath("$.data.status").value("ACTIVE"));
+
+                // Verify database state
+                Raffle updatedRaffle = rafflesRepository.findById(testRaffle.getId()).orElseThrow();
+                assertThat(updatedRaffle.getStatus()).isEqualTo(ACTIVE);
+                assertThat(updatedRaffle.getStartDate()).isNotNull(); // Should preserve original start date
+            }
         }
 
         @Nested

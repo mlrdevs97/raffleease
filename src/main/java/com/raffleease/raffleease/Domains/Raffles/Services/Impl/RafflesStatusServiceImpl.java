@@ -76,10 +76,14 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
     private void updateToActive(Raffle raffle) {
         switch (raffle.getStatus()) {
             case PENDING -> {
+                validateRaffleEndDate(raffle);
                 raffle.setStatus(ACTIVE);
                 raffle.setStartDate(LocalDateTime.now());
             }
-            case PAUSED -> raffle.setStatus(ACTIVE);
+            case PAUSED -> {
+                validateRaffleEndDate(raffle);
+                raffle.setStatus(ACTIVE);
+            }
             case COMPLETED -> reactivateRaffle(raffle);
             default -> throw new BusinessException("Invalid status transition to ACTIVE");
         }
@@ -107,9 +111,7 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
             throw new BusinessException("Cannot reactivate a raffle that already has a winner");
         }
 
-        if (raffle.getEndDate().isBefore(LocalDateTime.now().plusHours(24))) {
-            throw new BusinessException("The end date of the raffle must be at least one day after the current date to reactivate");
-        }
+        validateRaffleEndDate(raffle);
 
         if (raffle.getStatistics().getAvailableTickets() == 0 || raffle.getTotalTickets() <= raffle.getStatistics().getSoldTickets()) {
             throw new BusinessException("Available tickets for raffle are required to reactivate");
@@ -118,5 +120,11 @@ public class RafflesStatusServiceImpl implements RafflesStatusService {
         raffle.setStatus(ACTIVE);
         raffle.setCompletedAt(null);
         raffle.setCompletionReason(null);
+    }
+
+    private void validateRaffleEndDate(Raffle raffle) {
+        if (raffle.getEndDate().isBefore(LocalDateTime.now().plusHours(24))) {
+            throw new BusinessException("The end date of the raffle must be at least one day after the current date to reactivate");
+        }
     }
 }
