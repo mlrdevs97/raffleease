@@ -377,8 +377,8 @@ class RafflesSearchControllerIT extends AbstractIntegrationTest {
     class GetRaffleByIdTests {
 
         @Test
-        @DisplayName("Should return 403 when COLLABORATOR tries to get individual raffle details")
-        void shouldReturn403WhenCollaboratorTriesToGetRaffleDetails() throws Exception {
+        @DisplayName("Should successfully get raffle details for COLLABORATOR role")
+        void shouldSuccessfullyGetRaffleDetailsForCollaborator() throws Exception {
             // Arrange
             AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(
                     authData.association(), AssociationRole.COLLABORATOR);
@@ -391,10 +391,12 @@ class RafflesSearchControllerIT extends AbstractIntegrationTest {
                     .with(user(collaboratorData.user().getEmail())));
 
             // Assert
-            result.andExpect(status().isForbidden())
+            result.andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("Only administrators and members can access individual raffle details"));
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Raffle retrieved successfully"))
+                    .andExpect(jsonPath("$.data.id").value(testRaffle.getId()))
+                    .andExpect(jsonPath("$.data.title").value(testRaffle.getTitle()));
         }
 
         @Test
