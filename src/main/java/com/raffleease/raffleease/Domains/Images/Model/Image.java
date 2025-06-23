@@ -11,6 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
@@ -27,7 +28,9 @@ public class Image {
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
+    @Enumerated(STRING)
     private ImageStatus status;
+
     private String fileName;
     private String filePath;
     private String contentType;
