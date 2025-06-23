@@ -21,7 +21,7 @@ public record ImageDTO(
         String url,
 
         @NotNull
-        @Min(value = 1)
+        @Min(value = 0)
         @Max(value = 10)
         Integer imageOrder
 ) { }
