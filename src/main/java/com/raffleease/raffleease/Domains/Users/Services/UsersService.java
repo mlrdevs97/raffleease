@@ -1,7 +1,7 @@
 package com.raffleease.raffleease.Domains.Users.Services;
 
-import com.raffleease.raffleease.Common.Models.BaseUserData;
-import com.raffleease.raffleease.Common.Models.CreateUserData;
+import com.raffleease.raffleease.Common.Models.UserBaseDTO;
+import com.raffleease.raffleease.Common.Models.UserRegisterDTO;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 
@@ -19,7 +19,7 @@ public interface UsersService {
      * @throws com.raffleease.raffleease.Common.Exceptions.CustomExceptions.UniqueConstraintViolationException
      *         if email already exists
      */
-    User createUser(CreateUserData userData, String encodedPassword, boolean isEnabled);
+    User createUser(UserRegisterDTO userData, String encodedPassword, boolean isEnabled);
 
     /**
      * Updates an existing user's basic information.
@@ -28,7 +28,7 @@ public interface UsersService {
      * @param userData the new user data to apply
      * @return the updated User entity
      */
-    User updateUser(User user, BaseUserData userData);
+    User updateUser(User user, UserBaseDTO userData);
 
     /**
      * Enables or disables a user account.
@@ -56,7 +56,7 @@ public interface UsersService {
      * @throws com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException
      *         if user with the given ID doesn't exist
      */
-    UserResponse getUserById(Long userId);
+    UserResponse getUserResponseById(Long userId);
 
     /**
      * Retrieves all users belonging to a specific association.
@@ -112,4 +112,20 @@ public interface UsersService {
      *         if no user is authenticated or user not found
      */
     User getAuthenticatedUser();
+
+    /**
+     * Checks whether a user exists with the given email address.
+     * 
+     * @param email the email address to check
+     * @return true if a user exists with the given email, false otherwise
+     */
+    boolean existsByEmail(String email);
+
+    /**
+     * Saves a user entity.
+     * 
+     * @param user the user entity to save
+     * @return the saved User entity
+     */
+    User save(User user);
 }

@@ -7,6 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 @AllArgsConstructor
@@ -24,7 +25,9 @@ public class Customer {
     @Column(nullable = false)
     private String fullName;
 
-    private String phoneNumber;
+    @OneToOne(cascade = ALL, orphanRemoval = true)
+    @JoinColumn(name = "phone_number_id")
+    private CustomersPhoneNumber phoneNumber;
 
     private String email;
 

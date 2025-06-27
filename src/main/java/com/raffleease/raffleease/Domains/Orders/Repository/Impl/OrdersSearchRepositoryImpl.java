@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Orders.Repository.Impl;
 
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
+import com.raffleease.raffleease.Domains.Customers.Model.CustomersPhoneNumber;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderSearchFilters;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Model.OrderItem;
@@ -106,7 +107,9 @@ public class OrdersSearchRepositoryImpl implements OrdersSearchRepository {
         }
 
         if (filters.customerPhone() != null && !filters.customerPhone().isBlank()) {
-            predicates.add(cb.like(cb.lower(customerJoin.get("phoneNumber")), "%" + filters.customerPhone().toLowerCase() + "%"));
+            Join<Customer, CustomersPhoneNumber> phoneJoin = customerJoin.join("phoneNumber", LEFT);
+            Expression<String> concatenatedPhone = cb.concat(phoneJoin.get("prefix"), phoneJoin.get("nationalNumber"));
+            predicates.add(cb.like(concatenatedPhone, "%" + filters.customerPhone() + "%"));
         }
 
         if (filters.raffleId() != null) {

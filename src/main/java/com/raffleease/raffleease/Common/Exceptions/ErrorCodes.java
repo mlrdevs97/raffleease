@@ -11,8 +11,8 @@ public final class ErrorCodes {
     public static final String FILE_STORAGE_ERROR = "FILE_STORAGE_ERROR";
     public static final String USER_NOT_FOUND = "USER_NOT_FOUND";
     public static final String EMAIL_VERIFICATION_FAILED = "EMAIL_VERIFICATION_FAILED";
+    public static final String PASSWORD_RESET_FAILED = "PASSWORD_RESET_FAILED";
     public static final String MAIL_ERROR = "MAIL_ERROR";
-    public static final String ENCRYPTION_ERROR = "ENCRYPTION_ERROR";
     public static final String INVALID_REQUEST = "INVALID_REQUEST";
     public static final String MISSING_PARAMETER = "MISSING_PARAMETER";
     public static final String BUSINESS_ERROR = "BUSINESS_ERROR";
@@ -21,4 +21,10 @@ public final class ErrorCodes {
     public static final String VALUE_ALREADY_EXISTS = "VALUE_ALREADY_EXISTS";
     public static final String RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED";
     public static final String IMAGE_LIMIT_EXCEEDED = "IMAGE_LIMIT_EXCEEDED";
+    public static final String EMAIL_SAME_AS_CURRENT = "EMAIL_SAME_AS_CURRENT";
+    public static final String EMAIL_UPDATE_TOKEN_EXPIRED = "EMAIL_UPDATE_TOKEN_EXPIRED";
+    public static final String EMAIL_UPDATE_TOKEN_INVALID = "EMAIL_UPDATE_TOKEN_INVALID";
+    public static final String EMAIL_NO_LONGER_AVAILABLE = "EMAIL_NO_LONGER_AVAILABLE";
+    public static final String CURRENT_PASSWORD_INCORRECT = "CURRENT_PASSWORD_INCORRECT";
+    public static final String PASSWORD_SAME_AS_CURRENT = "PASSWORD_SAME_AS_CURRENT";
 }

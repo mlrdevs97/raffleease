@@ -5,21 +5,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 /**
  * Annotation to mark methods that can only be accessed by the user themselves.
  * Unlike @RequireRole with allowSelfAccess=true, this prevents even administrators 
  * from accessing other users' resources.
  */
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
+@Target({METHOD})
+@Retention(RUNTIME)
 public @interface SelfAccessOnly {
-    /**
-     * The parameter name that contains the target user ID
-     */
     String userIdParam() default "userId";
-    
-    /**
-     * Custom message to be shown when access is denied
-     */
     String message() default "You can only access your own account for this action";
 } 

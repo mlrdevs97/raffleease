@@ -126,12 +126,11 @@ class AdminOrdersRefundControllerIT extends AbstractIntegrationTest {
 
     private Order createTestOrder(OrderStatus status, List<Ticket> orderTickets, BigDecimal total) {
         // Create customer
-        Customer customer = Customer.builder()
+        Customer customer = customersRepository.save(TestDataBuilder.customer()
                 .fullName("jane doe")
                 .email("jane@example.com")
-                .phoneNumber("+1987654321")
-                .build();
-        customer = customersRepository.save(customer);
+                .phoneNumber("+1", "987654321")
+                .build());
 
         // Create order
         Order order = Order.builder()
@@ -674,10 +673,10 @@ class AdminOrdersRefundControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should fail when order has no order items")
         void shouldFailWhenOrderHasNoOrderItems() throws Exception {
             // Arrange - Create order without items (edge case)
-            Customer customer = customersRepository.save(Customer.builder()
+            Customer customer = customersRepository.save(TestDataBuilder.customer()
                     .fullName("test customer")
                     .email("test@example.com")
-                    .phoneNumber("+1234567890")
+                    .phoneNumber("+1", "234567890")
                     .build());
 
             Order testOrder = Order.builder()
@@ -723,10 +722,10 @@ class AdminOrdersRefundControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should fail when order items reference non-existent tickets")
         void shouldFailWhenOrderItemsReferenceNonExistentTickets() throws Exception {
             // Arrange - Create order with items that reference non-existent tickets
-            Customer customer = customersRepository.save(Customer.builder()
+            Customer customer = customersRepository.save(TestDataBuilder.customer()
                     .fullName("test customer")
                     .email("test@example.com")
-                    .phoneNumber("+1234567890")
+                    .phoneNumber("+1", "234567890")
                     .build());
 
             Order testOrder = Order.builder()

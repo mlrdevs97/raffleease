@@ -358,7 +358,7 @@ class PasswordResetControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.message").value("Validation failed"))
                     .andExpect(jsonPath("$.errors.token").value("REQUIRED"))
                     .andExpect(jsonPath("$.errors.password").value("REQUIRED"))
-                    .andExpect(jsonPath("$.errors.confirmPassword").value("REQUIRED"));
+                    .andExpect(jsonPath("$.errors.confirmPassword").value("INVALID_FORMAT"));
         }
     }
 } 

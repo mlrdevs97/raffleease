@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Customers.DTO;
 
-import com.raffleease.raffleease.Common.Models.PhoneNumber;
+import com.raffleease.raffleease.Common.Models.PhoneNumberDTO;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -20,7 +20,7 @@ public record CustomerCreate(
 
         @Nullable
         @Valid
-        PhoneNumber phoneNumber
+        PhoneNumberDTO phoneNumberDTO
 ) {
         public CustomerCreate {
                 fullName = trimAndLower(fullName);

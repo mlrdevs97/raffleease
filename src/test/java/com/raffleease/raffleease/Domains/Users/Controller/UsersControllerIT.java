@@ -2,15 +2,20 @@ package com.raffleease.raffleease.Domains.Users.Controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
-import com.raffleease.raffleease.Common.Models.BaseUserData;
-import com.raffleease.raffleease.Common.Models.CreateUserData;
-import com.raffleease.raffleease.Common.Models.PhoneNumber;
+import com.raffleease.raffleease.Common.Models.UserBaseDTO;
+import com.raffleease.raffleease.Common.Models.UserProfileDTO;
+import com.raffleease.raffleease.Common.Models.UserRegisterDTO;
+import com.raffleease.raffleease.Common.Models.PhoneNumberDTO;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.EditUserRequest;
+import com.raffleease.raffleease.Domains.Users.DTOs.UpdateEmailRequest;
+import com.raffleease.raffleease.Domains.Users.DTOs.UpdatePhoneNumberRequest;
+import com.raffleease.raffleease.Domains.Users.DTOs.VerifyEmailUpdateRequest;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
+import com.raffleease.raffleease.Domains.Auth.Repository.EmailUpdateTokenRepository;
 import com.raffleease.raffleease.util.AuthTestUtils;
 import com.raffleease.raffleease.util.AuthTestUtils.AuthTestData;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +26,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.ADMIN;
+import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.MEMBER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -52,7 +59,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should successfully create user with valid data")
         void shouldCreateUserWithValidData() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             CreateUserRequest request = createValidCreateUserRequest();
 
             // Act
@@ -71,7 +78,8 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.lastName").value("doe"))
                     .andExpect(jsonPath("$.data.userName").value("johndoe"))
                     .andExpect(jsonPath("$.data.email").value("john.doe@example.com"))
-                    .andExpect(jsonPath("$.data.phoneNumber").value("+1234567890"))
+                    .andExpect(jsonPath("$.data.phoneNumber.prefix").value("+1"))
+                    .andExpect(jsonPath("$.data.phoneNumber.nationalNumber").value("234567890"))
                     .andExpect(jsonPath("$.data.userRole").value("ASSOCIATION_MEMBER"))
                     .andExpect(jsonPath("$.data.isEnabled").value(true));
         }
@@ -80,7 +88,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 403 when MEMBER tries to create user")
         void shouldReturn403WhenMemberTriesToCreateUser() throws Exception {
             // Arrange
-            AuthTestData memberData = authTestUtils.createAuthenticatedUser(true, AssociationRole.MEMBER);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUser(true, MEMBER);
             CreateUserRequest request = createValidCreateUserRequest();
 
             // Act
@@ -120,7 +128,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 401 when unauthenticated user tries to create user")
         void shouldReturn401WhenUnauthenticatedUserTriesToCreateUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             CreateUserRequest request = createValidCreateUserRequest();
 
             // Act
@@ -136,7 +144,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when request data is invalid")
         void shouldReturn400WhenRequestDataIsInvalid() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             CreateUserRequest invalidRequest = createInvalidCreateUserRequest();
 
             // Act
@@ -156,7 +164,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when passwords don't match")
         void shouldReturn400WhenPasswordsDontMatch() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             CreateUserRequest requestWithMismatchedPasswords = createUserRequestWithMismatchedPasswords();
 
             // Act
@@ -177,7 +185,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 409 when username already exists")
         void shouldReturn409WhenUsernameAlreadyExists() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             CreateUserRequest request = createUserRequestWithExistingUsername(adminData.user().getUserName());
 
             // Act
@@ -198,7 +206,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 409 when email already exists")
         void shouldReturn409WhenEmailAlreadyExists() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             CreateUserRequest request = createUserRequestWithExistingEmail(adminData.user().getEmail());
 
             // Act
@@ -219,7 +227,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 404 when association doesn't exist")
         void shouldReturn404WhenAssociationDoesntExist() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             CreateUserRequest request = createValidCreateUserRequest();
             Long nonExistentAssociationId = 99999L;
 
@@ -242,7 +250,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should successfully return all users for association")
         void shouldReturnAllUsersForAssociation() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
 
             // Act
@@ -269,7 +277,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 403 when MEMBER tries to get all users")
         void shouldReturn403WhenMemberTriesToGetAllUsers() throws Exception {
             // Arrange
-            AuthTestData memberData = authTestUtils.createAuthenticatedUser(true, AssociationRole.MEMBER);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUser(true, MEMBER);
 
             // Act
             ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, memberData.association().getId())
@@ -303,7 +311,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 401 when unauthenticated user tries to get all users")
         void shouldReturn401WhenUnauthenticatedUserTriesToGetAllUsers() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
 
             // Act
             ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId()));
@@ -316,7 +324,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 404 when association doesn't exist")
         void shouldReturn404WhenAssociationDoesntExist() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             Long nonExistentAssociationId = 99999L;
 
             // Act
@@ -336,7 +344,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should successfully return user by ID for ADMIN")
         void shouldReturnUserByIdForAdmin() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             User targetUser = adminData.user();
 
             // Act
@@ -354,7 +362,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.lastName").value(targetUser.getLastName()))
                     .andExpect(jsonPath("$.data.userName").value(targetUser.getUserName()))
                     .andExpect(jsonPath("$.data.email").value(targetUser.getEmail()))
-                    .andExpect(jsonPath("$.data.userRole").value(targetUser.getUserRole().toString()))
+                    .andExpect(jsonPath("$.data.role").value(ADMIN))
                     .andExpect(jsonPath("$.data.isEnabled").value(targetUser.isEnabled()));
         }
 
@@ -362,7 +370,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should allow MEMBER to access their own user data")
         void shouldAllowMemberToAccessOwnUserData() throws Exception {
             // Arrange
-            AuthTestData memberData = authTestUtils.createAuthenticatedUser(true, AssociationRole.MEMBER);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUser(true, MEMBER);
 
             // Act
             ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}", 
@@ -400,7 +408,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 403 when MEMBER tries to access another user's data")
         void shouldReturn403WhenMemberTriesToAccessAnotherUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
 
             // Act - Member tries to access admin's data
@@ -419,7 +427,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 403 when COLLABORATOR tries to access another user's data")
         void shouldReturn403WhenCollaboratorTriesToAccessAnotherUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData collaboratorData = authTestUtils.createAuthenticatedUser(true, AssociationRole.COLLABORATOR);
             // Create membership for collaborator in admin's association
             AuthTestData collaboratorInSameAssociation = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
@@ -440,7 +448,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 401 when unauthenticated user tries to get user")
         void shouldReturn401WhenUnauthenticatedUserTriesToGetUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
 
             // Act
             ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}", 
@@ -454,7 +462,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 404 when association doesn't exist")
         void shouldReturn404WhenAssociationDoesntExist() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             Long nonExistentAssociationId = 99999L;
 
             // Act
@@ -475,7 +483,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should successfully update user with valid data for ADMIN")
         void shouldUpdateUserWithValidDataForAdmin() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             User targetUser = adminData.user();
             EditUserRequest request = createValidEditUserRequest();
 
@@ -495,14 +503,14 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.firstName").value("jane"))
                     .andExpect(jsonPath("$.data.lastName").value("smith"))
                     .andExpect(jsonPath("$.data.userName").value("janesmith"))
-                    .andExpect(jsonPath("$.data.email").value("jane.smith@example.com"));
+                    .andExpect(jsonPath("$.data.email").value(targetUser.getEmail()));
         }
 
         @Test
         @DisplayName("Should allow MEMBER to update their own data")
         void shouldAllowMemberToUpdateOwnData() throws Exception {
             // Arrange
-            AuthTestData memberData = authTestUtils.createAuthenticatedUser(true, AssociationRole.MEMBER);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUser(true, MEMBER);
             EditUserRequest request = createValidEditUserRequest();
 
             // Act
@@ -544,7 +552,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 403 when MEMBER tries to update another user")
         void shouldReturn403WhenMemberTriesToUpdateAnotherUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
             EditUserRequest request = createValidEditUserRequest();
 
@@ -559,14 +567,14 @@ class UsersControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isForbidden())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("Only administrators can update user accounts, or users can update their own account"));
+                    .andExpect(jsonPath("$.message").value("You can only update your own account"));
         }
 
         @Test
         @DisplayName("Should return 403 when COLLABORATOR tries to update another user")
         void shouldReturn403WhenCollaboratorTriesToUpdateAnotherUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
             EditUserRequest request = createValidEditUserRequest();
 
@@ -581,14 +589,14 @@ class UsersControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isForbidden())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("Only administrators can update user accounts, or users can update their own account"));
+                    .andExpect(jsonPath("$.message").value("You can only update your own account"));
         }
 
         @Test
         @DisplayName("Should return 401 when unauthenticated user tries to update user")
         void shouldReturn401WhenUnauthenticatedUserTriesToUpdateUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             EditUserRequest request = createValidEditUserRequest();
 
             // Act
@@ -605,7 +613,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 409 when updated username already exists")
         void shouldReturn409WhenUpdatedUsernameAlreadyExists() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData otherUserData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
             
             User adminUser = usersRepository.findById(adminData.user().getId()).orElseThrow();
@@ -642,7 +650,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should successfully disable user for ADMIN")
         void shouldDisableUserForAdmin() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
             User targetUser = memberData.user();
 
@@ -667,7 +675,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 403 when ADMIN tries to disable themselves")
         void shouldReturn403WhenAdminTriesToDisableThemselves() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
 
             // Act - Admin tries to disable themselves
             ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable", 
@@ -685,7 +693,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 403 when MEMBER tries to disable user")
         void shouldReturn403WhenMemberTriesToDisableUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
 
             // Act - Member tries to disable admin
@@ -704,7 +712,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 403 when COLLABORATOR tries to disable user")
         void shouldReturn403WhenCollaboratorTriesToDisableUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
 
             // Act - Collaborator tries to disable admin
@@ -723,7 +731,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 401 when unauthenticated user tries to disable user")
         void shouldReturn401WhenUnauthenticatedUserTriesToDisableUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
 
             // Act
             ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable", 
@@ -737,7 +745,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 404 when association doesn't exist")
         void shouldReturn404WhenAssociationDoesntExist() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             Long nonExistentAssociationId = 99999L;
 
             // Act
@@ -758,7 +766,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should successfully enable user for ADMIN")
         void shouldEnableUserForAdmin() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
             User targetUser = memberData.user();
             
@@ -787,7 +795,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 403 when MEMBER tries to enable user")
         void shouldReturn403WhenMemberTriesToEnableUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
 
             // Act - Member tries to enable admin
@@ -806,7 +814,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 403 when COLLABORATOR tries to enable user")
         void shouldReturn403WhenCollaboratorTriesToEnableUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
 
             // Act - Collaborator tries to enable admin
@@ -825,7 +833,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 401 when unauthenticated user tries to enable user")
         void shouldReturn401WhenUnauthenticatedUserTriesToEnableUser() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
 
             // Act
             ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/enable", 
@@ -839,7 +847,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 404 when association doesn't exist")
         void shouldReturn404WhenAssociationDoesntExist() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             Long nonExistentAssociationId = 99999L;
 
             // Act
@@ -860,7 +868,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should successfully update password for authenticated user")
         void shouldUpdatePasswordForAuthenticatedUser() throws Exception {
             // Arrange
-            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             User user = userData.user();
             String originalPassword = user.getPassword();
             String currentPlainPassword = "TempPassword#123"; // Known current password
@@ -899,7 +907,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 401 when user is not authenticated")
         void shouldReturn401WhenUserNotAuthenticated() throws Exception {
             // Arrange
-            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             EditPasswordRequest request = new EditPasswordRequest(
                     "CurrentPass#123",
                     "NewSecurePass#456",
@@ -920,11 +928,11 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when current password is incorrect")
         void shouldReturn400WhenCurrentPasswordIsIncorrect() throws Exception {
             // Arrange
-            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             User user = userData.user();
 
             EditPasswordRequest request = new EditPasswordRequest(
-                    "WrongCurrentPassword#123", // Incorrect current password
+                    "WrongCurrentPassword#123",
                     "NewSecurePass#456",
                     "NewSecurePass#456"
             );
@@ -937,7 +945,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .content(objectMapper.writeValueAsString(request)));
 
             // Assert
-            result.andExpect(status().isUnauthorized())
+            result.andExpect(status().isBadRequest())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.message").value("Current password is incorrect"));
@@ -947,7 +955,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when new password is same as current password")
         void shouldReturn400WhenNewPasswordIsSameAsCurrent() throws Exception {
             // Arrange
-            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             User user = userData.user();
             String currentPlainPassword = "CurrentPass#123";
 
@@ -957,7 +965,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
 
             EditPasswordRequest request = new EditPasswordRequest(
                     currentPlainPassword,
-                    currentPlainPassword, // Same as current password
+                    currentPlainPassword,
                     currentPlainPassword
             );
 
@@ -969,7 +977,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .content(objectMapper.writeValueAsString(request)));
 
             // Assert
-            result.andExpect(status().isUnauthorized())
+            result.andExpect(status().isBadRequest())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.message").value("New password must be different from current password"));
@@ -979,7 +987,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when passwords don't match")
         void shouldReturn400WhenPasswordsDontMatch() throws Exception {
             // Arrange
-            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             User user = userData.user();
             String currentPlainPassword = "CurrentPass#123";
 
@@ -1012,7 +1020,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when new password is weak")
         void shouldReturn400WhenNewPasswordIsWeak() throws Exception {
             // Arrange
-            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             User user = userData.user();
             String currentPlainPassword = "CurrentPass#123";
 
@@ -1045,7 +1053,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when required fields are blank")
         void shouldReturn400WhenRequiredFieldsAreBlank() throws Exception {
             // Arrange
-            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             User user = userData.user();
 
             EditPasswordRequest request = new EditPasswordRequest(
@@ -1075,7 +1083,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should preserve user permissions and data after password change")
         void shouldPreserveUserDataAfterPasswordChange() throws Exception {
             // Arrange
-            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             User user = userData.user();
             String currentPlainPassword = "CurrentPass#123";
             
@@ -1120,7 +1128,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 403 when trying to change another user's password")
         void shouldReturn403WhenTryingToChangeAnotherUsersPassword() throws Exception {
             // Arrange
-            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData otherUserData = authTestUtils.createAuthenticatedUserInSameAssociation(userData.association());
             
             EditPasswordRequest request = new EditPasswordRequest(
@@ -1147,7 +1155,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 404 when association doesn't exist")
         void shouldReturn404WhenAssociationDoesntExist() throws Exception {
             // Arrange
-            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             Long nonExistentAssociationId = 99999L;
             
             EditPasswordRequest request = new EditPasswordRequest(
@@ -1176,8 +1184,8 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when trying to create user with ADMIN role")
         void shouldReturn400WhenTryingToCreateUserWithAdminRole() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
-            CreateUserRequest request = createValidCreateUserRequestWithRole(AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            CreateUserRequest request = createValidCreateUserRequestWithRole(ADMIN);
 
             // Act
             ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
@@ -1186,19 +1194,18 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .content(objectMapper.writeValueAsString(request)));
 
             // Assert
-            result.andExpect(status().isBadRequest())
+            result.andExpect(status().isForbidden())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("Validation failed"))
-                    .andExpect(jsonPath("$.errors.role").value("INVALID_FIELD"));
+                    .andExpect(jsonPath("$.message").value("Administrators cannot create other administrator accounts"));
         }
 
         @Test
         @DisplayName("Should successfully create user with MEMBER role")
         void shouldCreateUserWithMemberRole() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
-            CreateUserRequest request = createValidCreateUserRequestWithRole(AssociationRole.MEMBER);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            CreateUserRequest request = createValidCreateUserRequestWithRole(MEMBER);
 
             // Act
             ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
@@ -1216,7 +1223,8 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.lastName").value("doe"))
                     .andExpect(jsonPath("$.data.userName").value("johndoe"))
                     .andExpect(jsonPath("$.data.email").value("john.doe@example.com"))
-                    .andExpect(jsonPath("$.data.phoneNumber").value("+1234567890"))
+                    .andExpect(jsonPath("$.data.phoneNumber.prefix").value("+1"))
+                    .andExpect(jsonPath("$.data.phoneNumber.nationalNumber").value("234567890"))
                     .andExpect(jsonPath("$.data.userRole").value("ASSOCIATION_MEMBER"))
                     .andExpect(jsonPath("$.data.isEnabled").value(true));
 
@@ -1224,14 +1232,14 @@ class UsersControllerIT extends AbstractIntegrationTest {
             Long createdUserId = authTestUtils.extractUserIdFromResponse(result);
             User createdUser = usersRepository.findById(createdUserId).orElseThrow();
             AssociationRole actualRole = authTestUtils.getUserRoleInAssociation(createdUser);
-            assertThat(actualRole).isEqualTo(AssociationRole.MEMBER);
+            assertThat(actualRole).isEqualTo(MEMBER);
         }
 
         @Test
         @DisplayName("Should successfully create user with COLLABORATOR role")
         void shouldCreateUserWithCollaboratorRole() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             CreateUserRequest request = createValidCreateUserRequestWithRole(AssociationRole.COLLABORATOR);
 
             // Act
@@ -1257,19 +1265,19 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should return 400 when role is null")
         void shouldReturn400WhenRoleIsNull() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             
-            PhoneNumber phoneNumber = PhoneNumber.builder()
+            PhoneNumberDTO phoneNumberDTO = PhoneNumberDTO.builder()
                     .prefix("+1")
                     .nationalNumber("234567890")
                     .build();
 
-            CreateUserData userData = new CreateUserData(
+            UserRegisterDTO userData = new UserRegisterDTO(
                     "John",
                     "Doe", 
                     "johndoe",
                     "john.doe@example.com",
-                    phoneNumber,
+                    phoneNumberDTO,
                     "SecurePass#123",
                     "SecurePass#123"
             );
@@ -1298,24 +1306,24 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should verify only MEMBER and COLLABORATOR roles are allowed")
         void shouldVerifyOnlyMemberAndCollaboratorRolesAreAllowed() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             
             // Test creating users with allowed roles
-            AssociationRole[] allowedRoles = {AssociationRole.MEMBER, AssociationRole.COLLABORATOR};
+            AssociationRole[] allowedRoles = {MEMBER, AssociationRole.COLLABORATOR};
             
             for (AssociationRole role : allowedRoles) {
                 // Create unique request for each role
-                PhoneNumber phoneNumber = PhoneNumber.builder()
+                PhoneNumberDTO phoneNumberDTO = PhoneNumberDTO.builder()
                         .prefix("+1")
                         .nationalNumber("23456789" + role.ordinal())
                         .build();
 
-                CreateUserData userData = new CreateUserData(
+                UserRegisterDTO userData = new UserRegisterDTO(
                         "John",
                         "Doe", 
                         "johndoe" + role.name().toLowerCase(),
                         "john.doe." + role.name().toLowerCase() + "@example.com",
-                        phoneNumber,
+                        phoneNumberDTO,
                         "SecurePass#123",
                         "SecurePass#123"
                 );
@@ -1348,27 +1356,27 @@ class UsersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should verify created users have appropriate permissions")
         void shouldVerifyCreatedUsersHaveAppropriatePermissions() throws Exception {
             // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, AssociationRole.ADMIN);
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             
             // Create a MEMBER user with unique credentials
-            PhoneNumber memberPhoneNumber = PhoneNumber.builder()
+            PhoneNumberDTO memberPhoneNumberDTO = PhoneNumberDTO.builder()
                     .prefix("+1")
                     .nationalNumber("234567890")
                     .build();
 
-            CreateUserData memberUserData = new CreateUserData(
+            UserRegisterDTO memberUserData = new UserRegisterDTO(
                     "Jane",
                     "Smith", 
                     "janesmith",
                     "jane.smith@example.com",
-                    memberPhoneNumber,
+                    memberPhoneNumberDTO,
                     "SecurePass#123",
                     "SecurePass#123"
             );
 
             CreateUserRequest memberRequest = CreateUserRequest.builder()
                     .userData(memberUserData)
-                    .role(AssociationRole.MEMBER)
+                    .role(MEMBER)
                     .build();
 
             ResultActions memberResult = mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
@@ -1398,17 +1406,17 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.message").value("Only administrators can access user accounts information"));
 
             // Create a COLLABORATOR user with unique credentials
-            PhoneNumber collaboratorPhoneNumber = PhoneNumber.builder()
+            PhoneNumberDTO collaboratorPhoneNumberDTO = PhoneNumberDTO.builder()
                     .prefix("+1")
                     .nationalNumber("987654321")
                     .build();
 
-            CreateUserData collaboratorUserData = new CreateUserData(
+            UserRegisterDTO collaboratorUserData = new UserRegisterDTO(
                     "Bob",
                     "Johnson", 
                     "bobjohnson",
                     "bob.johnson@example.com",
-                    collaboratorPhoneNumber,
+                    collaboratorPhoneNumberDTO,
                     "SecurePass#123",
                     "SecurePass#123"
             );
@@ -1437,23 +1445,652 @@ class UsersControllerIT extends AbstractIntegrationTest {
         }
     }
 
+    @Nested
+    @DisplayName("PUT /v1/associations/{associationId}/users/{userId}/email - Update Email")
+    class UpdateEmailTests {
+
+        @Test
+        @DisplayName("Should successfully request email update with valid data")
+        void shouldRequestEmailUpdateWithValidData() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            UpdateEmailRequest request = new UpdateEmailRequest("newemail@example.com");
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+                    userData.association().getId(), userData.user().getId())
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Email update verification has been sent to your new email address"))
+                    .andExpect(jsonPath("$.data").isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should return 400 when new email is same as current email")
+        void shouldReturn400WhenNewEmailIsSameAsCurrent() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            UpdateEmailRequest request = new UpdateEmailRequest(userData.user().getEmail());
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+                    userData.association().getId(), userData.user().getId())
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("The new email must be different from your current email"));
+        }
+
+        @Test
+        @DisplayName("Should return 409 when new email already exists")
+        void shouldReturn409WhenNewEmailAlreadyExists() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData otherUserData = authTestUtils.createAuthenticatedUserInSameAssociation(userData.association());
+            UpdateEmailRequest request = new UpdateEmailRequest(otherUserData.user().getEmail());
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+                    userData.association().getId(), userData.user().getId())
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isConflict())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors.email").value("VALUE_ALREADY_EXISTS"));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when email format is invalid")
+        void shouldReturn400WhenEmailFormatIsInvalid() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            UpdateEmailRequest request = new UpdateEmailRequest("invalid-email-format");
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+                    userData.association().getId(), userData.user().getId())
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors.newEmail").value("INVALID_EMAIL"));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when email is blank")
+        void shouldReturn400WhenEmailIsBlank() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            UpdateEmailRequest request = new UpdateEmailRequest("");
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+                    userData.association().getId(), userData.user().getId())
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors.newEmail").value("REQUIRED"));
+        }
+
+        @Test
+        @DisplayName("Should return 403 when MEMBER tries to update another user's email")
+        void shouldReturn403WhenMemberTriesToUpdateAnotherUsersEmail() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            UpdateEmailRequest request = new UpdateEmailRequest("newemail@example.com");
+
+            // Act - Member tries to update admin's email
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+                    adminData.association().getId(), adminData.user().getId())
+                    .with(user(memberData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("You can only update your own email address"));
+        }
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to update another user's email")
+        void shouldReturn403WhenCollaboratorTriesToUpdateAnotherUsersEmail() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            UpdateEmailRequest request = new UpdateEmailRequest("newemail@example.com");
+
+            // Act - Collaborator tries to update admin's email
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+                    adminData.association().getId(), adminData.user().getId())
+                    .with(user(collaboratorData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("You can only update your own email address"));
+        }
+
+        @Test
+        @DisplayName("Should allow MEMBER to update their own email")
+        void shouldAllowMemberToUpdateOwnEmail() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUser(true, MEMBER);
+            UpdateEmailRequest request = new UpdateEmailRequest("member.newemail@example.com");
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+                    memberData.association().getId(), memberData.user().getId())
+                    .with(user(memberData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Email update verification has been sent to your new email address"));
+        }
+
+        @Test
+        @DisplayName("Should allow COLLABORATOR to update their own email")
+        void shouldAllowCollaboratorToUpdateOwnEmail() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUser(true, AssociationRole.COLLABORATOR);
+            UpdateEmailRequest request = new UpdateEmailRequest("collaborator.newemail@example.com");
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+                    collaboratorData.association().getId(), collaboratorData.user().getId())
+                    .with(user(collaboratorData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Email update verification has been sent to your new email address"));
+        }
+
+        @Test
+        @DisplayName("Should return 401 when unauthenticated user tries to update email")
+        void shouldReturn401WhenUnauthenticatedUserTriesToUpdateEmail() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            UpdateEmailRequest request = new UpdateEmailRequest("newemail@example.com");
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+                    userData.association().getId(), userData.user().getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return 404 when association doesn't exist")
+        void shouldReturn404WhenAssociationDoesntExist() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            UpdateEmailRequest request = new UpdateEmailRequest("newemail@example.com");
+            Long nonExistentAssociationId = 99999L;
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+                    nonExistentAssociationId, userData.user().getId())
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isForbidden());
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /v1/associations/{associationId}/users/verify-email-update - Verify Email Update")
+    class VerifyEmailUpdateTests {
+
+        @Autowired
+        private EmailUpdateTokenRepository emailUpdateTokenRepository;
+
+        @Test
+        @DisplayName("Should return 400 when token is blank")
+        void shouldReturn400WhenTokenIsBlank() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            VerifyEmailUpdateRequest request = new VerifyEmailUpdateRequest("");
+
+            // Act
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/verify-email-update",
+                    userData.association().getId())
+                    .with(user(userData.user().getEmail()))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors.token").value("REQUIRED"));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when token is invalid")
+        void shouldReturn400WhenTokenIsInvalid() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            VerifyEmailUpdateRequest request = new VerifyEmailUpdateRequest("invalid-token");
+
+            // Act
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/verify-email-update",
+                    userData.association().getId())
+                    .with(user(userData.user().getEmail()))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Invalid or expired email update token"));
+        }
+
+        @Test
+        @DisplayName("Should return 401 when unauthenticated user tries to verify email update")
+        void shouldReturn401WhenUnauthenticatedUserTriesToVerifyEmailUpdate() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            VerifyEmailUpdateRequest request = new VerifyEmailUpdateRequest("some-token");
+
+            // Act
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/verify-email-update",
+                    userData.association().getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return 404 when association doesn't exist")
+        void shouldReturn404WhenAssociationDoesntExist() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            VerifyEmailUpdateRequest request = new VerifyEmailUpdateRequest("some-token");
+            Long nonExistentAssociationId = 99999L;
+
+            // Act
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/verify-email-update",
+                    nonExistentAssociationId)
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isForbidden());
+        }
+    }
+
+    @Nested
+    @DisplayName("PUT /v1/associations/{associationId}/users/{userId}/phone-number - Update Phone Number")
+    class UpdatePhoneNumberTests {
+
+        @Test
+        @DisplayName("Should successfully update phone number with valid data")
+        void shouldUpdatePhoneNumberWithValidData() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            PhoneNumberDTO newPhoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+44")
+                    .nationalNumber("7700900123")
+                    .build();
+            UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+                    userData.association().getId(), userData.user().getId())
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Phone number has been updated successfully"))
+                    .andExpect(jsonPath("$.data.id").value(userData.user().getId()))
+                    .andExpect(jsonPath("$.data.phoneNumber.prefix").value("+44"))
+                    .andExpect(jsonPath("$.data.phoneNumber.nationalNumber").value("7700900123"));
+
+            // Verify phone number was actually updated in database
+            User updatedUser = usersRepository.findById(userData.user().getId()).orElseThrow();
+            assertThat(updatedUser.getPhoneNumber().getPrefix()).isEqualTo("+44");
+            assertThat(updatedUser.getPhoneNumber().getNationalNumber()).isEqualTo("7700900123");
+        }
+
+        @Test
+        @DisplayName("Should allow MEMBER to update their own phone number")
+        void shouldAllowMemberToUpdateOwnPhoneNumber() throws Exception {
+            // Arrange
+            AuthTestData memberData = authTestUtils.createAuthenticatedUser(true, MEMBER);
+            PhoneNumberDTO newPhoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+33")
+                    .nationalNumber("123456789")
+                    .build();
+            UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+                    memberData.association().getId(), memberData.user().getId())
+                    .with(user(memberData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Phone number has been updated successfully"))
+                    .andExpect(jsonPath("$.data.phoneNumber.prefix").value("+33"))
+                    .andExpect(jsonPath("$.data.phoneNumber.nationalNumber").value("123456789"));
+        }
+
+        @Test
+        @DisplayName("Should allow COLLABORATOR to update their own phone number")
+        void shouldAllowCollaboratorToUpdateOwnPhoneNumber() throws Exception {
+            // Arrange
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUser(true, AssociationRole.COLLABORATOR);
+            PhoneNumberDTO newPhoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+49")
+                    .nationalNumber("1234567890")
+                    .build();
+            UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+                    collaboratorData.association().getId(), collaboratorData.user().getId())
+                    .with(user(collaboratorData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Phone number has been updated successfully"))
+                    .andExpect(jsonPath("$.data.phoneNumber.prefix").value("+49"))
+                    .andExpect(jsonPath("$.data.phoneNumber.nationalNumber").value("1234567890"));
+        }
+
+        @Test
+        @DisplayName("Should return 403 when MEMBER tries to update another user's phone number")
+        void shouldReturn403WhenMemberTriesToUpdateAnotherUsersPhoneNumber() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            PhoneNumberDTO newPhoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+1")
+                    .nationalNumber("9876543210")
+                    .build();
+            UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
+
+            // Act - Member tries to update admin's phone number
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+                    adminData.association().getId(), adminData.user().getId())
+                    .with(user(memberData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("You can only update your own phone number"));
+        }
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to update another user's phone number")
+        void shouldReturn403WhenCollaboratorTriesToUpdateAnotherUsersPhoneNumber() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            PhoneNumberDTO newPhoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+1")
+                    .nationalNumber("9876543210")
+                    .build();
+            UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
+
+            // Act - Collaborator tries to update admin's phone number
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+                    adminData.association().getId(), adminData.user().getId())
+                    .with(user(collaboratorData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("You can only update your own phone number"));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when phone number is null")
+        void shouldReturn400WhenPhoneNumberIsNull() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(null);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+                    userData.association().getId(), userData.user().getId())
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors.phoneNumber").value("REQUIRED"));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when phone number prefix is invalid")
+        void shouldReturn400WhenPhoneNumberPrefixIsInvalid() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            PhoneNumberDTO invalidPhoneNumber = PhoneNumberDTO.builder()
+                    .prefix("invalid-prefix")
+                    .nationalNumber("1234567890")
+                    .build();
+            UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(invalidPhoneNumber);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+                    userData.association().getId(), userData.user().getId())
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors['phoneNumber.prefix']").exists());
+        }
+
+        @Test
+        @DisplayName("Should return 400 when phone number national number is invalid")
+        void shouldReturn400WhenPhoneNumberNationalNumberIsInvalid() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            PhoneNumberDTO invalidPhoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+1")
+                    .nationalNumber("abc123")
+                    .build();
+            UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(invalidPhoneNumber);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+                    userData.association().getId(), userData.user().getId())
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors['phoneNumber.nationalNumber']").exists());
+        }
+
+        @Test
+        @DisplayName("Should return 401 when unauthenticated user tries to update phone number")
+        void shouldReturn401WhenUnauthenticatedUserTriesToUpdatePhoneNumber() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            PhoneNumberDTO newPhoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+1")
+                    .nationalNumber("9876543210")
+                    .build();
+            UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+                    userData.association().getId(), userData.user().getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return 404 when association doesn't exist")
+        void shouldReturn404WhenAssociationDoesntExist() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            PhoneNumberDTO newPhoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+1")
+                    .nationalNumber("9876543210")
+                    .build();
+            UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
+            Long nonExistentAssociationId = 99999L;
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+                    nonExistentAssociationId, userData.user().getId())
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should preserve other user data when updating phone number")
+        void shouldPreserveOtherUserDataWhenUpdatingPhoneNumber() throws Exception {
+            // Arrange
+            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            User originalUser = userData.user();
+            
+            // Store original user data
+            String originalFirstName = originalUser.getFirstName();
+            String originalLastName = originalUser.getLastName();
+            String originalEmail = originalUser.getEmail();
+            String originalUserName = originalUser.getUserName();
+            boolean originalEnabled = originalUser.isEnabled();
+            
+            PhoneNumberDTO newPhoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+44")
+                    .nationalNumber("7700900123")
+                    .build();
+            UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+                    userData.association().getId(), userData.user().getId())
+                    .with(user(userData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isOk());
+
+            // Verify all user data except phone number remained unchanged
+            User updatedUser = usersRepository.findById(originalUser.getId()).orElseThrow();
+            assertThat(updatedUser.getFirstName()).isEqualTo(originalFirstName);
+            assertThat(updatedUser.getLastName()).isEqualTo(originalLastName);
+            assertThat(updatedUser.getEmail()).isEqualTo(originalEmail);
+            assertThat(updatedUser.getUserName()).isEqualTo(originalUserName);
+            assertThat(updatedUser.isEnabled()).isEqualTo(originalEnabled);
+            
+            // But phone number should be changed
+            assertThat(updatedUser.getPhoneNumber().getPrefix()).isEqualTo("+44");
+            assertThat(updatedUser.getPhoneNumber().getNationalNumber()).isEqualTo("7700900123");
+        }
+    }
+
     // Helper methods for creating test data
     private CreateUserRequest createValidCreateUserRequest() {
-        return createValidCreateUserRequestWithRole(AssociationRole.MEMBER);
+        return createValidCreateUserRequestWithRole(MEMBER);
     }
 
     private CreateUserRequest createValidCreateUserRequestWithRole(AssociationRole role) {
-        PhoneNumber phoneNumber = PhoneNumber.builder()
+        PhoneNumberDTO phoneNumberDTO = PhoneNumberDTO.builder()
                 .prefix("+1")
                 .nationalNumber("234567890")
                 .build();
 
-        CreateUserData userData = new CreateUserData(
+        UserRegisterDTO userData = new UserRegisterDTO(
                 "John",
                 "Doe", 
                 "johndoe",
                 "john.doe@example.com",
-                phoneNumber,
+                phoneNumberDTO,
                 "SecurePass#123",
                 "SecurePass#123"
         );
@@ -1465,7 +2102,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
     }
 
     private CreateUserRequest createInvalidCreateUserRequest() {
-        CreateUserData invalidUserData = new CreateUserData(
+        UserRegisterDTO invalidUserData = new UserRegisterDTO(
                 "", // Invalid: empty first name
                 "", // Invalid: empty last name
                 "a", // Invalid: too short username
@@ -1477,119 +2114,97 @@ class UsersControllerIT extends AbstractIntegrationTest {
 
         return CreateUserRequest.builder()
                 .userData(invalidUserData)
-                .role(AssociationRole.MEMBER)
+                .role(MEMBER)
                 .build();
     }
 
     private CreateUserRequest createUserRequestWithMismatchedPasswords() {
-        PhoneNumber phoneNumber = PhoneNumber.builder()
+        PhoneNumberDTO phoneNumberDTO = PhoneNumberDTO.builder()
                 .prefix("+1")
                 .nationalNumber("234567890")
                 .build();
 
-        CreateUserData userData = new CreateUserData(
+        UserRegisterDTO userData = new UserRegisterDTO(
                 "John",
                 "Doe",
                 "johndoe",
                 "john.doe@example.com",
-                phoneNumber,
+                phoneNumberDTO,
                 "SecurePass#123",
                 "DifferentPass#456" // Mismatched password
         );
 
         return CreateUserRequest.builder()
                 .userData(userData)
-                .role(AssociationRole.MEMBER)
+                .role(MEMBER)
                 .build();
     }
 
     private CreateUserRequest createUserRequestWithExistingUsername(String existingUsername) {
-        PhoneNumber phoneNumber = PhoneNumber.builder()
+        PhoneNumberDTO phoneNumberDTO = PhoneNumberDTO.builder()
                 .prefix("+1")
                 .nationalNumber("234567890")
                 .build();
 
-        CreateUserData userData = new CreateUserData(
+        UserRegisterDTO userData = new UserRegisterDTO(
                 "John",
                 "Doe",
                 existingUsername, // Using existing username
                 "new.email@example.com",
-                phoneNumber,
+                phoneNumberDTO,
                 "SecurePass#123",
                 "SecurePass#123"
         );
 
         return CreateUserRequest.builder()
                 .userData(userData)
-                .role(AssociationRole.MEMBER)
+                .role(MEMBER)
                 .build();
     }
 
     private CreateUserRequest createUserRequestWithExistingEmail(String existingEmail) {
-        PhoneNumber phoneNumber = PhoneNumber.builder()
+        PhoneNumberDTO phoneNumberDTO = PhoneNumberDTO.builder()
                 .prefix("+1")
                 .nationalNumber("234567890")
                 .build();
 
-        CreateUserData userData = new CreateUserData(
+        UserRegisterDTO userData = new UserRegisterDTO(
                 "John",
                 "Doe",
                 "newusername",
                 existingEmail, // Using existing email
-                phoneNumber,
+                phoneNumberDTO,
                 "SecurePass#123",
                 "SecurePass#123"
         );
 
         return CreateUserRequest.builder()
                 .userData(userData)
-                .role(AssociationRole.MEMBER)
+                .role(MEMBER)
                 .build();
     }
 
     private EditUserRequest createValidEditUserRequest() {
-        PhoneNumber phoneNumber = PhoneNumber.builder()
-                .prefix("+1")
-                .nationalNumber("987654321")
-                .build();
-
-        BaseUserData userData = BaseUserData.builder()
+        return new EditUserRequest(UserBaseDTO.builder()
                 .firstName("Jane")
                 .lastName("Smith")
                 .userName("janesmith")
-                .email("jane.smith@example.com")
-                .phoneNumber(phoneNumber)
-                .build();
-
-        return new EditUserRequest(userData);
+                .build());
     }
 
     private EditUserRequest createInvalidEditUserRequest() {
-        BaseUserData invalidUserData = BaseUserData.builder()
-                .firstName("") // Invalid: empty first name
-                .lastName("") // Invalid: empty last name  
-                .userName("a") // Invalid: too short username
-                .email("invalid-email") // Invalid: invalid email format
-                .phoneNumber(null)
-                .build();
-
-        return new EditUserRequest(invalidUserData);
+        return new EditUserRequest(UserBaseDTO.builder()
+                .firstName("")
+                .lastName("")
+                .userName("a")
+                .build());
     }
 
     private EditUserRequest createEditUserRequestWithExistingUsername(String existingUsername) {
-        PhoneNumber phoneNumber = PhoneNumber.builder()
-                .prefix("+1")
-                .nationalNumber("987654321")
-                .build();
-
-        BaseUserData userData = BaseUserData.builder()
+        return new EditUserRequest(UserBaseDTO.builder()
                 .firstName("Jane")
                 .lastName("Smith")
                 .userName(existingUsername)
-                .email("jane.smith@example.com")
-                .phoneNumber(phoneNumber)
-                .build();
-
-        return new EditUserRequest(userData);
+                .build());
     }
 } 

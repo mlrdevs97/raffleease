@@ -2,11 +2,10 @@ package com.raffleease.raffleease.Common.RateLimiting;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
+import com.raffleease.raffleease.Common.Models.PhoneNumberDTO;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserRequest;
-import com.raffleease.raffleease.Common.Models.BaseUserData;
-import com.raffleease.raffleease.Common.Models.CreateUserData;
-import com.raffleease.raffleease.Common.Models.PhoneNumber;
+import com.raffleease.raffleease.Common.Models.UserRegisterDTO;
 import com.raffleease.raffleease.util.AuthTestUtils;
 import com.raffleease.raffleease.util.AuthTestUtils.AuthTestData;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +25,6 @@ import java.util.List;
 import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -451,17 +449,17 @@ class RateLimitingIT extends AbstractIntegrationTest {
     }
 
     private CreateUserRequest createUniqueCreateUserRequest(int uniqueId) {
-        PhoneNumber phoneNumber = PhoneNumber.builder()
+        PhoneNumberDTO phoneNumberDTO = PhoneNumberDTO.builder()
                 .prefix("+1")
                 .nationalNumber("23456789" + uniqueId)
                 .build();
 
-        CreateUserData userData = new CreateUserData(
+        UserRegisterDTO userData = new UserRegisterDTO(
                 "john" + uniqueId,
                 "doe" + uniqueId,
                 "johndoe" + uniqueId,
                 "john.doe" + uniqueId + "@example.com",
-                phoneNumber,
+                phoneNumberDTO,
                 "TestPassword123!",
                 "TestPassword123!"
         );

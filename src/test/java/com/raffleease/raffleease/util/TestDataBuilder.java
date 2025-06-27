@@ -12,8 +12,9 @@ import com.raffleease.raffleease.Domains.Raffles.Model.RaffleStatus;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Model.TicketStatus;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
+import com.raffleease.raffleease.Domains.Customers.Model.CustomersPhoneNumber;
 import com.raffleease.raffleease.Domains.Users.Model.User;
-import com.raffleease.raffleease.Domains.Users.Model.UserRole;
+import com.raffleease.raffleease.Domains.Users.Model.UserPhoneNumber;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -62,13 +63,23 @@ public class TestDataBuilder {
         return new TicketBuilder();
     }
 
+    public static CustomerBuilder customer() {
+        return new CustomerBuilder();
+    }
+
+    public static CustomersPhoneNumberBuilder customersPhoneNumber() {
+        return new CustomersPhoneNumberBuilder();
+    }
+
     public static class UserBuilder {
         private String firstName = "John";
         private String lastName = "Doe";
         private String userName = "johndoe";
         private String email = "john.doe@example.com";
-        private String phoneNumber = "+1234567890";
-        private UserRole userRole = UserRole.ASSOCIATION_MEMBER;
+        private UserPhoneNumber phoneNumber = UserPhoneNumber.builder()
+                .prefix("+1")
+                .nationalNumber("234567890")
+                .build();
         private String password = "$2a$10$8K1p/3m4kNG6cZOsLZhxOuWyEZwEG4CqJ8Zz8J9hOqWyEZwEG4CqJ8";
         private boolean isEnabled = true;
 
@@ -92,13 +103,16 @@ public class TestDataBuilder {
             return this;
         }
 
-        public UserBuilder phoneNumber(String phoneNumber) {
+        public UserBuilder phoneNumber(UserPhoneNumber phoneNumber) {
             this.phoneNumber = phoneNumber;
             return this;
         }
 
-        public UserBuilder userRole(UserRole userRole) {
-            this.userRole = userRole;
+        public UserBuilder phoneNumber(String prefix, String nationalNumber) {
+            this.phoneNumber = UserPhoneNumber.builder()
+                    .prefix(prefix)
+                    .nationalNumber(nationalNumber)
+                    .build();
             return this;
         }
 
@@ -124,7 +138,6 @@ public class TestDataBuilder {
                     .userName(userName)
                     .email(email)
                     .phoneNumber(phoneNumber)
-                    .userRole(userRole)
                     .password(password)
                     .isEnabled(isEnabled)
                     .build();
@@ -663,6 +676,75 @@ public class TestDataBuilder {
                     .status(status)
                     .raffle(raffle)
                     .customer(customer)
+                    .build();
+        }
+    }
+
+    public static class CustomerBuilder {
+        private String fullName = "John Doe";
+        private String email = "john.doe@example.com";
+        private CustomersPhoneNumber phoneNumber = TestDataBuilder.customersPhoneNumber().build();
+
+        public CustomerBuilder fullName(String fullName) {
+            this.fullName = fullName;
+            return this;
+        }
+
+        public CustomerBuilder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public CustomerBuilder phoneNumber(CustomersPhoneNumber phoneNumber) {
+            this.phoneNumber = phoneNumber;
+            return this;
+        }
+
+        public CustomerBuilder phoneNumber(String prefix, String nationalNumber) {
+            this.phoneNumber = CustomersPhoneNumber.builder()
+                    .prefix(prefix)
+                    .nationalNumber(nationalNumber)
+                    .build();
+            return this;
+        }
+
+        public CustomerBuilder noPhoneNumber() {
+            this.phoneNumber = null;
+            return this;
+        }
+
+        public CustomerBuilder noEmail() {
+            this.email = null;
+            return this;
+        }
+
+        public Customer build() {
+            return Customer.builder()
+                    .fullName(fullName)
+                    .email(email)
+                    .phoneNumber(phoneNumber)
+                    .build();
+        }
+    }
+
+    public static class CustomersPhoneNumberBuilder {
+        private String prefix = "+1";
+        private String nationalNumber = "234567890";
+
+        public CustomersPhoneNumberBuilder prefix(String prefix) {
+            this.prefix = prefix;
+            return this;
+        }
+
+        public CustomersPhoneNumberBuilder nationalNumber(String nationalNumber) {
+            this.nationalNumber = nationalNumber;
+            return this;
+        }
+
+        public CustomersPhoneNumber build() {
+            return CustomersPhoneNumber.builder()
+                    .prefix(prefix)
+                    .nationalNumber(nationalNumber)
                     .build();
         }
     }

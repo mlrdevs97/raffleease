@@ -43,13 +43,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Override
     public boolean canModifyUser(Long associationId, Long targetUserId, boolean allowSelfAccess) {
         User currentUser = usersService.getAuthenticatedUser();
-        
-        // If self access is allowed and user is modifying themselves, allow it
         if (allowSelfAccess && currentUser.getId().equals(targetUserId)) {
             return true;
         }
-        
-        // Otherwise, check if user has ADMIN role
         return hasRole(associationId, ADMIN);
     }
 

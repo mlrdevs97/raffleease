@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Auth.DTOs.Register;
 
-import com.raffleease.raffleease.Common.Models.PhoneNumber;
+import com.raffleease.raffleease.Common.Models.PhoneNumberDTO;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -23,7 +23,7 @@ public record RegisterAssociationData(
 
         @Nullable
         @Valid
-        PhoneNumber phoneNumber,
+        PhoneNumberDTO phoneNumber,
 
         @NotNull
         @Valid

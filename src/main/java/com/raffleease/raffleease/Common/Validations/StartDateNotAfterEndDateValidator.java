@@ -9,8 +9,6 @@ import java.time.LocalDateTime;
 public class StartDateNotAfterEndDateValidator implements ConstraintValidator<StartDateNotAfterEndDate, RaffleCreate> {
     @Override
     public boolean isValid(RaffleCreate raffleData, ConstraintValidatorContext context) {
-        context.disableDefaultConstraintViolation();
-
         LocalDateTime startDate = raffleData.startDate();
         LocalDateTime endDate = raffleData.endDate();
 
@@ -21,7 +19,9 @@ public class StartDateNotAfterEndDateValidator implements ConstraintValidator<St
         // Check if end date is at least 24 hours after start date
         LocalDateTime minimumEndDate = startDate.plusHours(24);
         if (endDate.isBefore(minimumEndDate)) {
+            context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("The end date must be at least 24 hours after the start date")
+                    .addPropertyNode("endDate")
                     .addConstraintViolation();
             return false;
         }

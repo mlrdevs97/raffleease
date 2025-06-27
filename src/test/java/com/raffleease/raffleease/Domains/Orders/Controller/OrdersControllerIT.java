@@ -2,7 +2,7 @@ package com.raffleease.raffleease.Domains.Orders.Controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
-import com.raffleease.raffleease.Common.Models.PhoneNumber;
+import com.raffleease.raffleease.Common.Models.PhoneNumberDTO;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
 import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Customers.DTO.CustomerCreate;
@@ -141,11 +141,11 @@ class OrdersControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should successfully create order with valid data")
         void shouldSuccessfullyCreateOrder() throws Exception {
             // Arrange
-            PhoneNumber phoneNumber = new PhoneNumber("+1", "1234567890");
+            PhoneNumberDTO phoneNumberDTO = new PhoneNumberDTO("+1", "234567890");
             CustomerCreate customerCreate = new CustomerCreate(
                     "John Doe",
                     "john@example.com",
-                    phoneNumber
+                    phoneNumberDTO
             );
 
             AdminOrderCreate orderCreate = new AdminOrderCreate(
@@ -172,7 +172,8 @@ class OrdersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.orderReference").exists())
                     .andExpect(jsonPath("$.data.customer.fullName").value("john doe"))
                     .andExpect(jsonPath("$.data.customer.email").value("john@example.com"))
-                    .andExpect(jsonPath("$.data.customer.phoneNumber").value("+11234567890"))
+                    .andExpect(jsonPath("$.data.customer.phoneNumber").value("+1"))
+                    .andExpect(jsonPath("$.data.customer.phoneNumber").value("234567890"))
                     .andExpect(jsonPath("$.data.comment").value("Test order comment"));
 
             // Verify order was created

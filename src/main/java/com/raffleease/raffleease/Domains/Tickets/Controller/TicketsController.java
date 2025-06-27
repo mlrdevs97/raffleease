@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static com.raffleease.raffleease.Common.RateLimiting.RateLimit.AccessLevel.PRIVATE;
+
 @ValidateAssociationAccess
 @RequiredArgsConstructor
 @RestController
@@ -21,7 +23,7 @@ public class TicketsController {
     private final TicketsQueryService queryService;
 
     @GetMapping
-    @RateLimit(operation = "search", accessLevel = RateLimit.AccessLevel.PRIVATE,
+    @RateLimit(operation = "search", accessLevel = PRIVATE,
                message = "Too many search requests. Please try again later.")
     public ResponseEntity<ApiResponse> search(
             @PathVariable Long associationId,
@@ -38,7 +40,7 @@ public class TicketsController {
     }
 
      @GetMapping("/random")
-     @RateLimit(operation = "read", accessLevel = RateLimit.AccessLevel.PRIVATE,
+     @RateLimit(operation = "read", accessLevel = PRIVATE,
                 message = "Too many random ticket requests. Please try again later.")
      public ResponseEntity<ApiResponse> getRandom(
              @PathVariable Long raffleId,

@@ -1,11 +1,11 @@
 package com.raffleease.raffleease.Domains.Users.Services;
 
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthenticationException;
-import com.raffleease.raffleease.Common.Models.BaseUserData;
-import com.raffleease.raffleease.Common.Models.CreateUserData;
-import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
+import com.raffleease.raffleease.Common.Models.UserBaseDTO;
+import com.raffleease.raffleease.Common.Models.UserProfileDTO;
 import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserRequest;
+import com.raffleease.raffleease.Domains.Users.DTOs.UpdatePhoneNumberRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
 
 public interface UsersManagementService {
@@ -24,12 +24,11 @@ public interface UsersManagementService {
      * AN user can only edit their own account.
      * Only ADMINS of the association can edit other user accounts.
      *
-     * @param associationId The ID of the association
      * @param userId The ID of the user to edit
      * @param userData The data to edit the user with
      * @return The updated user response
      */
-    UserResponse edit(Long associationId, Long userId, BaseUserData userData);
+    UserResponse edit(Long userId, UserBaseDTO userData);
 
     /**
      * Disable a user account. Disabled accounts cannot login to the application.
@@ -59,4 +58,15 @@ public interface UsersManagementService {
      * @throws AuthenticationException If the current password is incorrect
      */
     void editPassword(EditPasswordRequest request);
+
+    /**
+     * Update the phone number for a user account.
+     * Only the user can update their own phone number.
+     *
+     * @param associationId The ID of the association
+     * @param userId The ID of the user to update
+     * @param request The request containing the new phone number
+     * @return The updated user response
+     */
+    UserResponse updatePhoneNumber(Long associationId, Long userId, UpdatePhoneNumberRequest request);
 } 

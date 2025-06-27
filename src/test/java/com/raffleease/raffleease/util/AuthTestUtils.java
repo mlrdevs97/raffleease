@@ -65,7 +65,7 @@ public class AuthTestUtils {
         User user = TestDataBuilder.user()
                 .userName("authtestuser" + uniqueId)
                 .email("authtest" + uniqueId + "@example.com")
-                .phoneNumber("+1987" + String.format("%06d", Math.abs((uniqueId + "user").hashCode() % 1000000)))
+                .phoneNumber("+1", "987" + String.format("%06d", Math.abs((uniqueId + "user").hashCode() % 1000000)))
                 .password(encodedPassword)
                 .enabled(userEnabled)
                 .build();
@@ -116,7 +116,7 @@ public class AuthTestUtils {
         User user = TestDataBuilder.user()
                 .userName(username)
                 .email(email)
-                .phoneNumber("+1987" + String.format("%06d", Math.abs((username + "phone").hashCode() % 1000000)))
+                .phoneNumber("+1", "987" + String.format("%06d", Math.abs((username + "phone").hashCode() % 1000000)))
                 .password(encodedPassword)
                 .enabled(true)
                 .build();
@@ -185,7 +185,7 @@ public class AuthTestUtils {
         User user = TestDataBuilder.user()
                 .userName("seconduser" + uniqueId)
                 .email("seconduser" + uniqueId + "@example.com")
-                .phoneNumber("+1888" + String.format("%06d", Math.abs((uniqueId + "second").hashCode() % 1000000)))
+                .phoneNumber("+1", "888" + String.format("%06d", Math.abs((uniqueId + "second").hashCode() % 1000000)))
                 .password(encodedPassword)
                 .enabled(true)
                 .build();

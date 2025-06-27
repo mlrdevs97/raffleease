@@ -12,7 +12,7 @@ import static com.raffleease.raffleease.Common.Constants.ValidationPatterns.*;
  * Provides validation and sanitization for international phone numbers.
  */
 @Builder
-public record PhoneNumber(
+public record PhoneNumberDTO(
         @NotBlank
         @Pattern(regexp = PHONE_PREFIX_PATTERN)
         String prefix,
@@ -21,7 +21,7 @@ public record PhoneNumber(
         @Pattern(regexp = PHONE_NATIONAL_NUMBER_PATTERN)
         String nationalNumber
 ) {
-    public PhoneNumber {
+    public PhoneNumberDTO {
         prefix = trim(prefix);
         nationalNumber = trim(nationalNumber);
     }

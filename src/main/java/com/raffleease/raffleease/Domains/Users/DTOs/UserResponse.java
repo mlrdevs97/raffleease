@@ -1,6 +1,7 @@
 package com.raffleease.raffleease.Domains.Users.DTOs;
 
-import com.raffleease.raffleease.Domains.Users.Model.UserRole;
+import com.raffleease.raffleease.Common.Models.PhoneNumberDTO;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -12,8 +13,8 @@ public record UserResponse(
         String lastName,
         String userName,
         String email,
-        String phoneNumber,
-        UserRole userRole,
+        PhoneNumberDTO phoneNumber,
+        AssociationRole role,
         boolean isEnabled,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

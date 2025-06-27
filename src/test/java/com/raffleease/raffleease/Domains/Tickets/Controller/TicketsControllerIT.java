@@ -90,26 +90,26 @@ class TicketsControllerIT extends AbstractIntegrationTest {
     private List<Customer> createTestCustomers() {
         List<Customer> customers = new ArrayList<>();
         
-        Customer customer1 = Customer.builder()
+        Customer customer1 = customersRepository.save(TestDataBuilder.customer()
                 .fullName("John Smith")
                 .email("john.smith@example.com")
-                .phoneNumber("+1234567890")
-                .build();
-        customers.add(customersRepository.save(customer1));
+                .phoneNumber("+1", "234567890")
+                .build());
+        customers.add(customer1);
 
-        Customer customer2 = Customer.builder()
+        Customer customer2 = customersRepository.save(TestDataBuilder.customer()
                 .fullName("Jane Doe")
                 .email("jane.doe@example.com")
-                .phoneNumber("+1987654321")
-                .build();
-        customers.add(customersRepository.save(customer2));
+                .phoneNumber("+1", "987654321")
+                .build());
+        customers.add(customer2);
 
-        Customer customer3 = Customer.builder()
+        Customer customer3 = customersRepository.save(TestDataBuilder.customer()
                 .fullName("Bob Johnson")
                 .email("bob.johnson@example.com")
-                .phoneNumber("+1555123456")
-                .build();
-        customers.add(customersRepository.save(customer3));
+                .phoneNumber("+1", "555123456")
+                .build());
+        customers.add(customer3);
 
         return customers;
     }

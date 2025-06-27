@@ -202,10 +202,13 @@ class AdminOrdersSearchControllerIT extends AbstractIntegrationTest {
     }
 
     private Customer createCustomer(String fullName, String email, String phoneNumber) {
-        Customer customer = Customer.builder()
+        String prefix = phoneNumber.substring(0, 2);
+        String nationalNumber = phoneNumber.substring(2);
+        
+        Customer customer = TestDataBuilder.customer()
                 .fullName(fullName)
                 .email(email)
-                .phoneNumber(phoneNumber)
+                .phoneNumber(prefix, nationalNumber)
                 .build();
         return customersRepository.save(customer);
     }
@@ -493,7 +496,8 @@ class AdminOrdersSearchControllerIT extends AbstractIntegrationTest {
             // Assert
             result.andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content", hasSize(2)))
-                    .andExpect(jsonPath("$.data.content[*].customer.phoneNumber", everyItem(containsString("1234567890"))));
+                    .andExpect(jsonPath("$.data.content[*].customer.phoneNumber.prefix", everyItem(containsString("+1"))))
+                    .andExpect(jsonPath("$.data.content[*].customer.phoneNumber.nationalNumber", everyItem(containsString("234567890"))));
         }
     }
 

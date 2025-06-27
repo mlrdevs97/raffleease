@@ -101,52 +101,52 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
         List<Customer> customers = new ArrayList<>();
         
         // Customer 1: John Doe
-        customers.add(customersRepository.save(Customer.builder()
+        customers.add(customersRepository.save(TestDataBuilder.customer()
                 .fullName("John Doe")
                 .email("john.doe@example.com")
-                .phoneNumber("+1234567890")
+                .phoneNumber("+1", "234567890")
                 .build()));
         
         // Customer 2: Jane Smith
-        customers.add(customersRepository.save(Customer.builder()
+        customers.add(customersRepository.save(TestDataBuilder.customer()
                 .fullName("Jane Smith")
                 .email("jane.smith@example.com")
-                .phoneNumber("+1987654321")
+                .phoneNumber("+1", "987654321")
                 .build()));
         
         // Customer 3: John Johnson
-        customers.add(customersRepository.save(Customer.builder()
+        customers.add(customersRepository.save(TestDataBuilder.customer()
                 .fullName("John Johnson")
                 .email("john.johnson@gmail.com")
-                .phoneNumber("+1555123456")
+                .phoneNumber("+1", "555123456")
                 .build()));
         
         // Customer 4: Alice Brown
-        customers.add(customersRepository.save(Customer.builder()
+        customers.add(customersRepository.save(TestDataBuilder.customer()
                 .fullName("Alice Brown")
                 .email("alice.brown@yahoo.com")
-                .phoneNumber("+1444987654")
+                .phoneNumber("+1", "444987654")
                 .build()));
         
         // Customer 5: Bob Wilson (no email)
-        customers.add(customersRepository.save(Customer.builder()
+        customers.add(customersRepository.save(TestDataBuilder.customer()
                 .fullName("Bob Wilson")
-                .email(null)
-                .phoneNumber("+1333456789")
+                .noEmail()
+                .phoneNumber("+1", "333456789")
                 .build()));
         
         // Customer 6: Charlie Davis (no phone)
-        customers.add(customersRepository.save(Customer.builder()
+        customers.add(customersRepository.save(TestDataBuilder.customer()
                 .fullName("Charlie Davis")
                 .email("charlie.davis@hotmail.com")
-                .phoneNumber(null)
+                .noPhoneNumber()
                 .build()));
         
         return customers;
     }
 
     private void createTestTickets() {
-        for (int i = 0; i < 5; i++) { // Changed from 4 to 5 to include Bob Wilson
+        for (int i = 0; i < 6; i++) { // Updated from 5 to 6 to include Charlie Davis
             Customer customer = testCustomers.get(i);
             Raffle raffle = testRaffles.get(i % testRaffles.size()); // Distribute across raffles
             
@@ -179,8 +179,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
                     .andExpect(content().contentType("application/json"))
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.message").value("Customers retrieved successfully"))
-                    .andExpect(jsonPath("$.data.content", hasSize(5)))
-                    .andExpect(jsonPath("$.data.totalElements").value(5))
+                    .andExpect(jsonPath("$.data.content", hasSize(6)))
+                    .andExpect(jsonPath("$.data.totalElements").value(6))
                     .andExpect(jsonPath("$.data.totalPages").value(1))
                     .andExpect(jsonPath("$.data.first").value(true))
                     .andExpect(jsonPath("$.data.last").value(true));
@@ -193,13 +193,14 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
             ResultActions result = mockMvc.perform(get(searchEndpoint)
                     .with(user(authData.user().getEmail())));
 
-            // Assert - Verify ordering (most recent first) - now 5 customers returned
+            // Assert - Verify ordering (most recent first) - now 6 customers returned
             result.andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.content[0].fullName").value("Bob Wilson")) // Bob Wilson is now index 4, so most recent
-                    .andExpect(jsonPath("$.data.content[1].fullName").value("Alice Brown"))
-                    .andExpect(jsonPath("$.data.content[2].fullName").value("John Johnson"))
-                    .andExpect(jsonPath("$.data.content[3].fullName").value("Jane Smith"))
-                    .andExpect(jsonPath("$.data.content[4].fullName").value("John Doe"));
+                    .andExpect(jsonPath("$.data.content[0].fullName").value("Charlie Davis")) // Charlie Davis is now index 5, so most recent
+                    .andExpect(jsonPath("$.data.content[1].fullName").value("Bob Wilson"))
+                    .andExpect(jsonPath("$.data.content[2].fullName").value("Alice Brown"))
+                    .andExpect(jsonPath("$.data.content[3].fullName").value("John Johnson"))
+                    .andExpect(jsonPath("$.data.content[4].fullName").value("Jane Smith"))
+                    .andExpect(jsonPath("$.data.content[5].fullName").value("John Doe"));
         }
 
         @Test
@@ -272,10 +273,10 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
         @DisplayName("Should handle full name filter with special characters")
         void shouldHandleFullNameFilterWithSpecialCharacters() throws Exception {
             // Arrange - Create customer with special characters
-            Customer specialCustomer = customersRepository.save(Customer.builder()
+            Customer specialCustomer = customersRepository.save(TestDataBuilder.customer()
                     .fullName("José María O'Connor")
                     .email("jose@example.com")
-                    .phoneNumber("+1999888777")
+                    .phoneNumber("+1", "999888777")
                     .build());
             
             // Create ticket to make customer searchable
@@ -382,13 +383,14 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
         void shouldFilterCustomersByPhoneNumber() throws Exception {
             // Act
             ResultActions result = mockMvc.perform(get(searchEndpoint)
-                    .param("phoneNumber", "1234567890")
+                    .param("phoneNumber", "+1234567890")
                     .with(user(authData.user().getEmail())));
 
             // Assert
             result.andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content", hasSize(1)))
-                    .andExpect(jsonPath("$.data.content[0].phoneNumber").value("+1234567890"));
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.prefix").value("+1"))
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.nationalNumber").value("234567890"));
         }
 
         @Test
@@ -402,7 +404,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
             // Assert
             result.andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content", hasSize(1)))
-                    .andExpect(jsonPath("$.data.content[0].phoneNumber").value("+1555123456"));
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.prefix").value("+1"))
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.nationalNumber").value("555123456"));
         }
 
         @Test
@@ -416,7 +419,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
             // Assert
             result.andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content", hasSize(1)))
-                    .andExpect(jsonPath("$.data.content[0].phoneNumber").value("+1987654321"));
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.prefix").value("+1"))
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.nationalNumber").value("987654321"));
         }
 
         @Test
@@ -473,14 +477,15 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
             // Act
             ResultActions result = mockMvc.perform(get(searchEndpoint)
                     .param("fullName", "jane")
-                    .param("phoneNumber", "1987654321")
+                    .param("phoneNumber", "+1987654321")
                     .with(user(authData.user().getEmail())));
 
             // Assert
             result.andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content", hasSize(1)))
                     .andExpect(jsonPath("$.data.content[0].fullName").value("Jane Smith"))
-                    .andExpect(jsonPath("$.data.content[0].phoneNumber").value("+1987654321"));
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.prefix").value("+1"))
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.nationalNumber").value("987654321"));
         }
 
         @Test
@@ -514,7 +519,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.content", hasSize(1)))
                     .andExpect(jsonPath("$.data.content[0].fullName").value("John Johnson"))
                     .andExpect(jsonPath("$.data.content[0].email").value("john.johnson@gmail.com"))
-                    .andExpect(jsonPath("$.data.content[0].phoneNumber").value("+1555123456"));
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.prefix").value("+1"))
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.nationalNumber").value("555123456"));
         }
 
         @Test
@@ -549,7 +555,7 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
             // Assert
             result.andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content", hasSize(3)))
-                    .andExpect(jsonPath("$.data.totalElements").value(5))
+                    .andExpect(jsonPath("$.data.totalElements").value(6))
                     .andExpect(jsonPath("$.data.totalPages").value(2))
                     .andExpect(jsonPath("$.data.number").value(0))
                     .andExpect(jsonPath("$.data.size").value(3))
@@ -568,8 +574,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
 
             // Assert
             result.andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.content", hasSize(2)))
-                    .andExpect(jsonPath("$.data.totalElements").value(5))
+                    .andExpect(jsonPath("$.data.content", hasSize(3)))
+                    .andExpect(jsonPath("$.data.totalElements").value(6))
                     .andExpect(jsonPath("$.data.totalPages").value(2))
                     .andExpect(jsonPath("$.data.number").value(1))
                     .andExpect(jsonPath("$.data.size").value(3))
@@ -589,7 +595,7 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
             // Assert
             result.andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content", hasSize(0)))
-                    .andExpect(jsonPath("$.data.totalElements").value(5))
+                    .andExpect(jsonPath("$.data.totalElements").value(6))
                     .andExpect(jsonPath("$.data.totalPages").value(2))
                     .andExpect(jsonPath("$.data.number").value(10));
         }
@@ -630,8 +636,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
 
             // Assert - Empty strings should be treated as no filter
             result.andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.content", hasSize(5)))
-                    .andExpect(jsonPath("$.data.totalElements").value(5));
+                    .andExpect(jsonPath("$.data.content", hasSize(6)))
+                    .andExpect(jsonPath("$.data.totalElements").value(6));
         }
 
         @Test
@@ -646,8 +652,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
 
             // Assert - Whitespace should be trimmed and treated as no filter
             result.andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.content", hasSize(5)))
-                    .andExpect(jsonPath("$.data.totalElements").value(5));
+                    .andExpect(jsonPath("$.data.content", hasSize(6)))
+                    .andExpect(jsonPath("$.data.totalElements").value(6));
         }
 
         @Test
@@ -723,14 +729,15 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.content[0].id").exists())
                     .andExpect(jsonPath("$.data.content[0].fullName").value("John Doe"))
                     .andExpect(jsonPath("$.data.content[0].email").value("john.doe@example.com"))
-                    .andExpect(jsonPath("$.data.content[0].phoneNumber").value("+1234567890"))
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.prefix").value("+1"))
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.nationalNumber").value("234567890"))
                     .andExpect(jsonPath("$.data.content[0].createdAt").exists())
                     .andExpect(jsonPath("$.data.content[0].updatedAt").exists());
         }
 
         @Test
-        @DisplayName("Should handle customers with null email and phone number")
-        void shouldHandleCustomersWithNullEmailAndPhoneNumber() throws Exception {
+        @DisplayName("Should handle customers with null email but valid phone number")
+        void shouldHandleCustomersWithNullEmailButValidPhoneNumber() throws Exception {
             // Act
             ResultActions result = mockMvc.perform(get(searchEndpoint)
                     .param("fullName", "bob wilson")
@@ -740,7 +747,8 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content[0].fullName").value("Bob Wilson"))
                     .andExpect(jsonPath("$.data.content[0].email").isEmpty())
-                    .andExpect(jsonPath("$.data.content[0].phoneNumber").value("+1333456789"));
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.prefix").value("+1"))
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.nationalNumber").value("333456789"));
         }
 
         @Test
@@ -755,7 +763,7 @@ class CustomersSearchControllerIT extends AbstractIntegrationTest {
             // Assert
             result.andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.pageable").exists())
-                    .andExpect(jsonPath("$.data.totalElements").value(5))
+                    .andExpect(jsonPath("$.data.totalElements").value(6))
                     .andExpect(jsonPath("$.data.totalPages").value(3))
                     .andExpect(jsonPath("$.data.size").value(2))
                     .andExpect(jsonPath("$.data.number").value(0))

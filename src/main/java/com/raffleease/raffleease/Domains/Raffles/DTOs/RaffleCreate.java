@@ -25,6 +25,7 @@ public record RaffleCreate(
         @Size(max = 5000)
         String description,
 
+        @Future
         LocalDateTime startDate,
 
         @NotNull

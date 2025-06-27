@@ -9,14 +9,11 @@ import com.raffleease.raffleease.Domains.Customers.Repository.CustomersSearchRep
 import com.raffleease.raffleease.Domains.Customers.Repository.CustomersRepository;
 import com.raffleease.raffleease.Domains.Customers.Services.CustomersService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
@@ -27,15 +24,7 @@ public class CustomersServiceImpl implements CustomersService {
 
     @Override
     public Customer create(CustomerCreate data) {
-        String phoneNumber = Objects.nonNull(data.phoneNumber())
-                ? data.phoneNumber().prefix() + data.phoneNumber().nationalNumber()
-                : null;
-
-        return save(Customer.builder()
-                .fullName(data.fullName())
-                .email(data.email())
-                .phoneNumber(phoneNumber)
-                .build());
+        return save(mapper.toCustomer(data));
     }
 
     @Override

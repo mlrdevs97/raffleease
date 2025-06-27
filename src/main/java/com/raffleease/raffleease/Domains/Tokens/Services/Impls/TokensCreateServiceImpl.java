@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import static com.raffleease.raffleease.Domains.Tokens.Model.TokenType.ACCESS;
+import static com.raffleease.raffleease.Domains.Tokens.Model.TokenType.REFRESH;
 
 @RequiredArgsConstructor
 @Service
@@ -30,7 +31,7 @@ public class TokensCreateServiceImpl implements TokensCreateService {
     public String generateRefreshToken(Long userId) {
         return buildToken(
                 String.valueOf(userId),
-                TokenType.REFRESH,
+                REFRESH,
                 tokenQueryService.getRefreshTokenExpirationValue()
         );
     }

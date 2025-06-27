@@ -7,6 +7,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+import static jakarta.persistence.CascadeType.ALL;
+import static jakarta.persistence.GenerationType.IDENTITY;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -15,12 +18,11 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(name = "uk_user_email", columnNames = "email"),
-        @UniqueConstraint(name = "uk_user_username", columnNames = "user_name"),
-        @UniqueConstraint(name = "uk_user_phone", columnNames = "phone_number")
+        @UniqueConstraint(name = "uk_user_username", columnNames = "user_name")
 })
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 50)
@@ -35,10 +37,9 @@ public class User {
     @Column(nullable = false)
     private String email;
 
-    private String phoneNumber;
-
-    @Column(nullable = false)
-    private UserRole userRole;
+    @OneToOne(cascade = ALL, orphanRemoval = true)
+    @JoinColumn(name = "phone_number_id", nullable = false)
+    private UserPhoneNumber phoneNumber;
 
     @Column(nullable = false)
     private String password;

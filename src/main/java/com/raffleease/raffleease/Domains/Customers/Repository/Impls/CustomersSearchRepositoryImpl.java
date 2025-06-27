@@ -3,6 +3,7 @@ package com.raffleease.raffleease.Domains.Customers.Repository.Impls;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Customers.DTO.CustomerSearchFilters;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
+import com.raffleease.raffleease.Domains.Customers.Model.CustomersPhoneNumber;
 import com.raffleease.raffleease.Domains.Customers.Repository.CustomersSearchRepository;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static jakarta.persistence.criteria.JoinType.LEFT;
 
 @RequiredArgsConstructor
 @Repository
@@ -69,7 +72,9 @@ public class CustomersSearchRepositoryImpl implements CustomersSearchRepository 
             predicates.add(cb.like(cb.lower(customerJoin.get("email")), "%" + searchFilters.email().toLowerCase() + "%"));
         }
         if (searchFilters.phoneNumber() != null && !searchFilters.phoneNumber().isBlank()) {
-            predicates.add(cb.like(customerJoin.get("phoneNumber"), "%" + searchFilters.phoneNumber() + "%"));
+            Join<Customer, CustomersPhoneNumber> phoneJoin = customerJoin.join("phoneNumber", LEFT);
+            Expression<String> concatenatedPhone = cb.concat(phoneJoin.get("prefix"), phoneJoin.get("nationalNumber"));
+            predicates.add(cb.like(concatenatedPhone, "%" + searchFilters.phoneNumber() + "%"));
         }
 
         return predicates;

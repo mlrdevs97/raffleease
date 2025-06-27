@@ -1,9 +1,9 @@
 package com.raffleease.raffleease.Domains.Auth.Services.Impl;
 
 import com.raffleease.raffleease.Common.Configs.CorsProperties;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.PasswordResetException;
 import com.raffleease.raffleease.Domains.Auth.DTOs.ForgotPasswordRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.ResetPasswordRequest;
-import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
 import com.raffleease.raffleease.Domains.Auth.Model.PasswordResetToken;
 import com.raffleease.raffleease.Domains.Auth.Repository.PasswordResetTokenRepository;
 import com.raffleease.raffleease.Domains.Auth.Services.PasswordResetService;
@@ -11,8 +11,6 @@ import com.raffleease.raffleease.Domains.Notifications.Services.EmailsService;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.EmailVerificationException;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthenticationException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,8 +39,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     public void requestPasswordReset(ForgotPasswordRequest request) {
         try {
             User user = usersService.getUserByEmail(request.email());
-            
-            // Find existing token or create new one
+
             PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByUser(user)
                     .map(existingToken -> {
                         existingToken.setToken(UUID.randomUUID().toString());
@@ -51,7 +48,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
                     })
                     .orElseGet(() -> createPasswordResetToken(user));
             
-            // Send password reset email
             String resetLink = UriComponentsBuilder.fromHttpUrl(corsProperties.getClientAsList().get(0))
                     .path("/auth/reset-password")
                     .queryParam("token", passwordResetToken.getToken())
@@ -69,11 +65,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Override
     public void resetPassword(ResetPasswordRequest request) {
         PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(request.token())
-                .orElseThrow(() -> new EmailVerificationException("Invalid or expired password reset token"));
+                .orElseThrow(() -> new PasswordResetException("Invalid or expired password reset token"));
 
         if (passwordResetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
             passwordResetTokenRepository.delete(passwordResetToken);
-            throw new EmailVerificationException("Password reset token has expired");
+            throw new PasswordResetException("Password reset token has expired");
         }
 
         String encodedPassword = passwordEncoder.encode(request.password());

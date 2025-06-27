@@ -10,9 +10,13 @@ import com.raffleease.raffleease.Domains.Auth.Validations.PreventSelfDeletion;
 import com.raffleease.raffleease.Domains.Auth.Validations.SelfAccessOnly;
 import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.EditUserRequest;
+import com.raffleease.raffleease.Domains.Users.DTOs.UpdateEmailRequest;
+import com.raffleease.raffleease.Domains.Users.DTOs.UpdatePhoneNumberRequest;
+import com.raffleease.raffleease.Domains.Users.DTOs.VerifyEmailUpdateRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
 import com.raffleease.raffleease.Domains.Users.Services.UsersManagementService;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
+import com.raffleease.raffleease.Domains.Users.Services.EmailUpdateService;
 import com.raffleease.raffleease.Common.RateLimiting.RateLimit;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static com.raffleease.raffleease.Common.RateLimiting.RateLimit.AccessLevel.PRIVATE;
 import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.ADMIN;
 import static org.springframework.http.HttpStatus.CREATED;
 
@@ -31,21 +36,18 @@ import static org.springframework.http.HttpStatus.CREATED;
 public class UsersController {
     private final UsersManagementService usersManagementService;
     private final UsersService usersService;
+    private final EmailUpdateService emailUpdateService;
 
     @PostMapping
     @AdminOnly(message = "Only administrators can create user accounts")
-    @RateLimit(operation = "create", accessLevel = RateLimit.AccessLevel.PRIVATE)
+    @RateLimit(operation = "create", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> create(
             @PathVariable Long associationId,
             @Valid @RequestBody CreateUserRequest request
     ) {
-        UserResponse userResponse = usersManagementService.create(
-                associationId, 
-                request
-        );
         return ResponseEntity.status(CREATED).body(
                 ResponseFactory.success(
-                        userResponse,
+                        usersManagementService.create(associationId, request),
                         "User account created successfully. Verification email sent."
                 )
         );
@@ -53,7 +55,7 @@ public class UsersController {
 
     @GetMapping
     @AdminOnly(message = "Only administrators can access user accounts information")
-    @RateLimit(operation = "read", accessLevel = RateLimit.AccessLevel.PRIVATE)
+    @RateLimit(operation = "read", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> getAll(
             @PathVariable Long associationId
     ) {
@@ -72,12 +74,12 @@ public class UsersController {
         allowSelfAccess = true,
         message = "Only administrators can access other users' account information, or users can access their own account"
     )
-    @RateLimit(operation = "read", accessLevel = RateLimit.AccessLevel.PRIVATE)
+    @RateLimit(operation = "read", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> get(
             @PathVariable Long associationId,
             @PathVariable Long userId
     ) {
-        UserResponse user = usersService.getUserById(userId);
+        UserResponse user = usersService.getUserResponseById(userId);
         return ResponseEntity.ok().body(
                 ResponseFactory.success(
                         user,
@@ -87,25 +89,16 @@ public class UsersController {
     }
 
     @PutMapping("/{userId}")
-    @RequireRole(
-        value = ADMIN,
-        allowSelfAccess = true,
-        message = "Only administrators can update user accounts, or users can update their own account"
-    )
-    @RateLimit(operation = "update", accessLevel = RateLimit.AccessLevel.PRIVATE)
+    @SelfAccessOnly(message = "You can only update your own account")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> edit(
             @PathVariable Long associationId,
             @PathVariable Long userId,
             @Valid @RequestBody EditUserRequest request
     ) {
-        UserResponse userResponse = usersManagementService.edit(
-                associationId, 
-                userId,
-                request.userData()
-        );
         return ResponseEntity.ok().body(
                 ResponseFactory.success(
-                        userResponse,
+                        usersManagementService.edit(userId, request.userData()),
                         "User updated successfully"
                 )
         );
@@ -113,7 +106,7 @@ public class UsersController {
 
     @PutMapping("/{userId}/password")
     @SelfAccessOnly(message = "You can only change your own password")
-    @RateLimit(operation = "update", accessLevel = RateLimit.AccessLevel.PRIVATE)
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> editPassword(
             @PathVariable Long associationId,
             @PathVariable Long userId,
@@ -131,7 +124,7 @@ public class UsersController {
     @PatchMapping("/{userId}/disable")
     @AdminOnly(message = "Only administrators can disable user accounts")
     @PreventSelfDeletion(message = "Administrators cannot disable their own account")
-    @RateLimit(operation = "delete", accessLevel = RateLimit.AccessLevel.PRIVATE)
+    @RateLimit(operation = "delete", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> disableUser(
             @PathVariable Long associationId,
             @PathVariable Long userId
@@ -147,7 +140,7 @@ public class UsersController {
 
     @PatchMapping("/{userId}/enable")
     @AdminOnly(message = "Only administrators can enable user accounts")
-    @RateLimit(operation = "delete", accessLevel = RateLimit.AccessLevel.PRIVATE)
+    @RateLimit(operation = "delete", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> enableUser(
             @PathVariable Long associationId,
             @PathVariable Long userId
@@ -157,6 +150,55 @@ public class UsersController {
                 ResponseFactory.success(
                         null,
                         "User enabled successfully"
+                )
+        );
+    }
+
+    @PutMapping("/{userId}/email")
+    @SelfAccessOnly(message = "You can only update your own email address")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
+    public ResponseEntity<ApiResponse> requestEmailUpdate(
+            @PathVariable Long associationId,
+            @PathVariable Long userId,
+            @Valid @RequestBody UpdateEmailRequest request
+    ) {
+        emailUpdateService.requestEmailUpdate(userId, request);
+        return ResponseEntity.ok().body(
+                ResponseFactory.success(
+                        null,
+                        "Email update verification has been sent to your new email address"
+                )
+        );
+    }
+
+    @PostMapping("/verify-email-update")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
+    public ResponseEntity<ApiResponse> verifyEmailUpdate(
+            @PathVariable Long associationId,
+            @Valid @RequestBody VerifyEmailUpdateRequest request
+    ) {
+        emailUpdateService.verifyEmailUpdate(request);
+        return ResponseEntity.ok().body(
+                ResponseFactory.success(
+                        null,
+                        "Email has been updated successfully"
+                )
+        );
+    }
+
+    @PutMapping("/{userId}/phone-number")
+    @SelfAccessOnly(message = "You can only update your own phone number")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
+    public ResponseEntity<ApiResponse> updatePhoneNumber(
+            @PathVariable Long associationId,
+            @PathVariable Long userId,
+            @Valid @RequestBody UpdatePhoneNumberRequest request
+    ) {
+        UserResponse updatedUser = usersManagementService.updatePhoneNumber(associationId, userId, request);
+        return ResponseEntity.ok().body(
+                ResponseFactory.success(
+                        updatedUser,
+                        "Phone number has been updated successfully"
                 )
         );
     }

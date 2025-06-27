@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Common.Validations;
 
-import com.raffleease.raffleease.Common.Models.CreateUserData;
+import com.raffleease.raffleease.Common.Models.UserRegisterDTO;
 import com.raffleease.raffleease.Domains.Auth.DTOs.ResetPasswordRequest;
 import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
 import jakarta.validation.ConstraintValidator;
@@ -15,7 +15,7 @@ public class PasswordMatchesValidator implements ConstraintValidator<PasswordMat
         String password;
         String confirmPassword;
 
-        if (request instanceof CreateUserData userData) {
+        if (request instanceof UserRegisterDTO userData) {
             password = userData.getPassword();
             confirmPassword = userData.getConfirmPassword();
         } else if (request instanceof ResetPasswordRequest resetRequest) {

@@ -13,7 +13,7 @@ public class ValidUserRoleValidator implements ConstraintValidator<ValidUserRole
         if (role == null) {
             return true; 
         }
-        
-        return role == AssociationRole.MEMBER || role == AssociationRole.COLLABORATOR;
+    
+        return role == AssociationRole.MEMBER || role == AssociationRole.COLLABORATOR || role == AssociationRole.ADMIN;
     }
 } 

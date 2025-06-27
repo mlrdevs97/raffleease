@@ -121,12 +121,11 @@ class AdminOrdersCommentControllerIT extends AbstractIntegrationTest {
 
     private Order createTestOrder(OrderStatus status, String initialComment) {
         // Create customer
-        Customer customer = Customer.builder()
+        Customer customer = customersRepository.save(TestDataBuilder.customer()
                 .fullName("jane doe")
                 .email("jane@example.com")
-                .phoneNumber("+1987654321")
-                .build();
-        customer = customersRepository.save(customer);
+                .phoneNumber("+1", "987654321")
+                .build());
 
         // Create order
         Order order = Order.builder()

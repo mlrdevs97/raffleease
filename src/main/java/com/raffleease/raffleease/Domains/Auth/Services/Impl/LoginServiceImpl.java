@@ -41,6 +41,7 @@ public class LoginServiceImpl implements LoginService {
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .associationId(membership.getAssociation().getId())
+                .userId(user.getId())
                 .build();
     }
 

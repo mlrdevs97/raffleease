@@ -14,7 +14,6 @@ public interface UsersRepository extends JpaRepository<User, Long> {
     @Query("""
         SELECT u FROM User u 
         WHERE u.email = :identifier 
-           OR u.phoneNumber = :identifier 
            OR u.userName = :identifier
     """)
     Optional<User> findByIdentifier(@Param("identifier") String identifier);

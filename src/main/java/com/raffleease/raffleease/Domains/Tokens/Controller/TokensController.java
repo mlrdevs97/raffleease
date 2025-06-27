@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static com.raffleease.raffleease.Common.RateLimiting.RateLimit.AccessLevel.PRIVATE;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/v1/tokens")
@@ -17,7 +19,7 @@ public class TokensController {
     private final TokensManagementService service;
 
     @PostMapping("/refresh")
-    @RateLimit(operation = "update", accessLevel = RateLimit.AccessLevel.PRIVATE)
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> refreshToken(
             HttpServletRequest request,
             HttpServletResponse response

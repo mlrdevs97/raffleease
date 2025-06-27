@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Carts.Validations;
 
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthenticationException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
@@ -29,7 +29,7 @@ public class CartsValidator {
     public void validateIsUserCart(Cart cart) {
         User user = usersService.getAuthenticatedUser();
         if (cart.getUser().getId() != user.getId()) {
-            throw new AuthenticationException("You are not allowed to access this cart");
+            throw new AuthorizationException("You are not allowed to access this cart");
         }
     }
 

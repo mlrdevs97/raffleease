@@ -124,7 +124,7 @@ public class OrdersController {
     }
 
     @PostMapping("/{orderId}/comment")
-    @RateLimit(operation = "update", accessLevel = PRIVATE)
+    @RateLimit(operation = "create", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> addComment(
             @PathVariable Long orderId,
             @Valid @RequestBody CommentRequest request
@@ -136,7 +136,7 @@ public class OrdersController {
     }
 
     @PutMapping("/{orderId}/comment")
-    @RateLimit(operation = "update", accessLevel = PRIVATE)
+    @RateLimit(operation = "test", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> editComment(
             @PathVariable Long orderId,
             @Valid @RequestBody CommentRequest request

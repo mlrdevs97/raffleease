@@ -12,7 +12,8 @@ public final class ConstraintNameMapper {
             Map.entry("uk_user_phone", "userData.phoneNumber"),
             Map.entry("uk_association_name", "associationData.associationName"),
             Map.entry("uk_association_email", "associationData.email"),
-            Map.entry("uk_association_phone", "associationData.phoneNumber")
+            Map.entry("uk_association_phone", "associationData.phoneNumber"),
+            Map.entry("email", "email")
     );
 
     public String mapToField(String constraintName) {

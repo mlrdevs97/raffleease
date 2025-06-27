@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Update Verification</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f7;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid #ececec;
+        }
+
+        .header {
+            background-color: #3b82f6;
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .content h2 {
+            font-size: 18px;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+
+        .content p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .email-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .footer {
+            background-color: #f8f8fa;
+            color: #555;
+            text-align: center;
+            padding: 15px;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="header">
+        <h1>Hello, <span th:text="${customerName}">[User Name]</span>!</h1>
+    </div>
+    <div class="content">
+        <h2>Email Update Request</h2>
+        <p>You requested to update your email address on <strong><span th:text="${requestDate}">[Request Date]</span></strong>.</p>
+        
+        <div class="email-info">
+            <p><strong>Current email:</strong> <span th:text="${customerEmail}">[Current Email]</span></p>
+            <p><strong>New email:</strong> <span th:text="${newEmail}">[New Email]</span></p>
+        </div>
+        
+        <p>To complete the email update process, please verify your new email address by clicking the link below:</p>
+        <a th:href="@{${updateUrl}}" title="Verify your new email">Click here to verify your new email address</a>
+        
+        <p style="margin-top: 20px; font-size: 12px; color: #777;">
+            If you didn't request this email change, please ignore this email. Your current email address will remain unchanged.
+        </p>
+        
+        <p style="margin-top: 10px; font-size: 12px; color: #777;">
+            If the button above doesn't work, copy and paste the link into your browser.
+        </p>
+    </div>
+    <div class="footer">
+        <p>If you have any questions, please contact us at
+            <a th:href="'mailto:' + ${senderEmail}" th:text="${senderEmail}">support@raffleease.com</a>.
+        </p>
+        <p>© 2024 Raffle Ease.</p>
+    </div>
+</div>
+</body>
+</html> 

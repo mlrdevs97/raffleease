@@ -1,7 +1,6 @@
 package com.raffleease.raffleease.Common.Aspects;
 
 import com.raffleease.raffleease.Common.Utils.AspectUtils;
-import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Auth.Services.AuthorizationService;
 import com.raffleease.raffleease.Domains.Auth.Validations.AdminOnly;
 import com.raffleease.raffleease.Domains.Auth.Validations.PreventSelfDeletion;
@@ -28,13 +27,11 @@ public class AuthorizationAspect {
         Long associationId = AspectUtils.extractAssociationId(joinPoint);
         Long targetUserId = AspectUtils.extractUserId(joinPoint);
         
-        // Check if user can modify the target user (considering self-access)
         if (targetUserId != null && requireRole.allowSelfAccess()) {
             if (!authorizationService.canModifyUser(associationId, targetUserId, true)) {
                 authorizationService.requireRole(associationId, requireRole.value(), requireRole.message());
             }
         } else {
-            // Standard role requirement check
             authorizationService.requireRole(associationId, requireRole.value(), requireRole.message());
         }
         

@@ -14,9 +14,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({METHOD, TYPE})
 @Retention(RUNTIME)
 public @interface AdminOnly {
-
-    /**
-     * Custom message to be shown when access is denied
-     */
     String message() default "This action can only be performed by administrators";
 } 

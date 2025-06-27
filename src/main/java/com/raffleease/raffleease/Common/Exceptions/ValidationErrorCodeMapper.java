@@ -37,6 +37,9 @@ public final class ValidationErrorCodeMapper {
             Map.entry("Future", "MUST_BE_IN_FUTURE"),
             Map.entry("FutureOrPresent", "MUST_BE_IN_FUTURE_OR_PRESENT"),
 
+            // Custom validations
+            Map.entry("StartDateNotAfterEndDate", "END_DATE_VALIDATION_ERROR"),
+
             // Assertive checks
             Map.entry("AssertTrue", "MUST_BE_TRUE"),
             Map.entry("AssertFalse", "MUST_BE_FALSE"),

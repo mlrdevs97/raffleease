@@ -50,6 +50,7 @@ public class TokensManagementServiceImpl implements TokensManagementService {
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
                 .associationId(membership.getAssociation().getId())
+                .userId(userId)
                 .build();
     }
 

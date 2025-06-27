@@ -26,4 +26,13 @@ public interface EmailsService {
      * @param link the link to reset the password
      */
     void sendPasswordResetEmail(User user, String link);
+
+    /**
+     * Sends an email to verify email update request.
+     * 
+     * @param user the user requesting the email update
+     * @param newEmail the new email address to verify
+     * @param link the verification link
+     */
+    void sendEmailUpdateVerificationEmail(User user, String newEmail, String link);
 }

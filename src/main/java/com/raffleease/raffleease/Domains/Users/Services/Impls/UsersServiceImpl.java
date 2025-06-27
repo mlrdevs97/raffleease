@@ -1,8 +1,13 @@
 package com.raffleease.raffleease.Domains.Users.Services.Impls;
 
-import com.raffleease.raffleease.Common.Models.BaseUserData;
-import com.raffleease.raffleease.Common.Models.CreateUserData;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
+import com.raffleease.raffleease.Common.Models.UserBaseDTO;
+import com.raffleease.raffleease.Common.Models.UserRegisterDTO;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
+import com.raffleease.raffleease.Domains.Associations.Services.AssociationsMembershipService;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
+import com.raffleease.raffleease.Domains.Users.Mappers.UsersMapper;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
@@ -11,6 +16,7 @@ import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundExce
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.UniqueConstraintViolationException;
 import com.raffleease.raffleease.Common.Utils.ConstraintViolationParser;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
@@ -21,20 +27,21 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static com.raffleease.raffleease.Domains.Users.Model.UserRole.ASSOCIATION_MEMBER;
-
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class UsersServiceImpl implements UsersService {
     private final UsersRepository repository;
+    private final AssociationsMembershipService membershipService;
+    private final UsersMapper mapper;
 
     @Override
-    public User createUser(CreateUserData userData, String encodedPassword, boolean isEnabled) {
-        return save(buildUser(userData, encodedPassword, isEnabled));
+    public User createUser(UserRegisterDTO userData, String encodedPassword, boolean isEnabled) {
+        return save(mapper.buildUser(userData, encodedPassword, isEnabled));
     }
 
     @Override
-    public User updateUser(User user, BaseUserData userData) {
+    public User updateUser(User user, UserBaseDTO userData) {
         if (Objects.nonNull(userData.getFirstName())) {
         user.setFirstName(userData.getFirstName());
         }
@@ -44,14 +51,6 @@ public class UsersServiceImpl implements UsersService {
         if (Objects.nonNull(userData.getUserName())) {
             user.setUserName(userData.getUserName());
         }
-        if (Objects.nonNull(userData.getEmail())) {
-            user.setEmail(userData.getEmail());
-        }
-        if (Objects.nonNull(userData.getPhoneNumber())) {
-            String phoneNumber = userData.getPhoneNumber().prefix() + userData.getPhoneNumber().nationalNumber();
-            user.setPhoneNumber(phoneNumber);
-        }
-
         return save(user);
     }
 
@@ -68,9 +67,10 @@ public class UsersServiceImpl implements UsersService {
     }
 
     @Override
-    public UserResponse getUserById(Long userId) {
+    public UserResponse getUserResponseById(Long userId) {
         User user = findById(userId);
-        return toUserResponse(user);
+        AssociationRole role = membershipService.getUserRoleInAssociation(user);
+        return mapper.toUserResponse(user, role);
     }
 
     @Override
@@ -78,7 +78,8 @@ public class UsersServiceImpl implements UsersService {
         List<User> users = repository.findByAssociationId(associationId);
         List<UserResponse> userResponses = new java.util.ArrayList<>();
         for (User user : users) {
-            userResponses.add(toUserResponse(user));
+            AssociationRole role = membershipService.getUserRoleInAssociation(user);
+            userResponses.add(mapper.toUserResponse(user, role));
         }
         return userResponses;
     }
@@ -121,45 +122,20 @@ public class UsersServiceImpl implements UsersService {
          return findByIdentifier(identifier);
      }
 
-    private User buildUser(CreateUserData userData, String encodedPassword, boolean isEnabled) {
-        String phoneNumber = Objects.nonNull(userData.getPhoneNumber())
-                ? userData.getPhoneNumber().prefix() + userData.getPhoneNumber().nationalNumber()
-                : null;
-
-        return User.builder()
-                .firstName(userData.getFirstName())
-                .lastName(userData.getLastName())
-                .userRole(ASSOCIATION_MEMBER)
-                .userName(userData.getUserName())
-                .email(userData.getEmail())
-                .phoneNumber(phoneNumber)
-                .password(encodedPassword)
-                .isEnabled(isEnabled)
-                .build();
+    @Override
+    public boolean existsByEmail(String email) {
+        return repository.findByEmail(email).isPresent();
     }
 
-    private UserResponse toUserResponse(User user) {
-        return UserResponse.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .userName(user.getUserName())
-                .email(user.getEmail())
-                .phoneNumber(user.getPhoneNumber())
-                .userRole(user.getUserRole())
-                .isEnabled(user.isEnabled())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
-    }
-
-    private User save(User user) {
+    @Override
+    public User save(User user) {
         try {
             return repository.save(user);
         } catch (DataIntegrityViolationException ex) {
+            log.info("DataIntegrityViolationException when updating user: ");
             Optional<String> constraintName = ConstraintViolationParser.extractConstraintName(ex);
-
             if (constraintName.isPresent()) {
+                log.info("CONSTRAINT NAME: " + constraintName);
                 throw new UniqueConstraintViolationException(constraintName.get(), "Unique constraint violated: " + constraintName.get());
             } else {
                 throw ex;

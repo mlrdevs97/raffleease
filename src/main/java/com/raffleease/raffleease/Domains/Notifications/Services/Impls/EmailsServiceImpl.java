@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.EMAIL_VERIFICATION;
 import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.ORDER_SUCCESS;
 import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.PASSWORD_RESET;
+import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.EMAIL_UPDATE_VERIFICATION;
 import static com.raffleease.raffleease.Domains.Notifications.Model.NotificationChannel.EMAIL;
 
 @Slf4j
@@ -80,6 +81,15 @@ public class EmailsServiceImpl implements EmailsService {
         String htmlContent = processTemplate(ORDER_SUCCESS.getTemplate(), variables);
         sendEmail(order.getCustomer().getEmail(), ORDER_SUCCESS.getSubject(), htmlContent);
         notificationsService.create(NotificationType.ORDER_SUCCESS, EMAIL);
+    }
+
+    @Override
+    @Async
+    public void sendEmailUpdateVerificationEmail(User user, String newEmail, String link) {
+        Map<String, Object> variables = createEmailUpdateVerificationEmailVariables(user, newEmail, link);
+        String htmlContent = processTemplate(EMAIL_UPDATE_VERIFICATION.getTemplate(), variables);
+        sendEmail(newEmail, EMAIL_UPDATE_VERIFICATION.getSubject(), htmlContent);
+        notificationsService.create(NotificationType.EMAIL_UPDATE_VERIFICATION, EMAIL);
     }
 
     private Map<String, Object> createEmailVerificationEmailVariables(User user, String link) {
@@ -130,6 +140,20 @@ public class EmailsServiceImpl implements EmailsService {
         variables.put("createdAt", formattedOrderDate);
         variables.put("ticketList", ticketNumbers);
         variables.put("ticketCount", ticketNumbers.size());
+
+        return variables;
+    }
+
+    private Map<String, Object> createEmailUpdateVerificationEmailVariables(User user, String newEmail, String link) {
+        Map<String, Object> variables = new HashMap<>();
+        String formattedRequestDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm"));
+
+        variables.put("customerName", user.getUserName());
+        variables.put("customerEmail", user.getEmail());
+        variables.put("newEmail", newEmail);
+        variables.put("senderEmail", senderEmail);
+        variables.put("requestDate", formattedRequestDate);
+        variables.put("updateUrl", link);
 
         return variables;
     }
