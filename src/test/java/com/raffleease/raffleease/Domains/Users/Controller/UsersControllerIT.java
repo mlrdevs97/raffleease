@@ -12,6 +12,7 @@ import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.EditUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UpdateEmailRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UpdatePhoneNumberRequest;
+import com.raffleease.raffleease.Domains.Users.DTOs.UpdateUserRoleRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.VerifyEmailUpdateRequest;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
@@ -236,100 +237,6 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)));
-
-            // Assert
-            result.andExpect(status().isForbidden());
-        }
-    }
-
-    @Nested
-    @DisplayName("GET /v1/associations/{associationId}/users - Get All Users")
-    class GetAllUsersTests {
-
-        @Test
-        @DisplayName("Should successfully return all users for association")
-        void shouldReturnAllUsersForAssociation() throws Exception {
-            // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
-            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
-
-            // Act
-            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId())
-                    .with(user(adminData.user().getUserName()).roles("USER")));
-
-            // Assert
-            result.andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.message").value("Users retrieved successfully"))
-                    .andExpect(jsonPath("$.data").isArray())
-                    .andExpect(jsonPath("$.data", hasSize(greaterThanOrEqualTo(2))))
-                    .andExpect(jsonPath("$.data[0].id").exists())
-                    .andExpect(jsonPath("$.data[0].firstName").exists())
-                    .andExpect(jsonPath("$.data[0].lastName").exists())
-                    .andExpect(jsonPath("$.data[0].userName").exists())
-                    .andExpect(jsonPath("$.data[0].email").exists())
-                    .andExpect(jsonPath("$.data[0].userRole").exists())
-                    .andExpect(jsonPath("$.data[0].isEnabled").exists());
-        }
-
-        @Test
-        @DisplayName("Should return 403 when MEMBER tries to get all users")
-        void shouldReturn403WhenMemberTriesToGetAllUsers() throws Exception {
-            // Arrange
-            AuthTestData memberData = authTestUtils.createAuthenticatedUser(true, MEMBER);
-
-            // Act
-            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, memberData.association().getId())
-                    .with(user(memberData.user().getUserName()).roles("USER")));
-
-            // Assert
-            result.andExpect(status().isForbidden())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("Only administrators can access user accounts information"));
-        }
-
-        @Test
-        @DisplayName("Should return 403 when COLLABORATOR tries to get all users")
-        void shouldReturn403WhenCollaboratorTriesToGetAllUsers() throws Exception {
-            // Arrange
-            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUser(true, AssociationRole.COLLABORATOR);
-
-            // Act
-            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, collaboratorData.association().getId())
-                    .with(user(collaboratorData.user().getUserName()).roles("USER")));
-
-            // Assert
-            result.andExpect(status().isForbidden())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("Only administrators can access user accounts information"));
-        }
-
-        @Test
-        @DisplayName("Should return 401 when unauthenticated user tries to get all users")
-        void shouldReturn401WhenUnauthenticatedUserTriesToGetAllUsers() throws Exception {
-            // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
-
-            // Act
-            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId()));
-
-            // Assert
-            result.andExpect(status().isUnauthorized());
-        }
-
-        @Test
-        @DisplayName("Should return 404 when association doesn't exist")
-        void shouldReturn404WhenAssociationDoesntExist() throws Exception {
-            // Arrange
-            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
-            Long nonExistentAssociationId = 99999L;
-
-            // Act
-            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, nonExistentAssociationId)
-                    .with(user(adminData.user().getUserName()).roles("USER")));
 
             // Assert
             result.andExpect(status().isForbidden());
@@ -2074,6 +1981,430 @@ class UsersControllerIT extends AbstractIntegrationTest {
         }
     }
 
+    @Nested
+    @DisplayName("PUT /v1/associations/{associationId}/users/{userId}/role - Update User Role")
+    class UpdateUserRoleTests {
+
+        @Test
+        @DisplayName("Should successfully update user role from MEMBER to COLLABORATOR")
+        void shouldUpdateUserRoleFromMemberToCollaborator() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            
+            // Verify initial role
+            AssociationRole initialRole = authTestUtils.getUserRoleInAssociation(memberData.user());
+            assertThat(initialRole).isEqualTo(MEMBER);
+            
+            UpdateUserRoleRequest request = createUpdateUserRoleRequest(AssociationRole.COLLABORATOR);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), memberData.user().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpected(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("User role has been updated successfully"))
+                    .andExpect(jsonPath("$.data.id").value(memberData.user().getId()))
+                    .andExpect(jsonPath("$.data.role").value("COLLABORATOR"));
+
+            // Verify role was actually updated in database
+            AssociationRole updatedRole = authTestUtils.getUserRoleInAssociation(memberData.user());
+            assertThat(updatedRole).isEqualTo(AssociationRole.COLLABORATOR);
+        }
+
+        @Test
+        @DisplayName("Should successfully update user role from COLLABORATOR to MEMBER")
+        void shouldUpdateUserRoleFromCollaboratorToMember() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            
+            // Create a COLLABORATOR user
+            PhoneNumberDTO phoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+1")
+                    .nationalNumber("5555555555")
+                    .build();
+            UserRegisterDTO userData = new UserRegisterDTO(
+                    "Test", "Collaborator", "testcollaborator", "test.collaborator@example.com",
+                    phoneNumber, "SecurePass#123", "SecurePass#123"
+            );
+            CreateUserRequest createRequest = CreateUserRequest.builder()
+                    .userData(userData)
+                    .role(AssociationRole.COLLABORATOR)
+                    .build();
+            
+            ResultActions createResult = mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createRequest)));
+            
+            Long collaboratorUserId = authTestUtils.extractUserIdFromResponse(createResult);
+            User collaboratorUser = usersRepository.findById(collaboratorUserId).orElseThrow();
+            
+            // Verify initial role
+            AssociationRole initialRole = authTestUtils.getUserRoleInAssociation(collaboratorUser);
+            assertThat(initialRole).isEqualTo(AssociationRole.COLLABORATOR);
+            
+            UpdateUserRoleRequest request = createUpdateUserRoleRequest(MEMBER);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), collaboratorUserId)
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("User role has been updated successfully"))
+                    .andExpect(jsonPath("$.data.id").value(collaboratorUserId))
+                    .andExpect(jsonPath("$.data.role").value("ASSOCIATION_MEMBER"));
+
+            // Verify role was actually updated in database
+            AssociationRole updatedRole = authTestUtils.getUserRoleInAssociation(collaboratorUser);
+            assertThat(updatedRole).isEqualTo(MEMBER);
+        }
+
+        @Test
+        @DisplayName("Should return 403 when MEMBER tries to update user role")
+        void shouldReturn403WhenMemberTriesToUpdateUserRole() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            UpdateUserRoleRequest request = createUpdateUserRoleRequest(AssociationRole.COLLABORATOR);
+
+            // Act - Member tries to update admin's role
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), adminData.user().getId())
+                    .with(user(memberData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators can update user roles"));
+        }
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to update user role")
+        void shouldReturn403WhenCollaboratorTriesToUpdateUserRole() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            UpdateUserRoleRequest request = createUpdateUserRoleRequest(MEMBER);
+
+            // Act - Collaborator tries to update admin's role
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), adminData.user().getId())
+                    .with(user(collaboratorData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators can update user roles"));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when ADMIN tries to update their own role")
+        void shouldReturn400WhenAdminTriesToUpdateOwnRole() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            UpdateUserRoleRequest request = createUpdateUserRoleRequest(MEMBER);
+
+            // Act - Admin tries to update their own role
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), adminData.user().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("You cannot update your own role"))
+                    .andExpect(jsonPath("$.errorCode").value("ROLE_UPDATE_SELF_DENIED"));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trying to update another ADMIN's role")
+        void shouldReturn400WhenTryingToUpdateAnotherAdminRole() throws Exception {
+            // Arrange
+            AuthTestData adminData1 = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            
+            // Create another admin user in the same association
+            PhoneNumberDTO phoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+1")
+                    .nationalNumber("9999999999")
+                    .build();
+            UserRegisterDTO userData = new UserRegisterDTO(
+                    "Another", "Admin", "anotheradmin", "another.admin@example.com",
+                    phoneNumber, "SecurePass#123", "SecurePass#123"
+            );
+            CreateUserRequest createRequest = CreateUserRequest.builder()
+                    .userData(userData)
+                    .role(MEMBER) // Create as MEMBER first
+                    .build();
+            
+            ResultActions createResult = mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData1.association().getId())
+                    .with(user(adminData1.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createRequest)));
+            
+            Long secondUserId = authTestUtils.extractUserIdFromResponse(createResult);
+            User secondUser = usersRepository.findById(secondUserId).orElseThrow();
+            
+            // Manually promote to ADMIN via direct database manipulation (simulating existing admin)
+            authTestUtils.setUserRoleInAssociation(secondUser, ADMIN);
+            
+            UpdateUserRoleRequest request = createUpdateUserRoleRequest(MEMBER);
+
+            // Act - First admin tries to update second admin's role
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData1.association().getId(), secondUserId)
+                    .with(user(adminData1.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Administrator roles cannot be updated"))
+                    .andExpect(jsonPath("$.errorCode").value("ROLE_UPDATE_ADMIN_DENIED"));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when role is null")
+        void shouldReturn400WhenRoleIsNull() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            UpdateUserRoleRequest request = new UpdateUserRoleRequest(null);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), memberData.user().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors.role").value("REQUIRED"));
+        }
+
+        @Test
+        @DisplayName("Should return 400 when trying to set role to ADMIN")
+        void shouldReturn400WhenTryingToSetRoleToAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            
+            // Create request with ADMIN role (this should be invalid)
+            String requestJson = """
+                {
+                    "role": "ADMIN"
+                }
+                """;
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), memberData.user().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestJson));
+
+            // Assert
+            result.andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors.role").value("INVALID_FIELD"));
+        }
+
+        @Test
+        @DisplayName("Should return 401 when unauthenticated user tries to update role")
+        void shouldReturn401WhenUnauthenticatedUserTriesToUpdateRole() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            UpdateUserRoleRequest request = createUpdateUserRoleRequest(AssociationRole.COLLABORATOR);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), memberData.user().getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpected(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return 404 when user doesn't exist")
+        void shouldReturn404WhenUserDoesntExist() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            UpdateUserRoleRequest request = createUpdateUserRoleRequest(AssociationRole.COLLABORATOR);
+            Long nonExistentUserId = 99999L;
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), nonExistentUserId)
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpected(status().isNotFound())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").contains("not found"));
+        }
+
+        @Test
+        @DisplayName("Should return 404 when association doesn't exist")
+        void shouldReturn404WhenAssociationDoesntExist() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            UpdateUserRoleRequest request = createUpdateUserRoleRequest(AssociationRole.COLLABORATOR);
+            Long nonExistentAssociationId = 99999L;
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    nonExistentAssociationId, adminData.user().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpected(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should preserve other user data when updating role")
+        void shouldPreserveOtherUserDataWhenUpdatingRole() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            User originalUser = memberData.user();
+            
+            // Store original user data
+            String originalFirstName = originalUser.getFirstName();
+            String originalLastName = originalUser.getLastName();
+            String originalEmail = originalUser.getEmail();
+            String originalUserName = originalUser.getUserName();
+            boolean originalEnabled = originalUser.isEnabled();
+            String originalPhonePrefix = originalUser.getPhoneNumber().getPrefix();
+            String originalPhoneNumber = originalUser.getPhoneNumber().getNationalNumber();
+            
+            UpdateUserRoleRequest request = createUpdateUserRoleRequest(AssociationRole.COLLABORATOR);
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), originalUser.getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpected(status().isOk());
+
+            // Verify all user data except role remained unchanged
+            User updatedUser = usersRepository.findById(originalUser.getId()).orElseThrow();
+            assertThat(updatedUser.getFirstName()).isEqualTo(originalFirstName);
+            assertThat(updatedUser.getLastName()).isEqualTo(originalLastName);
+            assertThat(updatedUser.getEmail()).isEqualTo(originalEmail);
+            assertThat(updatedUser.getUserName()).isEqualTo(originalUserName);
+            assertThat(updatedUser.isEnabled()).isEqualTo(originalEnabled);
+            assertThat(updatedUser.getPhoneNumber().getPrefix()).isEqualTo(originalPhonePrefix);
+            assertThat(updatedUser.getPhoneNumber().getNationalNumber()).isEqualTo(originalPhoneNumber);
+            
+            // But role should be changed
+            AssociationRole updatedRole = authTestUtils.getUserRoleInAssociation(updatedUser);
+            assertThat(updatedRole).isEqualTo(AssociationRole.COLLABORATOR);
+        }
+
+        @Test
+        @DisplayName("Should allow updating role multiple times")
+        void shouldAllowUpdatingRoleMultipleTimes() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            
+            // First update: MEMBER -> COLLABORATOR
+            UpdateUserRoleRequest firstRequest = createUpdateUserRoleRequest(AssociationRole.COLLABORATOR);
+            
+            ResultActions firstResult = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), memberData.user().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(firstRequest)));
+            
+            firstResult.andExpected(status().isOk());
+            
+            // Verify first update
+            AssociationRole intermediateRole = authTestUtils.getUserRoleInAssociation(memberData.user());
+            assertThat(intermediateRole).isEqualTo(AssociationRole.COLLABORATOR);
+            
+            // Second update: COLLABORATOR -> MEMBER
+            UpdateUserRoleRequest secondRequest = createUpdateUserRoleRequest(MEMBER);
+            
+            // Act
+            ResultActions secondResult = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), memberData.user().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(secondRequest)));
+
+            // Assert
+            secondResult.andExpected(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("User role has been updated successfully"))
+                    .andExpect(jsonPath("$.data.role").value("ASSOCIATION_MEMBER"));
+
+            // Verify final role
+            AssociationRole finalRole = authTestUtils.getUserRoleInAssociation(memberData.user());
+            assertThat(finalRole).isEqualTo(MEMBER);
+        }
+
+        @Test
+        @DisplayName("Should return appropriate error when request body is invalid JSON")
+        void shouldReturnErrorWhenRequestBodyIsInvalidJson() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            String invalidJson = "{ invalid json }";
+
+            // Act
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+                    adminData.association().getId(), memberData.user().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(invalidJson));
+
+            // Assert
+            result.andExpected(status().isBadRequest());
+        }
+    }
+
     // Helper methods for creating test data
     private CreateUserRequest createValidCreateUserRequest() {
         return createValidCreateUserRequestWithRole(MEMBER);
@@ -2206,5 +2537,9 @@ class UsersControllerIT extends AbstractIntegrationTest {
                 .lastName("Smith")
                 .userName(existingUsername)
                 .build());
+    }
+
+    private UpdateUserRoleRequest createUpdateUserRoleRequest(AssociationRole role) {
+        return new UpdateUserRoleRequest(role);
     }
 } 

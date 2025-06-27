@@ -6,6 +6,7 @@ import com.raffleease.raffleease.Common.Models.UserProfileDTO;
 import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UpdatePhoneNumberRequest;
+import com.raffleease.raffleease.Domains.Users.DTOs.UpdateUserRoleRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
 
 public interface UsersManagementService {
@@ -69,4 +70,17 @@ public interface UsersManagementService {
      * @return The updated user response
      */
     UserResponse updatePhoneNumber(Long associationId, Long userId, UpdatePhoneNumberRequest request);
+
+    /**
+     * Update the role of a user in the association.
+     * Only ADMINS of the association can update user roles.
+     * The role can only be updated to MEMBER or COLLABORATOR, not ADMIN.
+     * Administrators cannot update their own role.
+     *
+     * @param associationId The ID of the association
+     * @param userId The ID of the user to update
+     * @param request The request containing the new role
+     * @return The updated user response
+     */
+    UserResponse updateUserRole(Long associationId, Long userId, UpdateUserRoleRequest request);
 } 

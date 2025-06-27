@@ -36,4 +36,11 @@ public class AssociationsMembershipServiceImpl implements AssociationsMembership
         AssociationMembership membership = findByUser(user);
         return membership.getRole();
     }
+
+    @Override
+    public AssociationMembership updateUserRole(User user, AssociationRole newRole) {
+        AssociationMembership membership = findByUser(user);
+        membership.setRole(newRole);
+        return membershipsRepository.save(membership);
+    }
 }

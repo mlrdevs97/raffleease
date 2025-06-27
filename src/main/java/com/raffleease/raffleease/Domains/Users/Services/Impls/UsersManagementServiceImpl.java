@@ -3,13 +3,16 @@ package com.raffleease.raffleease.Domains.Users.Services.Impls;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.PasswordResetException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.UpdateRoleException;
 import com.raffleease.raffleease.Common.Models.UserBaseDTO;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
+import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsMembershipService;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UpdatePhoneNumberRequest;
+import com.raffleease.raffleease.Domains.Users.DTOs.UpdateUserRoleRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Model.UserPhoneNumber;
@@ -24,6 +27,10 @@ import org.springframework.stereotype.Service;
 import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.ADMIN;
 import static com.raffleease.raffleease.Common.Exceptions.ErrorCodes.CURRENT_PASSWORD_INCORRECT;
 import static com.raffleease.raffleease.Common.Exceptions.ErrorCodes.PASSWORD_SAME_AS_CURRENT;
+import static com.raffleease.raffleease.Common.Exceptions.ErrorCodes.ROLE_UPDATE_SELF_DENIED;
+import static com.raffleease.raffleease.Common.Exceptions.ErrorCodes.ROLE_UPDATE_ADMIN_DENIED;
+import static com.raffleease.raffleease.Common.Exceptions.ErrorCodes.ADMIN_DISABLE_SELF_DENIED;
+import static com.raffleease.raffleease.Common.Exceptions.ErrorCodes.ADMIN_CREATE_ADMIN_DENIED;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -38,7 +45,7 @@ public class UsersManagementServiceImpl implements UsersManagementService {
     @Override
     public UserResponse create(Long associationId, CreateUserRequest request) {
         if (request.role() == ADMIN) {
-            throw new AuthorizationException("Administrators cannot create other administrator accounts");
+            throw new BusinessException("Administrators cannot create other administrator accounts", ADMIN_CREATE_ADMIN_DENIED);
         }
         String encodedPassword = passwordEncoder.encode(request.userData().getPassword());
         User user = usersService.createUser(request.userData(), encodedPassword, true);
@@ -60,6 +67,10 @@ public class UsersManagementServiceImpl implements UsersManagementService {
     public void disableUserInAssociation(Long associationId, Long userId) {
         Association association = associationsService.findById(associationId);
         User user = usersService.findById(userId);
+        User authenticatedUser = usersService.getAuthenticatedUser();
+        if (authenticatedUser.getId() == userId) {
+            throw new BusinessException("Administrators cannot disable their own accounts", ADMIN_DISABLE_SELF_DENIED);
+        }
         validateMembership(association, user);
         usersService.setUserEnabled(user, false);
     }
@@ -107,6 +118,31 @@ public class UsersManagementServiceImpl implements UsersManagementService {
         
         log.info("Phone number updated successfully for user: {}", user.getUserName());
         return usersService.getUserResponseById(updatedUser.getId());
+    }
+
+    @Transactional
+    @Override
+    public UserResponse updateUserRole(Long associationId, Long userId, UpdateUserRoleRequest request) {
+        Association association = associationsService.findById(associationId);
+        User user = usersService.findById(userId);
+        validateMembership(association, user);
+        User currentUser = usersService.getAuthenticatedUser();
+
+        if (currentUser.getId().equals(userId)) {
+            throw new UpdateRoleException("Administrators cannot update their own role", ROLE_UPDATE_SELF_DENIED);
+        }
+
+        AssociationRole currentRole = membershipService.getUserRoleInAssociation(user);
+        if (currentRole == ADMIN) {
+            throw new UpdateRoleException("Administrator roles cannot be updated", ROLE_UPDATE_ADMIN_DENIED);
+        }
+
+        membershipService.updateUserRole(user, request.role());
+        
+        log.info("Role updated successfully for user: {} from {} to {}", 
+                user.getUserName(), currentRole, request.role());
+        
+        return usersService.getUserResponseById(userId);
     }
 
     private void validateMembership(Association association, User user) {

@@ -68,15 +68,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         }
     }
 
-    @Override
-    public void preventSelfAction(Long targetUserId, String message) {
-        if (isSameUser(targetUserId)) {
-            User currentUser = usersService.getAuthenticatedUser();
-            log.warn("User {} attempted to perform forbidden action on themselves", currentUser.getUserName());
-            throw new AuthorizationException(message);
-        }
-    }
-
     /**
      * Check if userRole has sufficient privileges compared to requiredRole
      * Based on hierarchy: ADMIN > MEMBER > COLLABORATOR

@@ -54,6 +54,12 @@ public class GlobalExceptionHandler {
         return wrapError(ex, BAD_REQUEST, ErrorCodes.EMAIL_VERIFICATION_FAILED);
     }
 
+    @ExceptionHandler(UpdateRoleException.class)
+    public ResponseEntity<ApiResponse> handleUpdateRoleException(UpdateRoleException ex) {
+        String errorCode = ex.getErrorCode() != null ? ex.getErrorCode() : ErrorCodes.INVALID_REQUEST;
+        return wrapError(ex, BAD_REQUEST, errorCode);
+    }
+
     @ExceptionHandler(PasswordResetException.class)
     public ResponseEntity<ApiResponse> handlePasswordResetException(PasswordResetException ex) {
         return wrapError(ex, BAD_REQUEST, ErrorCodes.PASSWORD_RESET_FAILED);

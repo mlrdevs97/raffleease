@@ -3,7 +3,6 @@ package com.raffleease.raffleease.Common.Aspects;
 import com.raffleease.raffleease.Common.Utils.AspectUtils;
 import com.raffleease.raffleease.Domains.Auth.Services.AuthorizationService;
 import com.raffleease.raffleease.Domains.Auth.Validations.AdminOnly;
-import com.raffleease.raffleease.Domains.Auth.Validations.PreventSelfDeletion;
 import com.raffleease.raffleease.Domains.Auth.Validations.RequireRole;
 import com.raffleease.raffleease.Domains.Auth.Validations.SelfAccessOnly;
 import lombok.RequiredArgsConstructor;
@@ -43,15 +42,6 @@ public class AuthorizationAspect {
         Long associationId = AspectUtils.extractAssociationId(joinPoint);
         authorizationService.requireRole(associationId, ADMIN, adminOnly.message());
         log.debug("Admin-only authorization passed");
-    }
-
-    @Before("@annotation(preventSelfDeletion)")
-    public void checkPreventSelfDeletion(JoinPoint joinPoint, PreventSelfDeletion preventSelfDeletion) {
-        Long targetUserId = AspectUtils.extractParameterValue(joinPoint, preventSelfDeletion.userIdParam(), Long.class);
-        if (targetUserId != null) {
-            authorizationService.preventSelfAction(targetUserId, preventSelfDeletion.message());
-            log.debug("Self-deletion prevention check passed");
-        }
     }
 
     @Before("@annotation(selfAccessOnly)")

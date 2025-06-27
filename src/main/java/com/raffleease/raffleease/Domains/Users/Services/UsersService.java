@@ -3,7 +3,10 @@ package com.raffleease.raffleease.Domains.Users.Services;
 import com.raffleease.raffleease.Common.Models.UserBaseDTO;
 import com.raffleease.raffleease.Common.Models.UserRegisterDTO;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
+import com.raffleease.raffleease.Domains.Users.DTOs.UserSearchFilters;
 import com.raffleease.raffleease.Domains.Users.Model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -59,12 +62,15 @@ public interface UsersService {
     UserResponse getUserResponseById(Long userId);
 
     /**
-     * Retrieves all users belonging to a specific association.
+     * Searches for users based on the provided filters and paginates the results.
+     * The search is performed on the users of the association.
      * 
-     * @param associationId the ID of the association
-     * @return list of users as UserResponse DTOs
+     * @param associationId the association ID
+     * @param searchFilters the search filters
+     * @param pageable the pageable
+     * @return the page of users
      */
-    List<UserResponse> getUsersByAssociationId(Long associationId);
+    Page<UserResponse> search(Long associationId, UserSearchFilters searchFilters, Pageable pageable);
 
     /**
      * Finds a user by their unique identifier (email or username).

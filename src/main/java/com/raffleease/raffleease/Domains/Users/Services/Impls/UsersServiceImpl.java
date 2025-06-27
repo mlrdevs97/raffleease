@@ -7,9 +7,11 @@ import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembershi
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsMembershipService;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
+import com.raffleease.raffleease.Domains.Users.DTOs.UserSearchFilters;
 import com.raffleease.raffleease.Domains.Users.Mappers.UsersMapper;
 import com.raffleease.raffleease.Domains.Users.Model.User;
 import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
+import com.raffleease.raffleease.Domains.Users.Repository.UsersSearchRepository;
 import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException;
@@ -19,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -32,6 +36,7 @@ import java.util.Optional;
 @Service
 public class UsersServiceImpl implements UsersService {
     private final UsersRepository repository;
+    private final UsersSearchRepository searchRepository;
     private final AssociationsMembershipService membershipService;
     private final UsersMapper mapper;
 
@@ -74,14 +79,12 @@ public class UsersServiceImpl implements UsersService {
     }
 
     @Override
-    public List<UserResponse> getUsersByAssociationId(Long associationId) {
-        List<User> users = repository.findByAssociationId(associationId);
-        List<UserResponse> userResponses = new java.util.ArrayList<>();
-        for (User user : users) {
+    public Page<UserResponse> search(Long associationId, UserSearchFilters searchFilters, Pageable pageable) {
+        Page<User> usersPage = searchRepository.search(searchFilters, associationId, pageable);
+        return usersPage.map(user -> {
             AssociationRole role = membershipService.getUserRoleInAssociation(user);
-            userResponses.add(mapper.toUserResponse(user, role));
-        }
-        return userResponses;
+            return mapper.toUserResponse(user, role);
+        });
     }
 
     @Override

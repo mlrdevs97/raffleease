@@ -27,4 +27,8 @@ public final class ErrorCodes {
     public static final String EMAIL_NO_LONGER_AVAILABLE = "EMAIL_NO_LONGER_AVAILABLE";
     public static final String CURRENT_PASSWORD_INCORRECT = "CURRENT_PASSWORD_INCORRECT";
     public static final String PASSWORD_SAME_AS_CURRENT = "PASSWORD_SAME_AS_CURRENT";
+    public static final String ROLE_UPDATE_SELF_DENIED = "ROLE_UPDATE_SELF_DENIED";
+    public static final String ROLE_UPDATE_ADMIN_DENIED = "ROLE_UPDATE_ADMIN_DENIED";
+    public static final String ADMIN_DISABLE_SELF_DENIED = "ADMIN_DISABLE_SELF_DENIED";
+    public static final String ADMIN_CREATE_ADMIN_DENIED = "ADMIN_CREATE_ADMIN_DENIED";
 }

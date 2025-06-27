@@ -6,12 +6,13 @@ import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
 import com.raffleease.raffleease.Domains.Auth.Validations.ValidateAssociationAccess;
 import com.raffleease.raffleease.Domains.Auth.Validations.AdminOnly;
 import com.raffleease.raffleease.Domains.Auth.Validations.RequireRole;
-import com.raffleease.raffleease.Domains.Auth.Validations.PreventSelfDeletion;
 import com.raffleease.raffleease.Domains.Auth.Validations.SelfAccessOnly;
 import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.EditUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UpdateEmailRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UpdatePhoneNumberRequest;
+import com.raffleease.raffleease.Domains.Users.DTOs.UpdateUserRoleRequest;
+import com.raffleease.raffleease.Domains.Users.DTOs.UserSearchFilters;
 import com.raffleease.raffleease.Domains.Users.DTOs.VerifyEmailUpdateRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
 import com.raffleease.raffleease.Domains.Users.Services.UsersManagementService;
@@ -20,6 +21,7 @@ import com.raffleease.raffleease.Domains.Users.Services.EmailUpdateService;
 import com.raffleease.raffleease.Common.RateLimiting.RateLimit;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,13 +58,14 @@ public class UsersController {
     @GetMapping
     @AdminOnly(message = "Only administrators can access user accounts information")
     @RateLimit(operation = "read", accessLevel = PRIVATE)
-    public ResponseEntity<ApiResponse> getAll(
-            @PathVariable Long associationId
+    public ResponseEntity<ApiResponse> search(
+            @PathVariable Long associationId,
+            UserSearchFilters searchFilters,
+            Pageable pageable
     ) {
-        List<UserResponse> users = usersService.getUsersByAssociationId(associationId);
-        return ResponseEntity.ok().body(
+        return ResponseEntity.ok(
                 ResponseFactory.success(
-                        users,
+                        usersService.search(associationId, searchFilters, pageable),
                         "Users retrieved successfully"
                 )
         );
@@ -123,7 +126,6 @@ public class UsersController {
 
     @PatchMapping("/{userId}/disable")
     @AdminOnly(message = "Only administrators can disable user accounts")
-    @PreventSelfDeletion(message = "Administrators cannot disable their own account")
     @RateLimit(operation = "delete", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> disableUser(
             @PathVariable Long associationId,
@@ -199,6 +201,23 @@ public class UsersController {
                 ResponseFactory.success(
                         updatedUser,
                         "Phone number has been updated successfully"
+                )
+        );
+    }
+
+    @PutMapping("/{userId}/role")
+    @AdminOnly(message = "Only administrators can update user roles")
+    @RateLimit(operation = "update", accessLevel = PRIVATE)
+    public ResponseEntity<ApiResponse> updateUserRole(
+            @PathVariable Long associationId,
+            @PathVariable Long userId,
+            @Valid @RequestBody UpdateUserRoleRequest request
+    ) {
+        UserResponse updatedUser = usersManagementService.updateUserRole(associationId, userId, request);
+        return ResponseEntity.ok().body(
+                ResponseFactory.success(
+                        updatedUser,
+                        "User role has been updated successfully"
                 )
         );
     }

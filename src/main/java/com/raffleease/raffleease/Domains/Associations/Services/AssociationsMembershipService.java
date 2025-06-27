@@ -32,4 +32,14 @@ public interface AssociationsMembershipService {
      * @throws NotFoundException if the user is not a member of the association
      */
     AssociationRole getUserRoleInAssociation(User user);
+
+    /*
+     * Updates the role of the user in the association.
+     * 
+     * @param user the user
+     * @param newRole the new role
+     * @return the updated membership
+     * @throws NotFoundException if the user is not a member of the association
+     */
+    AssociationMembership updateUserRole(User user, AssociationRole newRole);
 }

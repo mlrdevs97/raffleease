@@ -38,12 +38,4 @@ public interface AuthorizationService {
      * @param message The message to throw if the user does not have the required role
      */
     void requireRole(Long associationId, AssociationRole requiredRole, String message);
-    
-    /**
-     * Verify that the current user is not trying to perform action on themselves
-     * 
-     * @param targetUserId The ID of the user to check if they are the same as the current user
-     * @param message The message to throw if the current user is the same as the target user
-    */
-    void preventSelfAction(Long targetUserId, String message);
-} 
+}

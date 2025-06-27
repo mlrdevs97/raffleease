@@ -13,11 +13,11 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Documented
-@Constraint(validatedBy = ValidUserRoleValidator.class)
+@Constraint(validatedBy = ValidRoleUpdateValidator.class)
 @Target({FIELD, PARAMETER})
 @Retention(RUNTIME)
-public @interface ValidUserRole {
-    String message() default "Only MEMBER and COLLABORATOR roles are allowed for new users";
+public @interface ValidRoleUpdate {
+    String message() default "Only MEMBER and COLLABORATOR roles are allowed for role updates";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 } 
