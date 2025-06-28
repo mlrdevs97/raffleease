@@ -34,9 +34,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.EMAIL_VERIFICATION;
-import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.ORDER_SUCCESS;
+import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.ORDER_CREATED;
+import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.ORDER_COMPLETED;
+import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.ORDER_CANCELLED;
+import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.ORDER_REFUNDED;
+import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.ORDER_UNPAID;
 import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.PASSWORD_RESET;
 import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.EMAIL_UPDATE_VERIFICATION;
+import static com.raffleease.raffleease.Domains.Notifications.Model.EmailTemplate.USER_CREATION_VERIFICATION;
 import static com.raffleease.raffleease.Domains.Notifications.Model.NotificationChannel.EMAIL;
 
 @Slf4j
@@ -76,11 +81,47 @@ public class EmailsServiceImpl implements EmailsService {
 
     @Override
     @Async
-    public void sendOrderSuccessEmail(Order order) {
-        Map<String, Object> variables = createOrderSuccessEmailVariables(order);
-        String htmlContent = processTemplate(ORDER_SUCCESS.getTemplate(), variables);
-        sendEmail(order.getCustomer().getEmail(), ORDER_SUCCESS.getSubject(), htmlContent);
-        notificationsService.create(NotificationType.ORDER_SUCCESS, EMAIL);
+    public void sendOrderCreatedEmail(Order order) {
+        Map<String, Object> variables = createOrderLifecycleEmailVariables(order);
+        String htmlContent = processTemplate(ORDER_CREATED.getTemplate(), variables);
+        sendEmail(order.getCustomer().getEmail(), ORDER_CREATED.getSubject(), htmlContent);
+        notificationsService.create(NotificationType.ORDER_CREATED, EMAIL);
+    }
+
+    @Override
+    @Async
+    public void sendOrderCompletedEmail(Order order) {
+        Map<String, Object> variables = createOrderLifecycleEmailVariables(order);
+        String htmlContent = processTemplate(ORDER_COMPLETED.getTemplate(), variables);
+        sendEmail(order.getCustomer().getEmail(), ORDER_COMPLETED.getSubject(), htmlContent);
+        notificationsService.create(NotificationType.ORDER_COMPLETED, EMAIL);
+    }
+
+    @Override
+    @Async
+    public void sendOrderCancelledEmail(Order order) {
+        Map<String, Object> variables = createOrderLifecycleEmailVariables(order);
+        String htmlContent = processTemplate(ORDER_CANCELLED.getTemplate(), variables);
+        sendEmail(order.getCustomer().getEmail(), ORDER_CANCELLED.getSubject(), htmlContent);
+        notificationsService.create(NotificationType.ORDER_CANCELLED, EMAIL);
+    }
+
+    @Override
+    @Async
+    public void sendOrderRefundedEmail(Order order) {
+        Map<String, Object> variables = createOrderLifecycleEmailVariables(order);
+        String htmlContent = processTemplate(ORDER_REFUNDED.getTemplate(), variables);
+        sendEmail(order.getCustomer().getEmail(), ORDER_REFUNDED.getSubject(), htmlContent);
+        notificationsService.create(NotificationType.ORDER_REFUNDED, EMAIL);
+    }
+
+    @Override
+    @Async
+    public void sendOrderUnpaidEmail(Order order) {
+        Map<String, Object> variables = createOrderLifecycleEmailVariables(order);
+        String htmlContent = processTemplate(ORDER_UNPAID.getTemplate(), variables);
+        sendEmail(order.getCustomer().getEmail(), ORDER_UNPAID.getSubject(), htmlContent);
+        notificationsService.create(NotificationType.ORDER_UNPAID, EMAIL);
     }
 
     @Override
@@ -90,6 +131,15 @@ public class EmailsServiceImpl implements EmailsService {
         String htmlContent = processTemplate(EMAIL_UPDATE_VERIFICATION.getTemplate(), variables);
         sendEmail(newEmail, EMAIL_UPDATE_VERIFICATION.getSubject(), htmlContent);
         notificationsService.create(NotificationType.EMAIL_UPDATE_VERIFICATION, EMAIL);
+    }
+
+    @Override
+    @Async
+    public void sendUserCreationVerificationEmail(User user, String associationName, String link) {
+        Map<String, Object> variables = createUserCreationVerificationEmailVariables(user, associationName, link);
+        String htmlContent = processTemplate(USER_CREATION_VERIFICATION.getTemplate(), variables);
+        sendEmail(user.getEmail(), USER_CREATION_VERIFICATION.getSubject(), htmlContent);
+        notificationsService.create(NotificationType.USER_CREATION_VERIFICATION, EMAIL);
     }
 
     private Map<String, Object> createEmailVerificationEmailVariables(User user, String link) {
@@ -109,8 +159,8 @@ public class EmailsServiceImpl implements EmailsService {
         Map<String, Object> variables = new HashMap<>();
         String formattedRequestDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm"));
 
-        variables.put("customerName", user.getUserName());
-        variables.put("customerEmail", user.getEmail());
+        variables.put("userName", user.getUserName());
+        variables.put("userEmail", user.getEmail());
         variables.put("senderEmail", senderEmail);
         variables.put("requestDate", formattedRequestDate);
         variables.put("resetUrl", link);
@@ -118,7 +168,7 @@ public class EmailsServiceImpl implements EmailsService {
         return variables;
     }
 
-    private Map<String, Object> createOrderSuccessEmailVariables(Order order) {
+    private Map<String, Object> createOrderLifecycleEmailVariables(Order order) {
         Map<String, Object> variables = new HashMap<>();
         Payment paymentData = order.getPayment();
         Customer customer = order.getCustomer();
@@ -137,9 +187,23 @@ public class EmailsServiceImpl implements EmailsService {
         variables.put("paymentMethod", paymentData.getPaymentMethod());
         variables.put("paymentTotal", paymentData.getTotal());
         variables.put("orderReference", order.getOrderReference());
-        variables.put("createdAt", formattedOrderDate);
+        variables.put("orderDate", formattedOrderDate);
         variables.put("ticketList", ticketNumbers);
         variables.put("ticketCount", ticketNumbers.size());
+        variables.put("raffleName", order.getRaffle().getTitle());
+        
+        if (order.getCompletedAt() != null) {
+            variables.put("completedDate", order.getCompletedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm")));
+        }
+        if (order.getCancelledAt() != null) {
+            variables.put("cancelledDate", order.getCancelledAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm")));
+        }
+        if (order.getRefundedAt() != null) {
+            variables.put("refundedDate", order.getRefundedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm")));
+        }
+        if (order.getUnpaidAt() != null) {
+            variables.put("unpaidDate", order.getUnpaidAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm")));
+        }
 
         return variables;
     }
@@ -154,6 +218,21 @@ public class EmailsServiceImpl implements EmailsService {
         variables.put("senderEmail", senderEmail);
         variables.put("requestDate", formattedRequestDate);
         variables.put("updateUrl", link);
+
+        return variables;
+    }
+
+    private Map<String, Object> createUserCreationVerificationEmailVariables(User user, String associationName, String link) {
+        Map<String, Object> variables = new HashMap<>();
+        String formattedCreationDate = user.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm"));
+
+        variables.put("customerName", user.getFirstName() + " " + user.getLastName());
+        variables.put("customerUsername", user.getUserName());
+        variables.put("customerEmail", user.getEmail());
+        variables.put("associationName", associationName);
+        variables.put("senderEmail", senderEmail);
+        variables.put("creationDate", formattedCreationDate);
+        variables.put("verificationUrl", link);
 
         return variables;
     }

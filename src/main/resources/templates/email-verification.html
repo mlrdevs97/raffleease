@@ -1,91 +1,68 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Verification</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f5f5f7;
-            margin: 0;
-            padding: 0;
-            color: #333;
-        }
-
-        .email-container {
-            max-width: 600px;
-            margin: 20px auto;
-            background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            border: 1px solid #ececec;
-        }
-
-        .header {
-            background-color: #3b82f6;
-            color: #ffffff;
-            padding: 30px 20px;
-            text-align: center;
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .content {
-            padding: 20px;
-        }
-
-        .content h2 {
-            font-size: 18px;
-            color: #3b82f6;
-            margin-bottom: 10px;
-        }
-
-        .content p {
-            margin: 10px 0;
-            line-height: 1.6;
-        }
-
-        .footer {
-            background-color: #f8f8fa;
-            color: #555;
-            text-align: center;
-            padding: 15px;
-            font-size: 14px;
-        }
-
-        .footer a {
-            color: #3b82f6;
-            text-decoration: none;
-            font-weight: bold;
-        }
-    </style>
+    <title>Confirm Registration - Raffleease</title>
 </head>
+
 <body>
-<div class="email-container">
-    <div class="header">
-        <h1>Hello, <span th:text="${customerName}">[User Name]</span>!</h1>
+<div id="email-template"
+     style="font-family: Arial, sans-serif; line-height: 1.6; color: rgb(51, 51, 51); max-width: 600px; margin: 0px auto; background-color: rgb(255, 255, 255);">
+    <div style="background-color: rgb(59, 130, 246); padding: 30px 20px; text-align: center;">
+        <h1 style="color: rgb(255, 255, 255); margin: 0px; font-size: 24px; font-weight: 600;">Welcome to
+            Raffleease!</h1>
     </div>
-    <div class="content">
-        <h2>Welcome to Raffle Ease!</h2>
-        <p>Thank you for registering with us on <strong><span th:text="${registrationDate}">[Registration Date]</span></strong>.</p>
-        <p>To complete your registration, please verify your email address.</p>
-        <a th:href="@{${verificationUrl}}" title="Verify your email">Click here to verify your email address and activate your account</a>
-        <p style="margin-top: 20px; font-size: 12px; color: #777;">
-            If the button above doesn't work, copy and paste the link into your browser.
+    <div style="padding: 40px 30px;">
+        <h2
+                style="color: rgb(31, 41, 55); font-size: 20px; font-weight: 600; margin-bottom: 20px; margin-top: 0px;">
+            Hello <span th:text="${customerName}">[Customer Name]</span>,</h2>
+        <p style="font-size: 16px; margin-bottom: 25px; color: rgb(75, 85, 99);">Thank you for registering with
+            Raffleease on <strong th:text="${registrationDate}">[Registration Date]</strong>!</p>
+        <p style="font-size: 16px; margin-bottom: 30px; color: rgb(75, 85, 99);">To complete your registration, please verify your email address by clicking the button below:
         </p>
+        <div
+                style="background-color: rgb(248, 250, 252); border: 1px solid rgb(226, 232, 240); border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+            <h3
+                    style="font-size: 16px; font-weight: 600; color: rgb(31, 41, 55); margin-top: 0px; margin-bottom: 15px;">
+                Account Details</h3>
+            <div style="margin-bottom: 10px;"><span
+                    style="color: rgb(107, 114, 128); font-size: 14px;">Name:</span><br><span
+                    style="color: rgb(31, 41, 55); font-weight: 500;" th:text="${customerName}">[Customer Name]</span></div>
+            <div><span style="color: rgb(107, 114, 128); font-size: 14px;">Email:</span><br><span
+                    style="color: rgb(31, 41, 55); font-weight: 500;" th:text="${customerEmail}">[customer.email@example.com]</span></div>
+        </div>
+        <div style="text-align: center; margin-bottom: 30px;"><a
+                th:href="${verificationUrl}"
+                style="display: inline-block; background-color: rgb(59, 130, 246); color: rgb(255, 255, 255); padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Verify
+            Email Address</a></div>
+        <p style="font-size: 14px; color: rgb(107, 114, 128); text-align: center; margin-bottom: 30px;">If the
+            button doesn't work, copy and paste this link into your browser:<br><a
+                    th:href="${verificationUrl}" th:text="${verificationUrl}"
+                    style="color: rgb(59, 130, 246); word-break: break-all;">[verification URL]</a>
+        </p>
+        <div
+                style="background-color: rgb(254, 243, 199); border: 1px solid rgb(245, 158, 11); border-radius: 6px; padding: 15px; margin-bottom: 25px;">
+            <h4
+                    style="color: rgb(146, 64, 14); font-size: 14px; font-weight: 600; margin-top: 0px; margin-bottom: 8px;">
+                🔒 Security Notice</h4>
+            <p style="color: rgb(146, 64, 14); font-size: 13px; margin: 0px; line-height: 1.5;">This verification
+                link will expire in 24 hours. If you didn't create this account, please ignore this email or contact
+                our support team.</p>
+        </div>
+        <p style="font-size: 14px; color: rgb(107, 114, 128); margin-bottom: 0px;">If you have any questions or need
+            assistance, please don't hesitate to contact our support team at <a th:href="'mailto:' + ${senderEmail}" th:text="${senderEmail}"
+                                                                                style="color: rgb(59, 130, 246);">support@raffleease.com</a></p>
     </div>
-    <div class="footer">
-        <p>If you have any questions, please contact us at
-            <a th:href="'mailto:' + ${senderEmail}" th:text="${senderEmail}">support@raffleease.com</a>.
+    <div
+            style="background-color: rgb(248, 250, 252); padding: 25px 30px; border-top: 1px solid rgb(226, 232, 240); text-align: center;">
+        <p style="font-size: 13px; color: rgb(107, 114, 128); margin: 0px 0px 10px;">This email was sent from
+            <span th:text="${senderEmail}">noreply@raffleease.com</span></p>
+        <p style="font-size: 12px; color: rgb(156, 163, 175); margin: 0px;">© 2024 Raffleease. All rights reserved.
         </p>
-        <p>© 2024 Raffle Ease.</p>
     </div>
 </div>
 </body>
+
 </html>

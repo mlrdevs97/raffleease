@@ -15,6 +15,7 @@ import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatusService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsService;
+import com.raffleease.raffleease.Domains.Notifications.Services.EmailsService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class OrdersEditServiceImpl implements OrdersEditService {
     private final OrdersMapper mapper;
     private final RafflesStatusService rafflesStatusService;
     private final RafflesStatisticsService statisticsService;
+    private final EmailsService emailsService;
 
     @Override
     @Transactional
@@ -50,7 +52,9 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         payment.setPaymentMethod(orderComplete.paymentMethod());
         order.setStatus(COMPLETED);
         order.setCompletedAt(LocalDateTime.now());
-        return mapper.fromOrder(ordersPersistenceService.save(order));
+        Order savedOrder = ordersPersistenceService.save(order);        
+        emailsService.sendOrderCompletedEmail(savedOrder);
+        return mapper.fromOrder(savedOrder);
     }
 
     @Override
@@ -63,7 +67,9 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         statisticsService.setCancelStatistics(order.getRaffle(), order.getOrderItems().stream().count());
         order.setStatus(CANCELLED);
         order.setCancelledAt(LocalDateTime.now());
-        return mapper.fromOrder(ordersPersistenceService.save(order));
+        Order savedOrder = ordersPersistenceService.save(order);
+        emailsService.sendOrderCancelledEmail(savedOrder);        
+        return mapper.fromOrder(savedOrder);
     }
 
     @Override
@@ -77,7 +83,9 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         rafflesStatusService.updateStatusAfterAvailableTicketsIncrease(raffle);
         order.setStatus(REFUNDED);
         order.setRefundedAt(LocalDateTime.now());
-        return mapper.fromOrder(ordersPersistenceService.save(order));
+        Order savedOrder = ordersPersistenceService.save(order);
+        emailsService.sendOrderRefundedEmail(savedOrder);        
+        return mapper.fromOrder(savedOrder);
     }
 
     @Override
@@ -90,7 +98,9 @@ public class OrdersEditServiceImpl implements OrdersEditService {
         releaseOrderTickets(order);
         order.setStatus(UNPAID);
         order.setUnpaidAt(LocalDateTime.now());
-        return mapper.fromOrder(ordersPersistenceService.save(order));
+        Order savedOrder = ordersPersistenceService.save(order);
+        emailsService.sendOrderUnpaidEmail(savedOrder);        
+        return mapper.fromOrder(savedOrder);
     }
 
     @Override
