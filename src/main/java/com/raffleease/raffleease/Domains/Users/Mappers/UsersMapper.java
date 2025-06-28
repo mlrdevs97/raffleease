@@ -13,12 +13,9 @@ import java.util.Objects;
 @Component
 public class UsersMapper {
     public User buildUser(UserRegisterDTO userData, String encodedPassword, boolean isEnabled) {
-        UserPhoneNumber phoneNumber = null;
-        if (Objects.nonNull(userData.getPhoneNumber())) {
-            phoneNumber = new UserPhoneNumber();
-            phoneNumber.setPrefix(userData.getPhoneNumber().prefix());
-            phoneNumber.setNationalNumber(userData.getPhoneNumber().nationalNumber());
-        }
+        UserPhoneNumber phoneNumber = new UserPhoneNumber();
+        phoneNumber.setPrefix(userData.getPhoneNumber().prefix());
+        phoneNumber.setNationalNumber(userData.getPhoneNumber().nationalNumber());
 
         return User.builder()
                 .firstName(userData.getFirstName())

@@ -6,6 +6,7 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import static com.raffleease.raffleease.Common.Utils.SanitizeUtils.trimAndLower;
@@ -16,8 +17,8 @@ public class UserProfileDTO extends UserBaseDTO {
     @Email
     private final String email;
 
-    @Nullable
     @Valid
+    @NotNull
     private final PhoneNumberDTO phoneNumber;
 
     @JsonCreator
