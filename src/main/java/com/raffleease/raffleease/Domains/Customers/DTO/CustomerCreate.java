@@ -20,7 +20,7 @@ public record CustomerCreate(
 
         @Nullable
         @Valid
-        PhoneNumberDTO phoneNumberDTO
+        PhoneNumberDTO phoneNumber
 ) {
         public CustomerCreate {
                 fullName = trimAndLower(fullName);

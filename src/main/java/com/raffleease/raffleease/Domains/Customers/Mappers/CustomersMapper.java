@@ -30,10 +30,10 @@ public class CustomersMapper {
 
     public Customer toCustomer(CustomerCreate data) {
         CustomersPhoneNumber phoneNumber = null;
-        if (data.phoneNumberDTO() != null) {
+        if (data.phoneNumber() != null) {
             phoneNumber = CustomersPhoneNumber.builder()
-                    .prefix(data.phoneNumberDTO().prefix())
-                    .nationalNumber(data.phoneNumberDTO().nationalNumber())
+                    .prefix(data.phoneNumber().prefix())
+                    .nationalNumber(data.phoneNumber().nationalNumber())
                     .build();
         }
 
