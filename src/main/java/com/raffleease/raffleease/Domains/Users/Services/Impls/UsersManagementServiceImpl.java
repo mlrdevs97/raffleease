@@ -1,7 +1,9 @@
 package com.raffleease.raffleease.Domains.Users.Services.Impls;
 
+import com.raffleease.raffleease.Common.Configs.CorsProperties;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.PasswordResetException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.UpdateRoleException;
 import com.raffleease.raffleease.Common.Models.UserBaseDTO;
@@ -10,6 +12,9 @@ import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsMembershipService;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
+import com.raffleease.raffleease.Domains.Auth.Model.VerificationToken;
+import com.raffleease.raffleease.Domains.Auth.Repository.VerificationTokenRepository;
+import com.raffleease.raffleease.Domains.Notifications.Services.EmailsService;
 import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UpdatePhoneNumberRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UpdateUserRoleRequest;
@@ -21,9 +26,15 @@ import com.raffleease.raffleease.Domains.Users.Services.UsersService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import static com.raffleease.raffleease.Common.Constants.Constants.EMAIL_VERIFICATION_EXPIRATION_MINUTES;
 import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.ADMIN;
 import static com.raffleease.raffleease.Common.Exceptions.ErrorCodes.CURRENT_PASSWORD_INCORRECT;
 import static com.raffleease.raffleease.Common.Exceptions.ErrorCodes.PASSWORD_SAME_AS_CURRENT;
@@ -40,6 +51,9 @@ public class UsersManagementServiceImpl implements UsersManagementService {
     private final AssociationsService associationsService;
     private final AssociationsMembershipService membershipService;
     private final PasswordEncoder passwordEncoder;
+    private final VerificationTokenRepository verificationTokenRepository;
+    private final EmailsService emailsService;
+    private final CorsProperties corsProperties;
 
     @Transactional
     @Override
@@ -48,9 +62,10 @@ public class UsersManagementServiceImpl implements UsersManagementService {
             throw new BusinessException("Administrators cannot create other administrator accounts", ADMIN_CREATE_ADMIN_DENIED);
         }
         String encodedPassword = passwordEncoder.encode(request.userData().getPassword());
-        User user = usersService.createUser(request.userData(), encodedPassword, true);
+        User user = usersService.createUser(request.userData(), encodedPassword, false);
         Association association = associationsService.findById(associationId);
         associationsService.createMembership(association, user, request.role());
+        handleUserVerification(user, association.getName());
         return usersService.getUserResponseById(user.getId());
     }
 
@@ -153,6 +168,28 @@ public class UsersManagementServiceImpl implements UsersManagementService {
                 throw new BusinessException(ex.getMessage());
             }
             throw ex;
+        }
+    }
+
+    private void handleUserVerification(User user, String associationName) {
+        VerificationToken verificationToken = createVerificationToken(user);
+        String verificationLink = UriComponentsBuilder.fromHttpUrl(corsProperties.getClientAsList().get(0))
+                .path("/auth/email-verification")
+                .queryParam("token", verificationToken.getToken())
+                .build()
+                .toUriString();
+        emailsService.sendUserCreationVerificationEmail(user, associationName, verificationLink);
+    }
+
+    private VerificationToken createVerificationToken(User user) {
+        try {
+            return verificationTokenRepository.save(VerificationToken.builder()
+                    .token(UUID.randomUUID().toString())
+                    .user(user)
+                    .expiryDate(LocalDateTime.now().plusMinutes(EMAIL_VERIFICATION_EXPIRATION_MINUTES))
+                    .build());
+        } catch (DataAccessException ex) {
+            throw new DatabaseException("Database error occurred while saving verification token");
         }
     }
 } 

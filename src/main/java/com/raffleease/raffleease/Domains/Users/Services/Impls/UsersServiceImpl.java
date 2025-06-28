@@ -135,10 +135,8 @@ public class UsersServiceImpl implements UsersService {
         try {
             return repository.save(user);
         } catch (DataIntegrityViolationException ex) {
-            log.info("DataIntegrityViolationException when updating user: ");
             Optional<String> constraintName = ConstraintViolationParser.extractConstraintName(ex);
             if (constraintName.isPresent()) {
-                log.info("CONSTRAINT NAME: " + constraintName);
                 throw new UniqueConstraintViolationException(constraintName.get(), "Unique constraint violated: " + constraintName.get());
             } else {
                 throw ex;

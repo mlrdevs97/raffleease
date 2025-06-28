@@ -25,8 +25,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 import static com.raffleease.raffleease.Common.RateLimiting.RateLimit.AccessLevel.PRIVATE;
 import static com.raffleease.raffleease.Domains.Associations.Model.AssociationRole.ADMIN;
 import static org.springframework.http.HttpStatus.CREATED;

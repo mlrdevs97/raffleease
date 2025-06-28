@@ -8,6 +8,8 @@ import com.raffleease.raffleease.Common.Models.UserRegisterDTO;
 import com.raffleease.raffleease.Common.Models.PhoneNumberDTO;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
+import com.raffleease.raffleease.Domains.Auth.Model.VerificationToken;
+import com.raffleease.raffleease.Domains.Auth.Repository.VerificationTokenRepository;
 import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.EditUserRequest;
 import com.raffleease.raffleease.Domains.Users.DTOs.UpdateEmailRequest;
@@ -19,7 +21,7 @@ import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
 import com.raffleease.raffleease.Domains.Auth.Repository.EmailUpdateTokenRepository;
 import com.raffleease.raffleease.util.AuthTestUtils;
 import com.raffleease.raffleease.util.AuthTestUtils.AuthTestData;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DisplayName;>
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +52,9 @@ class UsersControllerIT extends AbstractIntegrationTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private VerificationTokenRepository verificationTokenRepository;
+
     private static final String USERS_BASE_ENDPOINT = "/v1/associations/{associationId}/users";
 
     @Nested
@@ -57,8 +62,8 @@ class UsersControllerIT extends AbstractIntegrationTest {
     class CreateUserTests {
 
         @Test
-        @DisplayName("Should successfully create user with valid data")
-        void shouldCreateUserWithValidData() throws Exception {
+        @DisplayName("Should successfully create user with valid data and send verification email")
+        void shouldCreateUserWithValidDataAndSendVerificationEmail() throws Exception {
             // Arrange
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             CreateUserRequest request = createValidCreateUserRequest();
@@ -73,7 +78,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isCreated())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.message").value("User account created successfully. Verification email sent."))
+                    .andExpect(jsonPath("$.message").value("User account created successfully. Verification email sent to the user."))
                     .andExpect(jsonPath("$.data.id").exists())
                     .andExpect(jsonPath("$.data.firstName").value("john"))
                     .andExpect(jsonPath("$.data.lastName").value("doe"))
@@ -82,7 +87,17 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.phoneNumber.prefix").value("+1"))
                     .andExpect(jsonPath("$.data.phoneNumber.nationalNumber").value("234567890"))
                     .andExpect(jsonPath("$.data.userRole").value("ASSOCIATION_MEMBER"))
-                    .andExpect(jsonPath("$.data.isEnabled").value(true));
+                    .andExpect(jsonPath("$.data.isEnabled").value(false)); // Changed: users are now created disabled
+
+            // Verify verification token was created
+            Long createdUserId = authTestUtils.extractUserIdFromResponse(result);
+            User createdUser = usersRepository.findById(createdUserId).orElseThrow();
+            
+            // Check that a verification token was created for the user
+            VerificationToken verificationToken = verificationTokenRepository.findByUser(createdUser)
+                    .orElseThrow(() -> new AssertionError("Verification token should have been created"));
+            assertThat(verificationToken.getToken()).isNotNull();
+            assertThat(verificationToken.getExpiryDate()).isAfter(java.time.LocalDateTime.now());
         }
 
         @Test
@@ -240,6 +255,58 @@ class UsersControllerIT extends AbstractIntegrationTest {
 
             // Assert
             result.andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should not create verification token when user creation fails")
+        void shouldNotCreateVerificationTokenWhenUserCreationFails() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            CreateUserRequest request = createUserRequestWithExistingUsername(adminData.user().getUserName());
+            
+            int tokenCountBefore = verificationTokenRepository.findAll().size();
+
+            // Act
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            result.andExpect(status().isConflict())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false));
+
+            // Verify no verification token was created
+            int tokenCountAfter = verificationTokenRepository.findAll().size();
+            assertThat(tokenCountAfter).isEqualTo(tokenCountBefore);
+        }
+
+        @Test
+        @DisplayName("Should create user in disabled state requiring verification")
+        void shouldCreateUserInDisabledStateRequiringVerification() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            CreateUserRequest request = createValidCreateUserRequest();
+
+            // Act
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // Assert
+            Long createdUserId = authTestUtils.extractUserIdFromResponse(result);
+            User createdUser = usersRepository.findById(createdUserId).orElseThrow();
+            
+            // Verify user is disabled and cannot authenticate until verification
+            assertThat(createdUser.isEnabled()).isFalse();
+            assertThat(createdUser.getEmail()).isEqualTo("john.doe@example.com");
+            
+            // Verify verification token exists and is valid
+            VerificationToken token = verificationTokenRepository.findByUser(createdUser)
+                    .orElseThrow(() -> new AssertionError("Verification token should exist"));
+            assertThat(token.getExpiryDate()).isAfter(java.time.LocalDateTime.now());
         }
     }
 
@@ -1124,7 +1191,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isCreated())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.message").value("User account created successfully. Verification email sent."))
+                    .andExpect(jsonPath("$.message").value("User account created successfully. Verification email sent to the user."))
                     .andExpect(jsonPath("$.data.id").exists())
                     .andExpect(jsonPath("$.data.firstName").value("john"))
                     .andExpect(jsonPath("$.data.lastName").value("doe"))
@@ -1133,7 +1200,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.phoneNumber.prefix").value("+1"))
                     .andExpect(jsonPath("$.data.phoneNumber.nationalNumber").value("234567890"))
                     .andExpect(jsonPath("$.data.userRole").value("ASSOCIATION_MEMBER"))
-                    .andExpect(jsonPath("$.data.isEnabled").value(true));
+                    .andExpect(jsonPath("$.data.isEnabled").value(false)); // Changed: users are now created disabled
 
             // Verify the user was created with the correct association role
             Long createdUserId = authTestUtils.extractUserIdFromResponse(result);
@@ -1159,13 +1226,20 @@ class UsersControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isCreated())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.data.id").exists());
+                    .andExpect(jsonPath("$.message").value("User account created successfully. Verification email sent to the user."))
+                    .andExpect(jsonPath("$.data.id").exists())
+                    .andExpect(jsonPath("$.data.isEnabled").value(false)); // Changed: users are now created disabled
 
             // Verify the user was created with the correct association role
             Long createdUserId = authTestUtils.extractUserIdFromResponse(result);
             User createdUser = usersRepository.findById(createdUserId).orElseThrow();
             AssociationRole actualRole = authTestUtils.getUserRoleInAssociation(createdUser);
             assertThat(actualRole).isEqualTo(AssociationRole.COLLABORATOR);
+            
+            // Verify verification token was created
+            VerificationToken verificationToken = verificationTokenRepository.findByUser(createdUser)
+                    .orElseThrow(() -> new AssertionError("Verification token should have been created"));
+            assertThat(verificationToken.getToken()).isNotNull();
         }
 
         @Test
