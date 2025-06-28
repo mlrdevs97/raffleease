@@ -12,7 +12,7 @@ import lombok.Builder;
 import java.util.List;
 
 @Builder
-public record AdminOrderCreate(
+public record OrderCreate(
         @NotNull
         @Positive
         Long cartId,
@@ -32,7 +32,7 @@ public record AdminOrderCreate(
         @Size(max = 500)
         String comment
 ) {
-        public AdminOrderCreate {
+        public OrderCreate {
                 comment = trim(comment);
         }
 

@@ -1,6 +1,6 @@
 package com.raffleease.raffleease.Domains.Orders.Services;
 
-import com.raffleease.raffleease.Domains.Orders.DTOs.AdminOrderCreate;
+import com.raffleease.raffleease.Domains.Orders.DTOs.OrderCreate;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderDTO;
 
 public interface OrdersCreateService {
@@ -15,5 +15,5 @@ public interface OrdersCreateService {
      * @param associationId the ID of the association
      * @return the created order
      */
-    OrderDTO create(AdminOrderCreate adminOrder, Long associationId);
+    OrderDTO create(OrderCreate adminOrder, Long associationId);
 }

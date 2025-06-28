@@ -34,9 +34,9 @@ public class OrdersController {
     @RateLimit(operation = "create", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> create(
             @PathVariable Long associationId,
-            @Valid @RequestBody AdminOrderCreate adminOrderCreate
+            @Valid @RequestBody OrderCreate orderCreate
     ) {
-        OrderDTO order = ordersCreateService.create(adminOrderCreate, associationId);
+        OrderDTO order = ordersCreateService.create(orderCreate, associationId);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()

@@ -3,12 +3,11 @@ package com.raffleease.raffleease.Domains.Orders.Services.Impls;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Carts.Model.Cart;
-import com.raffleease.raffleease.Domains.Carts.Model.CartStatus;
 import com.raffleease.raffleease.Domains.Carts.Services.CartsPersistenceService;
 import com.raffleease.raffleease.Domains.Carts.Services.CartLifecycleService;
 import com.raffleease.raffleease.Domains.Customers.Model.Customer;
 import com.raffleease.raffleease.Domains.Customers.Services.CustomersService;
-import com.raffleease.raffleease.Domains.Orders.DTOs.AdminOrderCreate;
+import com.raffleease.raffleease.Domains.Orders.DTOs.OrderCreate;
 import com.raffleease.raffleease.Domains.Orders.DTOs.OrderDTO;
 import com.raffleease.raffleease.Domains.Orders.Mappers.OrdersMapper;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
@@ -24,6 +23,7 @@ import com.raffleease.raffleease.Domains.Raffles.Services.RafflesQueryService;
 import com.raffleease.raffleease.Domains.Raffles.Services.RafflesStatisticsService;
 import com.raffleease.raffleease.Domains.Tickets.Model.Ticket;
 import com.raffleease.raffleease.Domains.Tickets.Services.TicketsQueryService;
+import com.raffleease.raffleease.Domains.Notifications.Services.EmailsService;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -49,11 +49,12 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
     private final PaymentsService paymentsService;
     private final AssociationsService associationsService;
     private final CartLifecycleService cartLifecycleService;
+    private final EmailsService emailsService;
     private final OrdersMapper mapper;
 
     @Override
     @Transactional
-    public OrderDTO create(AdminOrderCreate adminOrder, Long associationId) {
+    public OrderDTO create(OrderCreate adminOrder, Long associationId) {
         Association association = associationsService.findById(associationId);
         Cart cart = cartsPersistence.findById(adminOrder.cartId());
         List<Ticket> requestedTickets = ticketsQueryService.findAllById(adminOrder.ticketIds());
@@ -68,7 +69,8 @@ public class OrdersCreateServiceImpl implements OrdersCreateService {
         List<OrderItem> orderItems = createOrderItems(order, finalizedTickets);
         order.setPayment(payment);
         order.getOrderItems().addAll(orderItems);
-        order = ordersPersistenceService.save(order);
+        order = ordersPersistenceService.save(order);        
+        emailsService.sendOrderCreatedEmail(order);        
         return mapper.fromOrder(order);
     }
 

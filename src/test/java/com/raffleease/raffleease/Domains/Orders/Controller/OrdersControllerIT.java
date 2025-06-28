@@ -8,7 +8,7 @@ import com.raffleease.raffleease.Domains.Carts.Repository.CartsRepository;
 import com.raffleease.raffleease.Domains.Customers.DTO.CustomerCreate;
 import com.raffleease.raffleease.Domains.Images.Model.Image;
 import com.raffleease.raffleease.Domains.Images.Model.ImageStatus;
-import com.raffleease.raffleease.Domains.Orders.DTOs.AdminOrderCreate;
+import com.raffleease.raffleease.Domains.Orders.DTOs.OrderCreate;
 import com.raffleease.raffleease.Domains.Orders.Model.Order;
 import com.raffleease.raffleease.Domains.Orders.Repository.OrdersRepository;
 import com.raffleease.raffleease.Domains.Raffles.Model.Raffle;
@@ -148,7 +148,7 @@ class OrdersControllerIT extends AbstractIntegrationTest {
                     phoneNumberDTO
             );
 
-            AdminOrderCreate orderCreate = new AdminOrderCreate(
+            OrderCreate orderCreate = new OrderCreate(
                     testCart.getId(),
                     testRaffle.getId(),
                     reservedTickets.stream().map(Ticket::getId).toList(),
@@ -227,7 +227,7 @@ class OrdersControllerIT extends AbstractIntegrationTest {
                     null
             );
 
-            AdminOrderCreate orderCreate = new AdminOrderCreate(
+            OrderCreate orderCreate = new OrderCreate(
                     testCart.getId(),
                     testRaffle.getId(),
                     reservedTickets.stream().map(Ticket::getId).toList(),
@@ -281,7 +281,7 @@ class OrdersControllerIT extends AbstractIntegrationTest {
                     null
             );
 
-            AdminOrderCreate orderCreate = new AdminOrderCreate(
+            OrderCreate orderCreate = new OrderCreate(
                     testCart.getId(),
                     testRaffle.getId(),
                     reservedTickets.stream().map(Ticket::getId).toList(),
@@ -340,7 +340,7 @@ class OrdersControllerIT extends AbstractIntegrationTest {
                     null
             );
 
-            AdminOrderCreate orderCreate = new AdminOrderCreate(
+            OrderCreate orderCreate = new OrderCreate(
                     testCart.getId(),
                     testRaffle.getId(),
                     List.of(newTicket.getId()),
@@ -392,7 +392,7 @@ class OrdersControllerIT extends AbstractIntegrationTest {
                     null
             );
 
-            AdminOrderCreate orderCreate = new AdminOrderCreate(
+            OrderCreate orderCreate = new OrderCreate(
                     testCart.getId(),
                     testRaffle.getId(),
                     reservedTickets.stream().limit(2).map(Ticket::getId).toList(),
