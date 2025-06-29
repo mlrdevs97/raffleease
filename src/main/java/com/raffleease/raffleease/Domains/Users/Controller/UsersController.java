@@ -105,7 +105,7 @@ public class UsersController {
         );
     }
 
-    @PutMapping("/{userId}/password")
+    @PatchMapping("/{userId}/password")
     @SelfAccessOnly(message = "You can only change your own password")
     @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> editPassword(
@@ -154,7 +154,7 @@ public class UsersController {
         );
     }
 
-    @PutMapping("/{userId}/email")
+    @PostMapping("/{userId}/email/verification-request")
     @SelfAccessOnly(message = "You can only update your own email address")
     @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> requestEmailUpdate(
@@ -186,7 +186,7 @@ public class UsersController {
         );
     }
 
-    @PutMapping("/{userId}/phone-number")
+    @PatchMapping("/{userId}/phone-number")
     @SelfAccessOnly(message = "You can only update your own phone number")
     @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> updatePhoneNumber(
@@ -203,7 +203,7 @@ public class UsersController {
         );
     }
 
-    @PutMapping("/{userId}/role")
+    @PatchMapping("/{userId}/role")
     @AdminOnly(message = "Only administrators can update user roles")
     @RateLimit(operation = "update", accessLevel = PRIVATE)
     public ResponseEntity<ApiResponse> updateUserRole(

@@ -88,7 +88,7 @@ class AuthorizationControllerIT extends AbstractIntegrationTest {
                     .content(objectMapper.writeValueAsString(request)));
 
             // Assert
-            result.andExpect(status().isForbidden())
+            result.andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.message").value("Administrators cannot create other administrator accounts"));
         }
@@ -158,7 +158,7 @@ class AuthorizationControllerIT extends AbstractIntegrationTest {
                     .with(user(adminData.user().getUserName()).roles("USER")));
 
             // Assert
-            result.andExpect(status().isForbidden())
+            result.andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.message").value("Administrators cannot disable their own account"));
         }

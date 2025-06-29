@@ -249,6 +249,24 @@ public class AuthTestUtils {
     }
 
     /**
+     * Sets the association role for a user.
+     * Useful for testing scenarios where you need to directly manipulate user roles.
+     * 
+     * @param user the user to set the role for
+     * @param role the new role to assign
+     */
+    public void setUserRoleInAssociation(User user, AssociationRole role) {
+        AssociationMembership membership = membershipsRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("No membership found for user: " + user.getId()));
+        membership.setRole(role);
+        membershipsRepository.save(membership);
+        
+        // Flush to ensure the change is persisted
+        entityManager.flush();
+        entityManager.refresh(membership);
+    }
+
+    /**
      * Record to hold test authentication data for clean organization.
      */
     public record AuthTestData(

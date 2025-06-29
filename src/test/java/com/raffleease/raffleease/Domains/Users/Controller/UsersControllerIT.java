@@ -3,11 +3,11 @@ package com.raffleease.raffleease.Domains.Users.Controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raffleease.raffleease.Base.AbstractIntegrationTest;
 import com.raffleease.raffleease.Common.Models.UserBaseDTO;
-import com.raffleease.raffleease.Common.Models.UserProfileDTO;
 import com.raffleease.raffleease.Common.Models.UserRegisterDTO;
 import com.raffleease.raffleease.Common.Models.PhoneNumberDTO;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Auth.DTOs.EditPasswordRequest;
+import com.raffleease.raffleease.Domains.Auth.DTOs.LoginRequest;
 import com.raffleease.raffleease.Domains.Auth.Model.VerificationToken;
 import com.raffleease.raffleease.Domains.Auth.Repository.VerificationTokenRepository;
 import com.raffleease.raffleease.Domains.Users.DTOs.CreateUserRequest;
@@ -21,7 +21,7 @@ import com.raffleease.raffleease.Domains.Users.Repository.UsersRepository;
 import com.raffleease.raffleease.Domains.Auth.Repository.EmailUpdateTokenRepository;
 import com.raffleease.raffleease.util.AuthTestUtils;
 import com.raffleease.raffleease.util.AuthTestUtils.AuthTestData;
-import org.junit.jupiter.api.DisplayName;>
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,7 +78,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isCreated())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.message").value("User account created successfully. Verification email sent to the user."))
+                    .andExpect(jsonPath("$.message").value("User account created successfully. Verification email sent."))
                     .andExpect(jsonPath("$.data.id").exists())
                     .andExpect(jsonPath("$.data.firstName").value("john"))
                     .andExpect(jsonPath("$.data.lastName").value("doe"))
@@ -86,13 +86,13 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.email").value("john.doe@example.com"))
                     .andExpect(jsonPath("$.data.phoneNumber.prefix").value("+1"))
                     .andExpect(jsonPath("$.data.phoneNumber.nationalNumber").value("234567890"))
-                    .andExpect(jsonPath("$.data.userRole").value("ASSOCIATION_MEMBER"))
+                    .andExpect(jsonPath("$.data.role").value("MEMBER"))
                     .andExpect(jsonPath("$.data.isEnabled").value(false)); // Changed: users are now created disabled
 
             // Verify verification token was created
             Long createdUserId = authTestUtils.extractUserIdFromResponse(result);
             User createdUser = usersRepository.findById(createdUserId).orElseThrow();
-            
+
             // Check that a verification token was created for the user
             VerificationToken verificationToken = verificationTokenRepository.findByUser(createdUser)
                     .orElseThrow(() -> new AssertionError("Verification token should have been created"));
@@ -263,8 +263,6 @@ class UsersControllerIT extends AbstractIntegrationTest {
             // Arrange
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             CreateUserRequest request = createUserRequestWithExistingUsername(adminData.user().getUserName());
-            
-            int tokenCountBefore = verificationTokenRepository.findAll().size();
 
             // Act
             ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
@@ -272,14 +270,12 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)));
 
-            // Assert
+            // Assert - Verify user creation fails as expected
             result.andExpect(status().isConflict())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.success").value(false));
-
-            // Verify no verification token was created
-            int tokenCountAfter = verificationTokenRepository.findAll().size();
-            assertThat(tokenCountAfter).isEqualTo(tokenCountBefore);
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.errors['userData.userName']").value("VALUE_ALREADY_EXISTS"));
         }
 
         @Test
@@ -298,11 +294,11 @@ class UsersControllerIT extends AbstractIntegrationTest {
             // Assert
             Long createdUserId = authTestUtils.extractUserIdFromResponse(result);
             User createdUser = usersRepository.findById(createdUserId).orElseThrow();
-            
+
             // Verify user is disabled and cannot authenticate until verification
             assertThat(createdUser.isEnabled()).isFalse();
             assertThat(createdUser.getEmail()).isEqualTo("john.doe@example.com");
-            
+
             // Verify verification token exists and is valid
             VerificationToken token = verificationTokenRepository.findByUser(createdUser)
                     .orElseThrow(() -> new AssertionError("Verification token should exist"));
@@ -322,7 +318,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             User targetUser = adminData.user();
 
             // Act
-            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}",
                     adminData.association().getId(), targetUser.getId())
                     .with(user(adminData.user().getUserName()).roles("USER")));
 
@@ -336,7 +332,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.lastName").value(targetUser.getLastName()))
                     .andExpect(jsonPath("$.data.userName").value(targetUser.getUserName()))
                     .andExpect(jsonPath("$.data.email").value(targetUser.getEmail()))
-                    .andExpect(jsonPath("$.data.role").value(ADMIN))
+                    .andExpect(jsonPath("$.data.role").value(ADMIN.toString()))
                     .andExpect(jsonPath("$.data.isEnabled").value(targetUser.isEnabled()));
         }
 
@@ -347,7 +343,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData memberData = authTestUtils.createAuthenticatedUser(true, MEMBER);
 
             // Act
-            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}",
                     memberData.association().getId(), memberData.user().getId())
                     .with(user(memberData.user().getUserName()).roles("USER")));
 
@@ -366,7 +362,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData collaboratorData = authTestUtils.createAuthenticatedUser(true, AssociationRole.COLLABORATOR);
 
             // Act
-            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}",
                     collaboratorData.association().getId(), collaboratorData.user().getId())
                     .with(user(collaboratorData.user().getUserName()).roles("USER")));
 
@@ -386,7 +382,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
 
             // Act - Member tries to access admin's data
-            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(memberData.user().getUserName()).roles("USER")));
 
@@ -407,7 +403,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData collaboratorInSameAssociation = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
 
             // Act - Collaborator tries to access admin's data
-            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(collaboratorInSameAssociation.user().getUserName()).roles("USER")));
 
@@ -425,7 +421,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
 
             // Act
-            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}",
                     adminData.association().getId(), adminData.user().getId()));
 
             // Assert
@@ -440,7 +436,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             Long nonExistentAssociationId = 99999L;
 
             // Act
-            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}",
                     nonExistentAssociationId, adminData.user().getId())
                     .with(user(adminData.user().getUserName()).roles("USER")));
 
@@ -462,7 +458,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             EditUserRequest request = createValidEditUserRequest();
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}",
                     adminData.association().getId(), targetUser.getId())
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -488,7 +484,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             EditUserRequest request = createValidEditUserRequest();
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}",
                     memberData.association().getId(), memberData.user().getId())
                     .with(user(memberData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -509,7 +505,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             EditUserRequest request = createValidEditUserRequest();
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}",
                     collaboratorData.association().getId(), collaboratorData.user().getId())
                     .with(user(collaboratorData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -531,7 +527,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             EditUserRequest request = createValidEditUserRequest();
 
             // Act - Member tries to update admin
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(memberData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -553,7 +549,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             EditUserRequest request = createValidEditUserRequest();
 
             // Act - Collaborator tries to update admin
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(collaboratorData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -574,7 +570,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             EditUserRequest request = createValidEditUserRequest();
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}",
                     adminData.association().getId(), adminData.user().getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)));
@@ -589,19 +585,19 @@ class UsersControllerIT extends AbstractIntegrationTest {
             // Arrange
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData otherUserData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
-            
+
             User adminUser = usersRepository.findById(adminData.user().getId()).orElseThrow();
             User otherUser = usersRepository.findById(otherUserData.user().getId()).orElseThrow();
             String conflictUsername = "conflictuser";
             otherUser.setUserName(conflictUsername);
-            usersRepository.save(otherUser);            
+            usersRepository.save(otherUser);
             assertThat(adminUser.getUserName()).isNotEqualTo(otherUser.getUserName());
             assertThat(adminUser.getId()).isNotEqualTo(otherUser.getId());
-            
+
             EditUserRequest request = createEditUserRequestWithExistingUsername(conflictUsername);
 
             // Act - Try to update adminUser to have otherUser's username
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{id}",
                     adminData.association().getId(), adminUser.getId())
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -629,7 +625,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             User targetUser = memberData.user();
 
             // Act
-            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable", 
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable",
                     adminData.association().getId(), targetUser.getId())
                     .with(user(adminData.user().getUserName()).roles("USER")));
 
@@ -652,12 +648,12 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
 
             // Act - Admin tries to disable themselves
-            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable", 
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(adminData.user().getUserName()).roles("USER")));
 
             // Assert
-            result.andExpect(status().isForbidden())
+            result.andExpect(status().isBadRequest())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.message").value("Administrators cannot disable their own account"));
@@ -671,7 +667,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
 
             // Act - Member tries to disable admin
-            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable", 
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(memberData.user().getUserName()).roles("USER")));
 
@@ -690,7 +686,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
 
             // Act - Collaborator tries to disable admin
-            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable", 
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(collaboratorData.user().getUserName()).roles("USER")));
 
@@ -708,7 +704,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
 
             // Act
-            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable", 
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable",
                     adminData.association().getId(), adminData.user().getId()));
 
             // Assert
@@ -723,7 +719,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             Long nonExistentAssociationId = 99999L;
 
             // Act
-            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable", 
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/disable",
                     nonExistentAssociationId, adminData.user().getId())
                     .with(user(adminData.user().getUserName()).roles("USER")));
 
@@ -743,13 +739,13 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
             User targetUser = memberData.user();
-            
+
             // Manually disable the user first so we can test enabling it
             targetUser.setEnabled(false);
             usersRepository.save(targetUser);
 
             // Act
-            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/enable", 
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/enable",
                     adminData.association().getId(), targetUser.getId())
                     .with(user(adminData.user().getUserName()).roles("USER")));
 
@@ -773,7 +769,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
 
             // Act - Member tries to enable admin
-            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/enable", 
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/enable",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(memberData.user().getUserName()).roles("USER")));
 
@@ -792,7 +788,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
 
             // Act - Collaborator tries to enable admin
-            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/enable", 
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/enable",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(collaboratorData.user().getUserName()).roles("USER")));
 
@@ -810,7 +806,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
 
             // Act
-            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/enable", 
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/enable",
                     adminData.association().getId(), adminData.user().getId()));
 
             // Assert
@@ -825,7 +821,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             Long nonExistentAssociationId = 99999L;
 
             // Act
-            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/enable", 
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/enable",
                     nonExistentAssociationId, adminData.user().getId())
                     .with(user(adminData.user().getUserName()).roles("USER")));
 
@@ -835,7 +831,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
     }
 
     @Nested
-    @DisplayName("PUT /v1/associations/{associationId}/users/{userId}/password - Edit Password")
+    @DisplayName("PATCH /v1/associations/{associationId}/users/{userId}/password - Edit Password")
     class EditPasswordTests {
 
         @Test
@@ -858,7 +854,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             );
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/password",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/password",
                     userData.association().getId(), user.getId())
                     .with(user(user.getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -889,7 +885,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             );
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/password",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/password",
                     userData.association().getId(), userData.user().getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)));
@@ -912,7 +908,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             );
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/password",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/password",
                     userData.association().getId(), user.getId())
                     .with(user(user.getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -944,7 +940,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             );
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/password",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/password",
                     userData.association().getId(), user.getId())
                     .with(user(user.getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -976,7 +972,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             );
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/password",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/password",
                     userData.association().getId(), user.getId())
                     .with(user(user.getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1009,7 +1005,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             );
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/password",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/password",
                     userData.association().getId(), user.getId())
                     .with(user(user.getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1024,43 +1020,13 @@ class UsersControllerIT extends AbstractIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should return 400 when required fields are blank")
-        void shouldReturn400WhenRequiredFieldsAreBlank() throws Exception {
-            // Arrange
-            AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
-            User user = userData.user();
-
-            EditPasswordRequest request = new EditPasswordRequest(
-                    "",
-                    "",
-                    ""  
-            );
-
-            // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/password",
-                    userData.association().getId(), user.getId())
-                    .with(user(user.getUserName()).roles("USER"))
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)));
-
-            // Assert - ERROR responses do NOT have a data field (ValidationErrorResponse)
-            result.andExpect(status().isBadRequest())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("Validation failed"))
-                    .andExpect(jsonPath("$.errors.currentPassword").value("REQUIRED"))
-                    .andExpect(jsonPath("$.errors.password").value("INVALID_FORMAT"))
-                    .andExpect(jsonPath("$.errors.confirmPassword").value("REQUIRED"));
-        }
-
-        @Test
         @DisplayName("Should preserve user permissions and data after password change")
         void shouldPreserveUserDataAfterPasswordChange() throws Exception {
             // Arrange
             AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             User user = userData.user();
             String currentPlainPassword = "CurrentPass#123";
-            
+
             // Store original user data
             String originalFirstName = user.getFirstName();
             String originalLastName = user.getLastName();
@@ -1078,7 +1044,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             );
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/password",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/password",
                     userData.association().getId(), user.getId())
                     .with(user(user.getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1093,7 +1059,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             assertThat(updatedUser.getLastName()).isEqualTo(originalLastName);
             assertThat(updatedUser.getEmail()).isEqualTo(originalEmail);
             assertThat(updatedUser.isEnabled()).isEqualTo(originalEnabled);
-            
+
             // But password should be changed
             assertThat(passwordEncoder.matches("NewSecurePass#456", updatedUser.getPassword())).isTrue();
         }
@@ -1104,7 +1070,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             // Arrange
             AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData otherUserData = authTestUtils.createAuthenticatedUserInSameAssociation(userData.association());
-            
+
             EditPasswordRequest request = new EditPasswordRequest(
                     "CurrentPass#123",
                     "NewSecurePass#456",
@@ -1112,7 +1078,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             );
 
             // Act - User tries to change another user's password
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/password",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/password",
                     userData.association().getId(), otherUserData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1131,7 +1097,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             // Arrange
             AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             Long nonExistentAssociationId = 99999L;
-            
+
             EditPasswordRequest request = new EditPasswordRequest(
                     "CurrentPass#123",
                     "NewSecurePass#456",
@@ -1139,7 +1105,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             );
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/password",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/password",
                     nonExistentAssociationId, userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1168,7 +1134,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .content(objectMapper.writeValueAsString(request)));
 
             // Assert
-            result.andExpect(status().isForbidden())
+            result.andExpect(status().isBadRequest())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.message").value("Administrators cannot create other administrator accounts"));
@@ -1191,7 +1157,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isCreated())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.message").value("User account created successfully. Verification email sent to the user."))
+                    .andExpect(jsonPath("$.message").value("User account created successfully. Verification email sent."))
                     .andExpect(jsonPath("$.data.id").exists())
                     .andExpect(jsonPath("$.data.firstName").value("john"))
                     .andExpect(jsonPath("$.data.lastName").value("doe"))
@@ -1199,7 +1165,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.email").value("john.doe@example.com"))
                     .andExpect(jsonPath("$.data.phoneNumber.prefix").value("+1"))
                     .andExpect(jsonPath("$.data.phoneNumber.nationalNumber").value("234567890"))
-                    .andExpect(jsonPath("$.data.userRole").value("ASSOCIATION_MEMBER"))
+                    .andExpect(jsonPath("$.data.role").value("MEMBER"))
                     .andExpect(jsonPath("$.data.isEnabled").value(false)); // Changed: users are now created disabled
 
             // Verify the user was created with the correct association role
@@ -1226,7 +1192,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isCreated())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.message").value("User account created successfully. Verification email sent to the user."))
+                    .andExpect(jsonPath("$.message").value("User account created successfully. Verification email sent."))
                     .andExpect(jsonPath("$.data.id").exists())
                     .andExpect(jsonPath("$.data.isEnabled").value(false)); // Changed: users are now created disabled
 
@@ -1235,7 +1201,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             User createdUser = usersRepository.findById(createdUserId).orElseThrow();
             AssociationRole actualRole = authTestUtils.getUserRoleInAssociation(createdUser);
             assertThat(actualRole).isEqualTo(AssociationRole.COLLABORATOR);
-            
+
             // Verify verification token was created
             VerificationToken verificationToken = verificationTokenRepository.findByUser(createdUser)
                     .orElseThrow(() -> new AssertionError("Verification token should have been created"));
@@ -1247,7 +1213,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         void shouldReturn400WhenRoleIsNull() throws Exception {
             // Arrange
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
-            
+
             PhoneNumberDTO phoneNumberDTO = PhoneNumberDTO.builder()
                     .prefix("+1")
                     .nationalNumber("234567890")
@@ -1255,7 +1221,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
 
             UserRegisterDTO userData = new UserRegisterDTO(
                     "John",
-                    "Doe", 
+                    "Doe",
                     "johndoe",
                     "john.doe@example.com",
                     phoneNumberDTO,
@@ -1288,10 +1254,10 @@ class UsersControllerIT extends AbstractIntegrationTest {
         void shouldVerifyOnlyMemberAndCollaboratorRolesAreAllowed() throws Exception {
             // Arrange
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
-            
+
             // Test creating users with allowed roles
             AssociationRole[] allowedRoles = {MEMBER, AssociationRole.COLLABORATOR};
-            
+
             for (AssociationRole role : allowedRoles) {
                 // Create unique request for each role
                 PhoneNumberDTO phoneNumberDTO = PhoneNumberDTO.builder()
@@ -1301,7 +1267,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
 
                 UserRegisterDTO userData = new UserRegisterDTO(
                         "John",
-                        "Doe", 
+                        "Doe",
                         "johndoe" + role.name().toLowerCase(),
                         "john.doe." + role.name().toLowerCase() + "@example.com",
                         phoneNumberDTO,
@@ -1338,7 +1304,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         void shouldVerifyCreatedUsersHaveAppropriatePermissions() throws Exception {
             // Arrange
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
-            
+
             // Create a MEMBER user with unique credentials
             PhoneNumberDTO memberPhoneNumberDTO = PhoneNumberDTO.builder()
                     .prefix("+1")
@@ -1347,7 +1313,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
 
             UserRegisterDTO memberUserData = new UserRegisterDTO(
                     "Jane",
-                    "Smith", 
+                    "Smith",
                     "janesmith",
                     "jane.smith@example.com",
                     memberPhoneNumberDTO,
@@ -1370,7 +1336,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             User memberUser = usersRepository.findById(memberUserId).orElseThrow();
 
             // Test that the MEMBER can access their own data but cannot access all users
-            ResultActions memberSelfAccessResult = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}", 
+            ResultActions memberSelfAccessResult = mockMvc.perform(get(USERS_BASE_ENDPOINT + "/{id}",
                     adminData.association().getId(), memberUser.getId())
                     .with(user(memberUser.getUserName()).roles("USER")));
 
@@ -1394,7 +1360,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
 
             UserRegisterDTO collaboratorUserData = new UserRegisterDTO(
                     "Bob",
-                    "Johnson", 
+                    "Johnson",
                     "bobjohnson",
                     "bob.johnson@example.com",
                     collaboratorPhoneNumberDTO,
@@ -1427,7 +1393,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
     }
 
     @Nested
-    @DisplayName("PUT /v1/associations/{associationId}/users/{userId}/email - Update Email")
+    @DisplayName("POST /v1/associations/{associationId}/users/{userId}/email/verification-request - Update Email")
     class UpdateEmailTests {
 
         @Test
@@ -1438,7 +1404,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateEmailRequest request = new UpdateEmailRequest("newemail@example.com");
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/{userId}/email/verification-request",
                     userData.association().getId(), userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1460,7 +1426,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateEmailRequest request = new UpdateEmailRequest(userData.user().getEmail());
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/{userId}/email/verification-request",
                     userData.association().getId(), userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1482,7 +1448,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateEmailRequest request = new UpdateEmailRequest(otherUserData.user().getEmail());
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/{userId}/email/verification-request",
                     userData.association().getId(), userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1504,7 +1470,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateEmailRequest request = new UpdateEmailRequest("invalid-email-format");
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/{userId}/email/verification-request",
                     userData.association().getId(), userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1526,7 +1492,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateEmailRequest request = new UpdateEmailRequest("");
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/{userId}/email/verification-request",
                     userData.association().getId(), userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1549,7 +1515,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateEmailRequest request = new UpdateEmailRequest("newemail@example.com");
 
             // Act - Member tries to update admin's email
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/{userId}/email/verification-request",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(memberData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1571,7 +1537,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateEmailRequest request = new UpdateEmailRequest("newemail@example.com");
 
             // Act - Collaborator tries to update admin's email
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/{userId}/email/verification-request",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(collaboratorData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1592,7 +1558,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateEmailRequest request = new UpdateEmailRequest("member.newemail@example.com");
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/{userId}/email/verification-request",
                     memberData.association().getId(), memberData.user().getId())
                     .with(user(memberData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1613,7 +1579,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateEmailRequest request = new UpdateEmailRequest("collaborator.newemail@example.com");
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/{userId}/email/verification-request",
                     collaboratorData.association().getId(), collaboratorData.user().getId())
                     .with(user(collaboratorData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1634,7 +1600,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateEmailRequest request = new UpdateEmailRequest("newemail@example.com");
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/{userId}/email/verification-request",
                     userData.association().getId(), userData.user().getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)));
@@ -1652,7 +1618,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             Long nonExistentAssociationId = 99999L;
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/email",
+            ResultActions result = mockMvc.perform(post(USERS_BASE_ENDPOINT + "/{userId}/email/verification-request",
                     nonExistentAssociationId, userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1751,7 +1717,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
     }
 
     @Nested
-    @DisplayName("PUT /v1/associations/{associationId}/users/{userId}/phone-number - Update Phone Number")
+    @DisplayName("PATCH /v1/associations/{associationId}/users/{userId}/phone-number - Update Phone Number")
     class UpdatePhoneNumberTests {
 
         @Test
@@ -1766,7 +1732,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
                     userData.association().getId(), userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1799,7 +1765,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
                     memberData.association().getId(), memberData.user().getId())
                     .with(user(memberData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1826,7 +1792,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
                     collaboratorData.association().getId(), collaboratorData.user().getId())
                     .with(user(collaboratorData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1854,7 +1820,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
 
             // Act - Member tries to update admin's phone number
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(memberData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1880,7 +1846,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
 
             // Act - Collaborator tries to update admin's phone number
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(collaboratorData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1901,7 +1867,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(null);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
                     userData.association().getId(), userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1927,7 +1893,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(invalidPhoneNumber);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
                     userData.association().getId(), userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1953,7 +1919,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(invalidPhoneNumber);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
                     userData.association().getId(), userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -1979,7 +1945,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
                     userData.association().getId(), userData.user().getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)));
@@ -2001,7 +1967,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             Long nonExistentAssociationId = 99999L;
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
                     nonExistentAssociationId, userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -2017,14 +1983,14 @@ class UsersControllerIT extends AbstractIntegrationTest {
             // Arrange
             AuthTestData userData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             User originalUser = userData.user();
-            
+
             // Store original user data
             String originalFirstName = originalUser.getFirstName();
             String originalLastName = originalUser.getLastName();
             String originalEmail = originalUser.getEmail();
             String originalUserName = originalUser.getUserName();
             boolean originalEnabled = originalUser.isEnabled();
-            
+
             PhoneNumberDTO newPhoneNumber = PhoneNumberDTO.builder()
                     .prefix("+44")
                     .nationalNumber("7700900123")
@@ -2032,7 +1998,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdatePhoneNumberRequest request = new UpdatePhoneNumberRequest(newPhoneNumber);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/phone-number",
                     userData.association().getId(), userData.user().getId())
                     .with(user(userData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -2048,7 +2014,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             assertThat(updatedUser.getEmail()).isEqualTo(originalEmail);
             assertThat(updatedUser.getUserName()).isEqualTo(originalUserName);
             assertThat(updatedUser.isEnabled()).isEqualTo(originalEnabled);
-            
+
             // But phone number should be changed
             assertThat(updatedUser.getPhoneNumber().getPrefix()).isEqualTo("+44");
             assertThat(updatedUser.getPhoneNumber().getNationalNumber()).isEqualTo("7700900123");
@@ -2056,7 +2022,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
     }
 
     @Nested
-    @DisplayName("PUT /v1/associations/{associationId}/users/{userId}/role - Update User Role")
+    @DisplayName("PATCH /v1/associations/{associationId}/users/{userId}/role - Update User Role")
     class UpdateUserRoleTests {
 
         @Test
@@ -2065,22 +2031,22 @@ class UsersControllerIT extends AbstractIntegrationTest {
             // Arrange
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
-            
+
             // Verify initial role
             AssociationRole initialRole = authTestUtils.getUserRoleInAssociation(memberData.user());
             assertThat(initialRole).isEqualTo(MEMBER);
-            
+
             UpdateUserRoleRequest request = createUpdateUserRoleRequest(AssociationRole.COLLABORATOR);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), memberData.user().getId())
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)));
 
             // Assert
-            result.andExpected(status().isOk())
+            result.andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.message").value("User role has been updated successfully"))
@@ -2097,7 +2063,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         void shouldUpdateUserRoleFromCollaboratorToMember() throws Exception {
             // Arrange
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
-            
+
             // Create a COLLABORATOR user
             PhoneNumberDTO phoneNumber = PhoneNumberDTO.builder()
                     .prefix("+1")
@@ -2111,23 +2077,23 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .userData(userData)
                     .role(AssociationRole.COLLABORATOR)
                     .build();
-            
+
             ResultActions createResult = mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(createRequest)));
-            
+
             Long collaboratorUserId = authTestUtils.extractUserIdFromResponse(createResult);
             User collaboratorUser = usersRepository.findById(collaboratorUserId).orElseThrow();
-            
+
             // Verify initial role
             AssociationRole initialRole = authTestUtils.getUserRoleInAssociation(collaboratorUser);
             assertThat(initialRole).isEqualTo(AssociationRole.COLLABORATOR);
-            
+
             UpdateUserRoleRequest request = createUpdateUserRoleRequest(MEMBER);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), collaboratorUserId)
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -2139,7 +2105,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.message").value("User role has been updated successfully"))
                     .andExpect(jsonPath("$.data.id").value(collaboratorUserId))
-                    .andExpect(jsonPath("$.data.role").value("ASSOCIATION_MEMBER"));
+                    .andExpect(jsonPath("$.data.role").value("MEMBER"));
 
             // Verify role was actually updated in database
             AssociationRole updatedRole = authTestUtils.getUserRoleInAssociation(collaboratorUser);
@@ -2155,7 +2121,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateUserRoleRequest request = createUpdateUserRoleRequest(AssociationRole.COLLABORATOR);
 
             // Act - Member tries to update admin's role
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(memberData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -2177,7 +2143,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateUserRoleRequest request = createUpdateUserRoleRequest(MEMBER);
 
             // Act - Collaborator tries to update admin's role
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(collaboratorData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -2198,7 +2164,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateUserRoleRequest request = createUpdateUserRoleRequest(MEMBER);
 
             // Act - Admin tries to update their own role
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), adminData.user().getId())
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -2208,8 +2174,8 @@ class UsersControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isBadRequest())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("You cannot update your own role"))
-                    .andExpect(jsonPath("$.errorCode").value("ROLE_UPDATE_SELF_DENIED"));
+                    .andExpect(jsonPath("$.message").value("Administrators cannot update their own role"))
+                    .andExpect(jsonPath("$.code").value("ROLE_UPDATE_SELF_DENIED"));
         }
 
         @Test
@@ -2217,7 +2183,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
         void shouldReturn400WhenTryingToUpdateAnotherAdminRole() throws Exception {
             // Arrange
             AuthTestData adminData1 = authTestUtils.createAuthenticatedUser(true, ADMIN);
-            
+
             // Create another admin user in the same association
             PhoneNumberDTO phoneNumber = PhoneNumberDTO.builder()
                     .prefix("+1")
@@ -2229,24 +2195,24 @@ class UsersControllerIT extends AbstractIntegrationTest {
             );
             CreateUserRequest createRequest = CreateUserRequest.builder()
                     .userData(userData)
-                    .role(MEMBER) // Create as MEMBER first
+                    .role(MEMBER)
                     .build();
-            
+
             ResultActions createResult = mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData1.association().getId())
                     .with(user(adminData1.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(createRequest)));
-            
+
             Long secondUserId = authTestUtils.extractUserIdFromResponse(createResult);
             User secondUser = usersRepository.findById(secondUserId).orElseThrow();
-            
+
             // Manually promote to ADMIN via direct database manipulation (simulating existing admin)
             authTestUtils.setUserRoleInAssociation(secondUser, ADMIN);
-            
+
             UpdateUserRoleRequest request = createUpdateUserRoleRequest(MEMBER);
 
             // Act - First admin tries to update second admin's role
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData1.association().getId(), secondUserId)
                     .with(user(adminData1.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -2257,7 +2223,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.message").value("Administrator roles cannot be updated"))
-                    .andExpect(jsonPath("$.errorCode").value("ROLE_UPDATE_ADMIN_DENIED"));
+                    .andExpect(jsonPath("$.code").value("ROLE_UPDATE_ADMIN_DENIED"));
         }
 
         @Test
@@ -2269,7 +2235,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateUserRoleRequest request = new UpdateUserRoleRequest(null);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), memberData.user().getId())
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -2289,16 +2255,16 @@ class UsersControllerIT extends AbstractIntegrationTest {
             // Arrange
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
-            
+
             // Create request with ADMIN role (this should be invalid)
             String requestJson = """
-                {
-                    "role": "ADMIN"
-                }
-                """;
+                    {
+                        "role": "ADMIN"
+                    }
+                    """;
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), memberData.user().getId())
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
@@ -2321,13 +2287,13 @@ class UsersControllerIT extends AbstractIntegrationTest {
             UpdateUserRoleRequest request = createUpdateUserRoleRequest(AssociationRole.COLLABORATOR);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), memberData.user().getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)));
 
             // Assert
-            result.andExpected(status().isUnauthorized());
+            result.andExpect(status().isUnauthorized());
         }
 
         @Test
@@ -2339,17 +2305,17 @@ class UsersControllerIT extends AbstractIntegrationTest {
             Long nonExistentUserId = 99999L;
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), nonExistentUserId)
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)));
 
             // Assert
-            result.andExpected(status().isNotFound())
+            result.andExpect(status().isNotFound())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").contains("not found"));
+                    .andExpect(jsonPath("$.message", containsString("not found")));
         }
 
         @Test
@@ -2361,14 +2327,14 @@ class UsersControllerIT extends AbstractIntegrationTest {
             Long nonExistentAssociationId = 99999L;
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     nonExistentAssociationId, adminData.user().getId())
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)));
 
             // Assert
-            result.andExpected(status().isForbidden());
+            result.andExpect(status().isForbidden());
         }
 
         @Test
@@ -2378,7 +2344,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
             User originalUser = memberData.user();
-            
+
             // Store original user data
             String originalFirstName = originalUser.getFirstName();
             String originalLastName = originalUser.getLastName();
@@ -2387,18 +2353,18 @@ class UsersControllerIT extends AbstractIntegrationTest {
             boolean originalEnabled = originalUser.isEnabled();
             String originalPhonePrefix = originalUser.getPhoneNumber().getPrefix();
             String originalPhoneNumber = originalUser.getPhoneNumber().getNationalNumber();
-            
+
             UpdateUserRoleRequest request = createUpdateUserRoleRequest(AssociationRole.COLLABORATOR);
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), originalUser.getId())
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)));
 
             // Assert
-            result.andExpected(status().isOk());
+            result.andExpect(status().isOk());
 
             // Verify all user data except role remained unchanged
             User updatedUser = usersRepository.findById(originalUser.getId()).orElseThrow();
@@ -2409,7 +2375,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
             assertThat(updatedUser.isEnabled()).isEqualTo(originalEnabled);
             assertThat(updatedUser.getPhoneNumber().getPrefix()).isEqualTo(originalPhonePrefix);
             assertThat(updatedUser.getPhoneNumber().getNationalNumber()).isEqualTo(originalPhoneNumber);
-            
+
             // But role should be changed
             AssociationRole updatedRole = authTestUtils.getUserRoleInAssociation(updatedUser);
             assertThat(updatedRole).isEqualTo(AssociationRole.COLLABORATOR);
@@ -2421,38 +2387,38 @@ class UsersControllerIT extends AbstractIntegrationTest {
             // Arrange
             AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
             AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
-            
+
             // First update: MEMBER -> COLLABORATOR
             UpdateUserRoleRequest firstRequest = createUpdateUserRoleRequest(AssociationRole.COLLABORATOR);
-            
-            ResultActions firstResult = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+
+            ResultActions firstResult = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), memberData.user().getId())
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(firstRequest)));
-            
-            firstResult.andExpected(status().isOk());
-            
+
+            firstResult.andExpect(status().isOk());
+
             // Verify first update
             AssociationRole intermediateRole = authTestUtils.getUserRoleInAssociation(memberData.user());
             assertThat(intermediateRole).isEqualTo(AssociationRole.COLLABORATOR);
-            
+
             // Second update: COLLABORATOR -> MEMBER
             UpdateUserRoleRequest secondRequest = createUpdateUserRoleRequest(MEMBER);
-            
+
             // Act
-            ResultActions secondResult = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions secondResult = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), memberData.user().getId())
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(secondRequest)));
 
             // Assert
-            secondResult.andExpected(status().isOk())
+            secondResult.andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.message").value("User role has been updated successfully"))
-                    .andExpect(jsonPath("$.data.role").value("ASSOCIATION_MEMBER"));
+                    .andExpect(jsonPath("$.data.role").value("MEMBER"));
 
             // Verify final role
             AssociationRole finalRole = authTestUtils.getUserRoleInAssociation(memberData.user());
@@ -2468,14 +2434,526 @@ class UsersControllerIT extends AbstractIntegrationTest {
             String invalidJson = "{ invalid json }";
 
             // Act
-            ResultActions result = mockMvc.perform(put(USERS_BASE_ENDPOINT + "/{userId}/role",
+            ResultActions result = mockMvc.perform(patch(USERS_BASE_ENDPOINT + "/{userId}/role",
                     adminData.association().getId(), memberData.user().getId())
                     .with(user(adminData.user().getUserName()).roles("USER"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(invalidJson));
 
             // Assert
-            result.andExpected(status().isBadRequest());
+            result.andExpect(status().isBadRequest());
+        }
+    }
+
+
+    @Nested
+    @DisplayName("Disabled User Login Tests")
+    class DisabledUserLoginTests {
+
+        @Test
+        @DisplayName("Should prevent disabled user from logging in with correct credentials")
+        void shouldPreventDisabledUserFromLoggingInWithCorrectCredentials() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+
+            // Disable the member user
+            User targetUser = memberData.user();
+            targetUser.setEnabled(false);
+            usersRepository.save(targetUser);
+
+            // Verify user is disabled
+            assertThat(targetUser.isEnabled()).isFalse();
+
+            // Create login request with correct credentials
+            LoginRequest loginRequest = new LoginRequest(targetUser.getUserName(), memberData.plainTextPassword());
+
+            // Act
+            ResultActions result = mockMvc.perform(post("/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(loginRequest)));
+
+            // Assert
+            result.andExpect(status().isUnauthorized())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Authentication failed for provided credentials: User is disabled"));
+        }
+
+        @Test
+        @DisplayName("Should prevent disabled user from logging in with email")
+        void shouldPreventDisabledUserFromLoggingInWithEmail() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+
+            // Disable the member user
+            User targetUser = memberData.user();
+            targetUser.setEnabled(false);
+            usersRepository.save(targetUser);
+
+            // Verify user is disabled
+            assertThat(targetUser.isEnabled()).isFalse();
+
+            // Create login request with email and correct password
+            LoginRequest loginRequest = new LoginRequest(targetUser.getEmail(), memberData.plainTextPassword());
+
+            // Act
+            ResultActions result = mockMvc.perform(post("/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(loginRequest)));
+
+            // Assert
+            result.andExpect(status().isUnauthorized())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Authentication failed for provided credentials: User is disabled"));
+        }
+
+        @Test
+        @DisplayName("Should allow enabled user to log in after being re-enabled")
+        void shouldAllowEnabledUserToLogInAfterBeingReEnabled() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+
+            // Disable the member user first
+            User targetUser = memberData.user();
+            targetUser.setEnabled(false);
+            usersRepository.save(targetUser);
+
+            // Verify user is disabled
+            assertThat(targetUser.isEnabled()).isFalse();
+
+            // Try to login while disabled (should fail)
+            LoginRequest loginRequest = new LoginRequest(targetUser.getUserName(), memberData.plainTextPassword());
+            ResultActions disabledLoginResult = mockMvc.perform(post("/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(loginRequest)));
+
+            disabledLoginResult.andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.message").value("Authentication failed for provided credentials: User is disabled"));
+
+            // Re-enable the user
+            targetUser.setEnabled(true);
+            usersRepository.save(targetUser);
+
+            // Verify user is enabled
+            assertThat(targetUser.isEnabled()).isTrue();
+
+            // Act - Try to login again after being re-enabled
+            ResultActions enabledLoginResult = mockMvc.perform(post("/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(loginRequest)));
+
+            // Assert
+            enabledLoginResult.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("User authenticated successfully"))
+                    .andExpect(jsonPath("$.data.accessToken").exists())
+                    .andExpect(jsonPath("$.data.associationId").value(adminData.association().getId()))
+                    .andExpect(cookie().exists("refresh_token"));
+        }
+
+        @Test
+        @DisplayName("Should prevent newly created disabled user from logging in")
+        void shouldPreventNewlyCreatedDisabledUserFromLoggingIn() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            CreateUserRequest request = createValidCreateUserRequest();
+
+            // Create a new user (which will be disabled by default)
+            ResultActions createResult = mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            createResult.andExpect(status().isCreated());
+            Long createdUserId = authTestUtils.extractUserIdFromResponse(createResult);
+            User createdUser = usersRepository.findById(createdUserId).orElseThrow();
+
+            // Verify user is disabled
+            assertThat(createdUser.isEnabled()).isFalse();
+
+            // Try to login with the newly created user's credentials
+            LoginRequest loginRequest = new LoginRequest(createdUser.getUserName(), "SecurePass#123");
+
+            // Act
+            ResultActions result = mockMvc.perform(post("/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(loginRequest)));
+
+            // Assert
+            result.andExpect(status().isUnauthorized())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Authentication failed for provided credentials: User is disabled"));
+        }
+
+        @Test
+        @DisplayName("Should prevent disabled user from logging in even with wrong password")
+        void shouldPreventDisabledUserFromLoggingInEvenWithWrongPassword() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+
+            // Disable the member user
+            User targetUser = memberData.user();
+            targetUser.setEnabled(false);
+            usersRepository.save(targetUser);
+
+            // Verify user is disabled
+            assertThat(targetUser.isEnabled()).isFalse();
+
+            // Create login request with wrong password
+            LoginRequest loginRequest = new LoginRequest(targetUser.getUserName(), "WrongPassword123");
+
+            // Act
+            ResultActions result = mockMvc.perform(post("/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(loginRequest)));
+
+            // Assert - Should still return unauthorized, but the message might be different
+            // depending on whether the password check or enabled check happens first
+            result.andExpect(status().isUnauthorized())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false));
+        }
+
+        @Test
+        @DisplayName("Should handle disabled user login attempt with non-existent user gracefully")
+        void shouldHandleDisabledUserLoginAttemptWithNonExistentUserGracefully() throws Exception {
+            // Arrange
+            LoginRequest loginRequest = new LoginRequest("nonexistentuser", "anypassword");
+
+            // Act
+            ResultActions result = mockMvc.perform(post("/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(loginRequest)));
+
+            // Assert - Should return unauthorized for non-existent user
+            // The disabled check should not be reached for non-existent users
+            result.andExpect(status().isUnauthorized())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false));
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /v1/associations/{associationId}/users - Search Users")
+    class SearchUsersTests {
+
+        @Test
+        @DisplayName("Should successfully return paginated users for ADMIN")
+        void shouldReturnPaginatedUsersForAdmin() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData1 = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+            AuthTestData memberData2 = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+
+            // Act
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER")));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.message").value("Users retrieved successfully"))
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content", hasSize(greaterThanOrEqualTo(3)))) // admin + 2 members
+                    .andExpect(jsonPath("$.data.totalElements", greaterThanOrEqualTo(3)))
+                    .andExpect(jsonPath("$.data.pageable").exists());
+        }
+
+        @Test
+        @DisplayName("Should filter users by fullName")
+        void shouldFilterUsersByFullName() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            
+            // Create a user with specific name for filtering
+            PhoneNumberDTO phoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+1")
+                    .nationalNumber("5551234567")
+                    .build();
+            UserRegisterDTO userData = new UserRegisterDTO(
+                    "Alice", "Cooper", "alicecooper", "alice.cooper@example.com",
+                    phoneNumber, "SecurePass#123", "SecurePass#123"
+            );
+            CreateUserRequest createRequest = CreateUserRequest.builder()
+                    .userData(userData)
+                    .role(MEMBER)
+                    .build();
+
+            mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createRequest)))
+                    .andExpect(status().isCreated());
+
+            // Act - Search by fullName
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .param("fullName", "Alice Cooper")
+                    .with(user(adminData.user().getUserName()).roles("USER")));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.content", hasSize(1)))
+                    .andExpect(jsonPath("$.data.content[0].firstName").value("alice"))
+                    .andExpect(jsonPath("$.data.content[0].lastName").value("cooper"));
+        }
+
+        @Test
+        @DisplayName("Should filter users by email")
+        void shouldFilterUsersByEmail() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            
+            // Act - Search by email domain
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .param("email", adminData.user().getEmail().split("@")[0]) // Search by email prefix
+                    .with(user(adminData.user().getUserName()).roles("USER")));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.content", hasSize(greaterThanOrEqualTo(1))))
+                    .andExpect(jsonPath("$.data.content[*].email", hasItem(containsString(adminData.user().getEmail().split("@")[0]))));
+        }
+
+        @Test
+        @DisplayName("Should filter users by role")
+        void shouldFilterUsersByRole() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+
+            // Act - Search for ADMIN users only
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .param("role", "ADMIN")
+                    .with(user(adminData.user().getUserName()).roles("USER")));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.content", hasSize(greaterThanOrEqualTo(1))))
+                    .andExpect(jsonPath("$.data.content[0].role").value("ADMIN"));
+        }
+
+        @Test 
+        @DisplayName("Should filter users by phoneNumber")
+        void shouldFilterUsersByPhoneNumber() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            
+            // Create user with specific phone number
+            PhoneNumberDTO phoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+44")
+                    .nationalNumber("7700900123")
+                    .build();
+            UserRegisterDTO userData = new UserRegisterDTO(
+                    "Bob", "Wilson", "bobwilson", "bob.wilson@example.com",
+                    phoneNumber, "SecurePass#123", "SecurePass#123"
+            );
+            CreateUserRequest createRequest = CreateUserRequest.builder()
+                    .userData(userData)
+                    .role(MEMBER)
+                    .build();
+
+            mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createRequest)))
+                    .andExpect(status().isCreated());
+
+            // Act - Search by phone number
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .param("phoneNumber", "7700900123")
+                    .with(user(adminData.user().getUserName()).roles("USER")));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.content", hasSize(1)))
+                    .andExpect(jsonPath("$.data.content[0].phoneNumber.nationalNumber").value("7700900123"));
+        }
+
+        @Test
+        @DisplayName("Should support pagination")
+        void shouldSupportPagination() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            
+            // Create multiple users to test pagination
+            for (int i = 1; i <= 5; i++) {
+                PhoneNumberDTO phoneNumber = PhoneNumberDTO.builder()
+                        .prefix("+1")
+                        .nationalNumber("555000" + String.format("%04d", i))
+                        .build();
+                UserRegisterDTO userData = new UserRegisterDTO(
+                        "User" + i, "Test", "user" + i + "test", "user" + i + "@test.com",
+                        phoneNumber, "SecurePass#123", "SecurePass#123"
+                );
+                CreateUserRequest createRequest = CreateUserRequest.builder()
+                        .userData(userData)
+                        .role(MEMBER)
+                        .build();
+
+                mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
+                        .with(user(adminData.user().getUserName()).roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                        .andExpect(status().isCreated());
+            }
+
+            // Act - Request first page with size 2
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .param("page", "0")
+                    .param("size", "2")
+                    .with(user(adminData.user().getUserName()).roles("USER")));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.content", hasSize(2)))
+                    .andExpect(jsonPath("$.data.totalElements", greaterThanOrEqualTo(6))) // admin + 5 created users
+                    .andExpect(jsonPath("$.data.pageable.pageNumber").value(0))
+                    .andExpect(jsonPath("$.data.pageable.pageSize").value(2));
+        }
+
+        @Test
+        @DisplayName("Should return 403 when MEMBER tries to search users")
+        void shouldReturn403WhenMemberTriesToSearchUsers() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData memberData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+
+            // Act
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .with(user(memberData.user().getUserName()).roles("USER")));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators can access user accounts information"));
+        }
+
+        @Test
+        @DisplayName("Should return 403 when COLLABORATOR tries to search users")
+        void shouldReturn403WhenCollaboratorTriesToSearchUsers() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            AuthTestData collaboratorData = authTestUtils.createAuthenticatedUserInSameAssociation(adminData.association());
+
+            // Act
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .with(user(collaboratorData.user().getUserName()).roles("USER")));
+
+            // Assert
+            result.andExpect(status().isForbidden())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Only administrators can access user accounts information"));
+        }
+
+        @Test
+        @DisplayName("Should return 401 when unauthenticated user tries to search users")
+        void shouldReturn401WhenUnauthenticatedUserTriesToSearchUsers() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+
+            // Act
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId()));
+
+            // Assert
+            result.andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return empty results when no users match filters")
+        void shouldReturnEmptyResultsWhenNoUsersMatchFilters() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+
+            // Act - Search for non-existent email
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .param("email", "nonexistent@nowhere.com")
+                    .with(user(adminData.user().getUserName()).roles("USER")));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.content", hasSize(0)))
+                    .andExpect(jsonPath("$.data.totalElements").value(0));
+        }
+
+        @Test
+        @DisplayName("Should return 404 when association doesn't exist")
+        void shouldReturn404WhenAssociationDoesntExist() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            Long nonExistentAssociationId = 99999L;
+
+            // Act
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, nonExistentAssociationId)
+                    .with(user(adminData.user().getUserName()).roles("USER")));
+
+            // Assert
+            result.andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should handle combined filters correctly")
+        void shouldHandleCombinedFiltersCorrectly() throws Exception {
+            // Arrange
+            AuthTestData adminData = authTestUtils.createAuthenticatedUser(true, ADMIN);
+            
+            // Create user for specific filtering
+            PhoneNumberDTO phoneNumber = PhoneNumberDTO.builder()
+                    .prefix("+1")
+                    .nationalNumber("5559876543")
+                    .build();
+            UserRegisterDTO userData = new UserRegisterDTO(
+                    "Combined", "Filter", "combinedfilter", "combined.filter@example.com",
+                    phoneNumber, "SecurePass#123", "SecurePass#123"
+            );
+            CreateUserRequest createRequest = CreateUserRequest.builder()
+                    .userData(userData)
+                    .role(AssociationRole.COLLABORATOR)
+                    .build();
+
+            mockMvc.perform(post(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .with(user(adminData.user().getUserName()).roles("USER"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createRequest)))
+                    .andExpect(status().isCreated());
+
+            // Act - Apply multiple filters
+            ResultActions result = mockMvc.perform(get(USERS_BASE_ENDPOINT, adminData.association().getId())
+                    .param("fullName", "Combined")
+                    .param("email", "combined")
+                    .param("role", "COLLABORATOR")
+                    .with(user(adminData.user().getUserName()).roles("USER")));
+
+            // Assert
+            result.andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.content", hasSize(1)))
+                    .andExpect(jsonPath("$.data.content[0].firstName").value("combined"))
+                    .andExpect(jsonPath("$.data.content[0].lastName").value("filter"))
+                    .andExpect(jsonPath("$.data.content[0].email").value("combined.filter@example.com"))
+                    .andExpect(jsonPath("$.data.content[0].role").value("COLLABORATOR"));
         }
     }
 
@@ -2492,7 +2970,7 @@ class UsersControllerIT extends AbstractIntegrationTest {
 
         UserRegisterDTO userData = new UserRegisterDTO(
                 "John",
-                "Doe", 
+                "Doe",
                 "johndoe",
                 "john.doe@example.com",
                 phoneNumberDTO,

@@ -10,13 +10,12 @@ import static com.raffleease.raffleease.Common.Constants.ValidationPatterns.PASS
 public record EditPasswordRequest(
         @NotBlank(message = "Current password is required")
         String currentPassword,
-        
+
         @NotBlank
         @Pattern(regexp = PASSWORD_PATTERN)
         String password,
-        
+
         @NotBlank
         @Pattern(regexp = PASSWORD_PATTERN)
         String confirmPassword
-) {
-} 
+) { }

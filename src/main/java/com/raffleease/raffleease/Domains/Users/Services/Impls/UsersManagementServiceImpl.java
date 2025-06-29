@@ -79,8 +79,8 @@ public class UsersManagementServiceImpl implements UsersManagementService {
         Association association = associationsService.findById(associationId);
         User user = usersService.findById(userId);
         User authenticatedUser = usersService.getAuthenticatedUser();
-        if (authenticatedUser.getId() == userId) {
-            throw new BusinessException("Administrators cannot disable their own accounts", ADMIN_DISABLE_SELF_DENIED);
+        if (authenticatedUser.getId().equals(userId)) {
+            throw new BusinessException("Administrators cannot disable their own account", ADMIN_DISABLE_SELF_DENIED);
         }
         validateMembership(association, user);
         usersService.setUserEnabled(user, false);

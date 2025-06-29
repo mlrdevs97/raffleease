@@ -14,6 +14,7 @@ public final class ValidationErrorCodeMapper {
             // Format validations
             Map.entry("Email", "INVALID_EMAIL"),
             Map.entry("Pattern", "INVALID_FORMAT"),
+            Map.entry("ValidPassword", "INVALID_FORMAT"),
             Map.entry("Digits", "INVALID_DIGITS"),
             Map.entry("URL", "INVALID_URL"),
 

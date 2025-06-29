@@ -316,8 +316,11 @@ class ReservationsControllerIT extends AbstractIntegrationTest {
 
             // Assert
             result.andExpect(status().isForbidden())
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("You are not allowed to access this cart"));
+                    .andExpect(content().contentType("application/json"))
+                    .andExpect(jsonPath("$.message").value("You are not allowed to access this association"))
+                    .andExpect(jsonPath("$.statusCode").value(403))
+                    .andExpect(jsonPath("$.statusText").value("Forbidden"))
+                    .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
 
             // Verify tickets remained available
             List<Ticket> tickets = ticketsRepository.findAllById(ticketIds);

@@ -1,5 +1,7 @@
 package com.raffleease.raffleease.Domains.Auth.Validations.Interceptors;
 
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthenticationException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsMembershipService;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
@@ -17,8 +19,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Map;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 import static org.springframework.web.servlet.HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE;
 
 @RequiredArgsConstructor
@@ -33,31 +33,24 @@ public class AssociationAccessInterceptor implements HandlerInterceptor {
         if (!(handler instanceof HandlerMethod method)) return true;
         if (!method.getBeanType().isAnnotationPresent(ValidateAssociationAccess.class)) return true;
 
-        // 1. Check authentication
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
-            response.setStatus(SC_UNAUTHORIZED);
-            return false;
+            throw new AuthenticationException("Authentication required");
         }
 
-        // 2. Get association ID from path variables
         Map<String, String> pathVariables = (Map<String, String>) request.getAttribute(URI_TEMPLATE_VARIABLES_ATTRIBUTE);
         String associationIdStr = pathVariables.get("associationId");
         if (associationIdStr == null) {
-            response.setStatus(SC_FORBIDDEN);
-            return false;
+            throw new AuthorizationException("Association ID is required");
         }
 
-        // 3. Parse association ID
         Long associationId;
         try {
             associationId = Long.parseLong(associationIdStr);
         } catch (NumberFormatException ex) {
-            response.setStatus(SC_FORBIDDEN);
-            return false;
+            throw new AuthorizationException("Invalid association ID format");
         }
 
-        // 4. Get user and validate access
         String identifier = auth.getName();
         User user = usersService.findByIdentifier(identifier);
         
@@ -66,8 +59,7 @@ public class AssociationAccessInterceptor implements HandlerInterceptor {
             membershipsService.validateIsMember(association, user);
             return true;
         } catch (Exception ex) {
-            response.setStatus(SC_FORBIDDEN);
-            return false;
+            throw new AuthorizationException("You are not allowed to access this association");
         }
     }
 }

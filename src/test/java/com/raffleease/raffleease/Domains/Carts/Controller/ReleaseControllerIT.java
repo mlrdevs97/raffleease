@@ -302,9 +302,11 @@ class ReleaseControllerIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("Should fail when trying to release tickets from another user's cart")
         void shouldFailWhenReleasingTicketsFromAnotherUsersCart() throws Exception {
-            // Arrange - Create another user and try to use first user's cart
-            AuthTestData otherAuthData = authTestUtils.createAuthenticatedUserWithCredentials(
-                    "otheruser", "other@example.com", "password123");
+            // Arrange - Create another user in the same association
+            AuthTestData otherAuthData = authTestUtils.createAuthenticatedUserInSameAssociation(authData.association());
+
+            reservedTickets.forEach(ticket -> ticket.setCart(testCart));
+            reservedTickets = ticketsRepository.saveAll(reservedTickets);
 
             List<Long> ticketIds = reservedTickets.stream()
                     .limit(2)
@@ -322,12 +324,16 @@ class ReleaseControllerIT extends AbstractIntegrationTest {
             result.andExpect(status().isForbidden())
                     .andExpect(content().contentType("application/json"))
                     .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("You are not allowed to access this cart"));
+                    .andExpect(jsonPath("$.message").value("You are not allowed to access this cart"))
+                    .andExpect(jsonPath("$.statusCode").value(403))
+                    .andExpect(jsonPath("$.statusText").value("Forbidden"))
+                    .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
 
             // Verify tickets remained reserved in original cart
             List<Ticket> tickets = ticketsRepository.findAllById(ticketIds);
             assertThat(tickets).allSatisfy(ticket -> {
                 assertThat(ticket.getStatus()).isEqualTo(RESERVED);
+                assertThat(ticket.getCart()).isNotNull();
                 assertThat(ticket.getCart().getId()).isEqualTo(testCart.getId());
             });
 

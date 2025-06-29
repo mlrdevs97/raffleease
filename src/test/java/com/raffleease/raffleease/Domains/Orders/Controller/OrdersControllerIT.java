@@ -172,8 +172,8 @@ class OrdersControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.data.orderReference").exists())
                     .andExpect(jsonPath("$.data.customer.fullName").value("john doe"))
                     .andExpect(jsonPath("$.data.customer.email").value("john@example.com"))
-                    .andExpect(jsonPath("$.data.customer.phoneNumber").value("+1"))
-                    .andExpect(jsonPath("$.data.customer.phoneNumber").value("234567890"))
+                    .andExpect(jsonPath("$.data.customer.phoneNumber.prefix").value("+1"))
+                    .andExpect(jsonPath("$.data.customer.phoneNumber.nationalNumber").value("234567890"))
                     .andExpect(jsonPath("$.data.comment").value("Test order comment"));
 
             // Verify order was created

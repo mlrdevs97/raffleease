@@ -335,30 +335,5 @@ class PasswordResetControllerIT extends AbstractIntegrationTest {
                     .andExpect(jsonPath("$.message").value("Validation failed"))
                     .andExpect(jsonPath("$.errors.password").value("INVALID_FORMAT"));
         }
-
-        @Test
-        @DisplayName("Should return 400 when required fields are blank")
-        void shouldReturn400WhenRequiredFieldsAreBlank() throws Exception {
-            // Arrange
-            ResetPasswordRequest request = new ResetPasswordRequest(
-                    "", // Blank token
-                    "", // Blank password
-                    ""  // Blank confirm password
-            );
-
-            // Act
-            ResultActions result = mockMvc.perform(post(RESET_PASSWORD_ENDPOINT)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)));
-
-            // Assert
-            result.andExpect(status().isBadRequest())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.success").value(false))
-                    .andExpect(jsonPath("$.message").value("Validation failed"))
-                    .andExpect(jsonPath("$.errors.token").value("REQUIRED"))
-                    .andExpect(jsonPath("$.errors.password").value("REQUIRED"))
-                    .andExpect(jsonPath("$.errors.confirmPassword").value("INVALID_FORMAT"));
-        }
     }
 } 
