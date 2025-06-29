@@ -6,6 +6,7 @@ import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembershi
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsMembershipsRepository;
 import com.raffleease.raffleease.Domains.Associations.Repository.AssociationsRepository;
+import com.raffleease.raffleease.Domains.Associations.Services.AssociationsMembershipService;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsService;
 import com.raffleease.raffleease.Domains.Auth.DTOs.Register.RegisterAssociationData;
 import com.raffleease.raffleease.Domains.Users.Model.User;
@@ -25,7 +26,7 @@ import java.util.Optional;
 @Service
 public class AssociationsServiceImpl implements AssociationsService {
     private final AssociationsRepository associationsRepository;
-    private final AssociationsMembershipsRepository membershipsRepository;
+    private final AssociationsMembershipService membershipService;
     private final AssociationsMapper mapper;
 
     @Transactional
@@ -40,13 +41,10 @@ public class AssociationsServiceImpl implements AssociationsService {
                 .orElseThrow(() -> new NotFoundException("Association with id <" + id + "> not found"));
     }
 
+    @Transactional
     @Override
-    public void createMembership(Association association, User user, AssociationRole role) {
-        AssociationMembership membership = save(AssociationMembership.builder()
-                .association(association)
-                .user(user)
-                .role(role)
-                .build());
+    public void createAssociationMembership(Association association, User user, AssociationRole role) {
+        AssociationMembership membership = membershipService.createMembership(association, user, role);
         association.getMemberships().add(membership);
         save(association);
     }
@@ -63,14 +61,6 @@ public class AssociationsServiceImpl implements AssociationsService {
             }
         } catch (DataAccessException ex) {
             throw new DatabaseException("Database error occurred while saving association: " + ex.getMessage());
-        }
-    }
-
-    private AssociationMembership save(AssociationMembership membership) {
-        try {
-            return membershipsRepository.save(membership);
-        } catch (DataAccessException ex) {
-            throw new DatabaseException("Database error occurred while saving new membership for association: " + ex.getMessage());
         }
     }
 }

@@ -32,5 +32,5 @@ public interface AssociationsService {
      * @param user the user
      * @param role the role
      */
-    void createMembership(Association association, User user, AssociationRole role);
+    void createAssociationMembership(Association association, User user, AssociationRole role);
 }

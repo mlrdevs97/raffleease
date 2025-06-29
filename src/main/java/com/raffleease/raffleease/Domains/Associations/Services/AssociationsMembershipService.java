@@ -7,6 +7,17 @@ import com.raffleease.raffleease.Domains.Users.Model.User;
 
 public interface AssociationsMembershipService {
     /*
+     * Creates a new membership for the user in the association.
+     * 
+     * @param association the association
+     * @param user the user
+     * @param role the role
+     * @return the membership
+     * @throws BusinessException if the user is already a member of the association
+     */
+    AssociationMembership createMembership(Association association, User user, AssociationRole role);
+
+    /*
      * Validates if the user is a member of the association.
      * 
      * @param association the association
