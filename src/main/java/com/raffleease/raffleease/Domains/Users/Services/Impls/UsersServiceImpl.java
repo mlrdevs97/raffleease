@@ -1,9 +1,7 @@
 package com.raffleease.raffleease.Domains.Users.Services.Impls;
 
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
 import com.raffleease.raffleease.Common.Models.UserBaseDTO;
 import com.raffleease.raffleease.Common.Models.UserRegisterDTO;
-import com.raffleease.raffleease.Domains.Associations.Model.AssociationMembership;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
 import com.raffleease.raffleease.Domains.Associations.Services.AssociationsMembershipService;
 import com.raffleease.raffleease.Domains.Users.DTOs.UserResponse;
@@ -17,8 +15,8 @@ import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseExce
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.NotFoundException;
 import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.UniqueConstraintViolationException;
 import com.raffleease.raffleease.Common.Utils.ConstraintViolationParser;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -27,11 +25,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-@Slf4j
 @RequiredArgsConstructor
 @Service
 public class UsersServiceImpl implements UsersService {
@@ -40,6 +36,7 @@ public class UsersServiceImpl implements UsersService {
     private final AssociationsMembershipService membershipService;
     private final UsersMapper mapper;
 
+    @Transactional
     @Override
     public User createUser(UserRegisterDTO userData, String encodedPassword, boolean isEnabled) {
         return save(mapper.buildUser(userData, encodedPassword, isEnabled));
@@ -133,7 +130,7 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public User save(User user) {
         try {
-            return repository.save(user);
+            return repository.saveAndFlush(user);
         } catch (DataIntegrityViolationException ex) {
             Optional<String> constraintName = ConstraintViolationParser.extractConstraintName(ex);
             if (constraintName.isPresent()) {

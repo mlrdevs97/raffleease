@@ -1,11 +1,7 @@
 package com.raffleease.raffleease.Domains.Users.Services.Impls;
 
 import com.raffleease.raffleease.Common.Configs.CorsProperties;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.AuthorizationException;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.BusinessException;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.DatabaseException;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.PasswordResetException;
-import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.UpdateRoleException;
+import com.raffleease.raffleease.Common.Exceptions.CustomExceptions.*;
 import com.raffleease.raffleease.Common.Models.UserBaseDTO;
 import com.raffleease.raffleease.Domains.Associations.Model.Association;
 import com.raffleease.raffleease.Domains.Associations.Model.AssociationRole;
@@ -64,7 +60,7 @@ public class UsersManagementServiceImpl implements UsersManagementService {
         String encodedPassword = passwordEncoder.encode(request.userData().getPassword());
         User user = usersService.createUser(request.userData(), encodedPassword, false);
         Association association = associationsService.findById(associationId);
-        associationsService.createMembership(association, user, request.role());
+        associationsService.createAssociationMembership(association, user, request.role());
         handleUserVerification(user, association.getName());
         return usersService.getUserResponseById(user.getId());
     }
@@ -114,8 +110,6 @@ public class UsersManagementServiceImpl implements UsersManagementService {
 
         String encodedNewPassword = passwordEncoder.encode(request.password());
         usersService.updatePassword(authenticatedUser, encodedNewPassword);
-
-        log.info("Password updated successfully for user: {}", authenticatedUser.getUserName());
     }
 
     @Transactional
@@ -130,8 +124,6 @@ public class UsersManagementServiceImpl implements UsersManagementService {
             .build();
         user.setPhoneNumber(phoneNumber);
         User updatedUser = usersService.save(user);
-        
-        log.info("Phone number updated successfully for user: {}", user.getUserName());
         return usersService.getUserResponseById(updatedUser.getId());
     }
 
@@ -153,10 +145,6 @@ public class UsersManagementServiceImpl implements UsersManagementService {
         }
 
         membershipService.updateUserRole(user, request.role());
-        
-        log.info("Role updated successfully for user: {} from {} to {}", 
-                user.getUserName(), currentRole, request.role());
-        
         return usersService.getUserResponseById(userId);
     }
 
