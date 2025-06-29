@@ -46,7 +46,7 @@ public class RegisterServiceImpl implements RegisterService {
         String encodedPassword = passwordEncoder.encode(request.userData().getPassword());
         User user = usersService.createUser(request.userData(), encodedPassword, false);
         Association association = associationsService.create(request.associationData());
-        associationsService.createMembership(association, user, ADMIN);
+        associationsService.createAssociationMembership(association, user, ADMIN);
         handleUserVerification(user);
         return toRegisterResponse(user);
     }
